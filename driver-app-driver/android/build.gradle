@@ -1,0 +1,108 @@
+buildscript {
+    ext.kotlin_version = '2.1.0'
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.11.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.gms:google-services:4.4.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        // Repositório alternativo para volley (caso o Cashfree falhe)
+        maven {
+            url 'https://repo1.maven.org/maven2'
+        }
+        // Repositório do Cashfree (deve ser o último para não interferir com volley)
+        maven {
+            url 'https://maven.cashfree.com/release'
+        }
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    
+    // Configuração específica para cashfree_pg - força Maven Central para volley
+    if (project.name == 'cashfree_pg') {
+        project.afterEvaluate {
+            if (project.hasProperty('android')) {
+                repositories {
+                    // Reordena repositórios: Maven Central primeiro
+                    all { ArtifactRepository repo ->
+                        if (repo instanceof MavenArtifactRepository) {
+                            def url = repo.url.toString()
+                            if (url.contains('cashfree.com')) {
+                                // Move Cashfree para o final
+                                project.repositories.remove(repo)
+                                project.repositories.add(repo)
+                            }
+                        }
+                    }
+                }
+                configurations.all {
+                    resolutionStrategy {
+                        // Prioriza Maven Central
+                        preferProjectModules()
+                        // Exclui Cashfree para volley
+                        eachDependency { DependencyResolveDetails details ->
+                            if (details.requested.group == 'com.android.volley') {
+                                // Força resolução apenas do Maven Central
+                                details.because 'Cashfree repository returns 403 for volley'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Adiciona namespace para plugins que não têm antes da avaliação
+    if (project.name == 'cashfree_pg' || project.name == 'contacts_service') {
+        project.beforeEvaluate {
+            if (project.hasProperty('android')) {
+                def namespaceMap = [
+                    'cashfree_pg': 'com.cashfree.pg',
+                    'contacts_service': 'com.github.contactsservice',
+                ]
+                def namespace = namespaceMap[project.name]
+                if (namespace != null) {
+                    project.ext.namespace = namespace
+                }
+            }
+        }
+    }
+    
+    // Workaround para contacts_service - corrige incompatibilidade com Flutter moderno
+    if (project.name == 'contacts_service') {
+        project.afterEvaluate {
+            android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_1_8
+                    targetCompatibility JavaVersion.VERSION_1_8
+                }
+            }
+            // Adiciona dependência do Flutter embedding antigo para compatibilidade
+            dependencies {
+                if (project.hasProperty('android')) {
+                    implementation 'io.flutter:flutter_embedding_debug:1.0.0-unknown'
+                }
+            }
+        }
+    }
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

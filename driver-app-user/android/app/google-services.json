@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "725859983456",
+    "firebase_url": "https://goin-7372e-default-rtdb.firebaseio.com/",
+    "project_id": "goin-7372e",
+    "storage_bucket": "goin-7372e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725859983456:android:99a85914b9ca7c7d6c2305",
+        "android_client_info": {
+          "package_name": "br.app.omny.driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQfTS6lgiK2E1iOYmQj6Mm63j0I27N9N4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725859983456:android:60783efc6be48da66c2305",
+        "android_client_info": {
+          "package_name": "br.app.omny.user"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQfTS6lgiK2E1iOYmQj6Mm63j0I27N9N4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
