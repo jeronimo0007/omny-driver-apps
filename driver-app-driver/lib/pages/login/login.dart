@@ -38,11 +38,8 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
   MaskTextInputFormatter? _phoneMaskFormatter;
   final FocusNode _phoneFocusNode = FocusNode();
   final FocusNode _emailFocusNode = FocusNode();
-  final FocusNode _referralFocusNode = FocusNode();
   bool _isPhoneFocused = false;
   bool _isEmailFocused = false;
-  bool _isReferralFocused = false;
-  final TextEditingController _referralController = TextEditingController();
 
   // Callback para atualizar o estado quando o texto mudar
   void _onTextChanged() {
@@ -98,12 +95,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
       });
     });
 
-    _referralFocusNode.addListener(() {
-      setState(() {
-        _isReferralFocused = _referralFocusNode.hasFocus;
-      });
-    });
-
     // Adicionar listener ao controller para atualizar o botão quando o texto mudar
     controller.addListener(_onTextChanged);
 
@@ -127,8 +118,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
     controller.removeListener(_onTextChanged);
     _phoneFocusNode.dispose();
     _emailFocusNode.dispose();
-    _referralFocusNode.dispose();
-    _referralController.dispose();
     controller.dispose();
     super.dispose();
   }
@@ -585,56 +574,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                               ? (isLoginemail == false)
                                   ? Column(
                                       children: [
-                                        // Código de indicação (Opcional) - acima do celular
-                                        MyText(
-                                          text: (languages[choosenLanguage]
-                                                  ?['text_referral_optional'] ??
-                                              'Código de indicação (Opcional)'),
-                                          size: media.width * fourteen,
-                                          color: hintColor,
-                                        ),
-                                        SizedBox(height: media.height * 0.01),
-                                        Container(
-                                          height: 48,
-                                          width: media.width * 0.9,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            border: Border.all(
-                                              color: _isReferralFocused
-                                                  ? const Color(0xFF9A03E9)
-                                                  : textColor.withOpacity(0.5),
-                                              width: _isReferralFocused
-                                                  ? 2.0
-                                                  : 1.0,
-                                            ),
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12),
-                                          alignment: Alignment.centerLeft,
-                                          child: TextFormField(
-                                            controller: _referralController,
-                                            focusNode: _referralFocusNode,
-                                            decoration: InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: languages[
-                                                          choosenLanguage]?[
-                                                      'text_enter_referral'] ??
-                                                  'Digite o código de indicação',
-                                              hintStyle: GoogleFonts.poppins(
-                                                fontSize:
-                                                    media.width * fourteen,
-                                                color: hintColor,
-                                              ),
-                                            ),
-                                            style: GoogleFonts.poppins(
-                                              fontSize: media.width * fourteen,
-                                              color: textColor,
-                                            ),
-                                            onChanged: (_) => setState(() {}),
-                                          ),
-                                        ),
-                                        SizedBox(height: media.height * 0.02),
                                         MyText(
                                           text: (languages[choosenLanguage] ??
                                                       languages['en'])?[
@@ -937,10 +876,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                                 8
                                                             : 8)) {
                                                       _error = '';
-                                                      loginReferralCode =
-                                                          _referralController
-                                                              .text
-                                                              .trim();
                                                       FocusManager
                                                           .instance.primaryFocus
                                                           ?.unfocus();

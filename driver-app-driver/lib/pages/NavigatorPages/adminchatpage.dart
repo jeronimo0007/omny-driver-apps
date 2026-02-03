@@ -215,10 +215,28 @@ class _AdminChatPageState extends State<AdminChatPage> {
                                                                   userDetails[
                                                                           'user_id']
                                                                       .toString())
-                                                              ? buttonColor
+                                                              ? Colors.transparent
                                                               : const Color(
                                                                   0xffE7EDEF)),
-                                                      child: MyText(
+                                                      child: (adminChatList[i]['from_id'].toString() ==
+                                                              userDetails['user_id'].toString())
+                                                          ? Container(
+                                                              decoration: BoxDecoration(
+                                                                borderRadius: BorderRadius.only(
+                                                                  topLeft: Radius.circular(media.width * 0.02),
+                                                                  bottomRight: Radius.circular(media.width * 0.02),
+                                                                  bottomLeft: Radius.circular(media.width * 0.02),
+                                                                ),
+                                                                border: Border.all(color: buttonColor, width: 2),
+                                                              ),
+                                                              padding: EdgeInsets.all(media.width * 0.03),
+                                                              child: MyText(
+                                                                text: adminChatList[i]['message'],
+                                                                size: media.width * fourteen,
+                                                                color: (isDarkTheme == true) ? Colors.black : textColor,
+                                                              ),
+                                                            )
+                                                          : MyText(
                                                         text: adminChatList[i]
                                                             ['message'],
                                                         size: media.width *

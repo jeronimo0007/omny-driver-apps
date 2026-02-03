@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_driver/pages/onTripPage/map_page.dart';
 import 'package:flutter_driver/pages/onTripPage/rides.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,8 @@ import 'package:pinput/pinput.dart';
 import '../../styles/styles.dart';
 import '../../functions/functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:math' as math;
 import '../../translation/translation.dart';
 import '../../widgets/widgets.dart';
@@ -32,20 +35,45 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
   dynamic aController;
   bool _resend = false;
   String _error = '';
+  int _resendDuration = 90; // Primeiro tempo: 90 segundos
+  int _resendCountToday = 0;
+  static const int _maxResendPerDay = 6;
 
   String get timerString {
     Duration duration = aController.duration * aController.value;
     return '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}';
   }
 
+  Future<void> _loadResendCount() async {
+    final prefs = pref ?? await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final savedDate = prefs.getString('otp_resend_date');
+    if (savedDate == today) {
+      if (mounted) setState(() {
+        _resendCountToday = prefs.getInt('otp_resend_count') ?? 0;
+      });
+    } else {
+      await prefs.setString('otp_resend_date', today);
+      await prefs.setInt('otp_resend_count', 0);
+      if (mounted) setState(() => _resendCountToday = 0);
+    }
+  }
+
+  Future<void> _saveResendCount() async {
+    final prefs = pref ?? await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    await prefs.setString('otp_resend_date', today);
+    await prefs.setInt('otp_resend_count', _resendCountToday);
+  }
+
   @override
   void initState() {
-    aController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 60));
-    aController.reverse(
-        from: aController.value == 0.0 ? 60.0 : aController.value);
-    otpFalse();
     super.initState();
+    aController = AnimationController(
+        vsync: this, duration: Duration(seconds: _resendDuration));
+    aController.reverse(from: _resendDuration.toDouble());
+    _loadResendCount();
+    otpFalse();
   }
 
   @override
@@ -191,30 +219,6 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                           SingleChildScrollView(
                             child: Column(
                               children: [
-                                Container(
-                                  width: media.width * 0.9,
-                                  alignment: Alignment.center,
-                                  child: SizedBox(
-                                    height: 55,
-                                    width: 55,
-                                    child: CustomPaint(
-                                        // ignore: sort_child_properties_last
-                                        child: Center(
-                                          child: MyText(
-                                            text: timerString,
-                                            size: media.width * fourteen,
-                                            fontweight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        painter: CustomTimerPainter(
-                                            animation: aController,
-                                            backgroundColor: buttonColor,
-                                            color: const Color(0xffEDF0F4))),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: media.height * 0.02,
-                                ),
                                 (isfromomobile == true)
                                     ? SizedBox(
                                         child: MyText(
@@ -308,47 +312,85 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                                   height: 20,
                                 ),
                                 TextButton(
-                                    onPressed: () async {
-                                      if (timerString == "0:00") {
-                                        loginLoading = true;
-                                        valueNotifierLogin.incrementNotifier();
-                                        var verify = await verifyUser(phnumber);
-                                        // var register = await registerUser();
-                                        if (verify == false) {
-                                          setState(() {
-                                            _error = '';
-                                            _pinPutController2.text = '';
-                                            _resend = false;
-                                          });
-                                          phoneAuth(countries[phcode]
-                                                  ['dial_code'] +
-                                              phnumber);
-                                          aController.reverse(
-                                              from: aController.value == 0.0
-                                                  ? 60.0
-                                                  : aController.value);
-                                        } else {
-                                          setState(() {
-                                            _pinPutController2.text = '';
-                                            _error = verify is String
-                                                ? verify
-                                                : (languages[choosenLanguage]?[
-                                                        'text_mobile_already_taken'] ??
-                                                    'O número de celular já está em uso.');
-                                          });
-                                        }
-                                      }
-                                      loginLoading = false;
-                                      valueNotifierLogin.incrementNotifier();
-                                    },
-                                    child: MyText(
-                                      text: languages[choosenLanguage]
-                                          ['text_resend_otp'],
-                                      size: media.width * sixteen,
-                                      color: (_resend == false)
-                                          ? buttonColor.withOpacity(0.4)
-                                          : buttonColor,
+                                    onPressed: (_resend && _resendCountToday < _maxResendPerDay)
+                                        ? () async {
+                                            loginLoading = true;
+                                            valueNotifierLogin.incrementNotifier();
+                                            var verify = await verifyUser(phnumber);
+                                            if (verify == false) {
+                                              await phoneAuth(countries[phcode]['dial_code'] + phnumber);
+                                              setState(() {
+                                                _error = '';
+                                                _pinPutController2.text = '';
+                                                _resend = false;
+                                                _resendCountToday++;
+                                                _resendDuration = _resendDuration * 2;
+                                              });
+                                              await _saveResendCount();
+                                              aController.dispose();
+                                              aController = AnimationController(
+                                                  vsync: this,
+                                                  duration: Duration(seconds: _resendDuration));
+                                              aController.reverse(from: _resendDuration.toDouble());
+                                              if (mounted) setState(() {});
+                                            } else {
+                                              setState(() {
+                                                _pinPutController2.text = '';
+                                                _error = verify is String
+                                                    ? verify
+                                                    : (languages[choosenLanguage]?['text_mobile_already_taken'] ??
+                                                        'O número de celular já está em uso.');
+                                              });
+                                            }
+                                            loginLoading = false;
+                                            valueNotifierLogin.incrementNotifier();
+                                          }
+                                        : null,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        MyText(
+                                          text: languages[choosenLanguage]['text_resend_otp'],
+                                          size: media.width * sixteen,
+                                          color: (_resend && _resendCountToday < _maxResendPerDay)
+                                              ? buttonColor
+                                              : buttonColor.withOpacity(0.4),
+                                        ),
+                                        if (_resendCountToday >= _maxResendPerDay)
+                                          Padding(
+                                            padding: EdgeInsets.only(top: media.width * 0.02),
+                                            child: MyText(
+                                              text: languages[choosenLanguage]['text_max_resend_per_day'] ??
+                                                  'Máximo de 6 reenvios por dia.',
+                                              size: media.width * twelve,
+                                              color: Colors.red,
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                      ],
                                     )),
+                                SizedBox(height: media.height * 0.02),
+                                Container(
+                                  width: media.width * 0.9,
+                                  alignment: Alignment.center,
+                                  child: SizedBox(
+                                    height: 55,
+                                    width: 55,
+                                    child: CustomPaint(
+                                        // ignore: sort_child_properties_last
+                                        child: Center(
+                                          child: MyText(
+                                            text: timerString,
+                                            size: media.width * fourteen,
+                                            fontweight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        painter: CustomTimerPainter(
+                                            animation: aController,
+                                            backgroundColor: buttonColor,
+                                            color: const Color(0xffEDF0F4))),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -393,6 +435,15 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                               value = 0;
                               navigate(verify);
                             } else {
+                              // Web: se Firebase não foi inicializado, orientar a usar e-mail
+                              if (kIsWeb && Firebase.apps.isEmpty) {
+                                setState(() {
+                                  _error = 'Login por telefone não disponível na web. Use login por e-mail.';
+                                });
+                                loginLoading = false;
+                                valueNotifierLogin.incrementNotifier();
+                                return;
+                              }
                               // firebase code send true
                               try {
                                 PhoneAuthCredential credential =

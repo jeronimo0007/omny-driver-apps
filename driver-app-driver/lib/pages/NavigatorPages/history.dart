@@ -996,47 +996,41 @@ myHistory[i]['requestBill']['data']['requested_currency_symbol'] +
                                                                 SizedBox(
                                                                   width: media
                                                                           .width *
-                                                                      0.06,
+                                                                      0.02,
                                                                 ),
-                                                                SizedBox(
-                                                                  width: media
-                                                                          .width *
-                                                                      0.5,
+                                                                Expanded(
                                                                   child: MyText(
                                                                     text: myHistory[
                                                                             i][
-                                                                        'pick_address'],
-                                                                    // maxLines: 1,
+                                                                        'pick_address'] ?? '',
+                                                                    maxLines: 2,
+                                                                    overflow:
+                                                                        TextOverflow.ellipsis,
                                                                     size: media
                                                                             .width *
                                                                         twelve,
                                                                   ),
                                                                 ),
-                                                                Container(
-                                                                  padding: EdgeInsets
-                                                                      .all(media
-                                                                              .width *
-                                                                          0.01),
-                                                                  decoration: BoxDecoration(
-                                                                      color: Colors
-                                                                          .red
-                                                                          .withOpacity(
-                                                                              0.1),
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(media.width *
-                                                                              0.01)),
-                                                                  child: MyText(
-                                                                    text: languages[
-                                                                            choosenLanguage]
-                                                                        [
-                                                                        'text_cancelled'],
-                                                                    size: media
-                                                                            .width *
-                                                                        twelve,
-                                                                    color: Colors
-                                                                        .red,
+                                                                SizedBox(
+                                                                  width: media.width * 0.02,
+                                                                ),
+                                                                Flexible(
+                                                                  child: Container(
+                                                                    padding: EdgeInsets.symmetric(
+                                                                        horizontal: media.width * 0.02,
+                                                                        vertical: media.width * 0.01),
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors.red.withOpacity(0.1),
+                                                                        borderRadius: BorderRadius.circular(media.width * 0.01)),
+                                                                    child: MyText(
+                                                                      text: languages[choosenLanguage]['text_cancelled'],
+                                                                      size: media.width * twelve,
+                                                                      color: Colors.red,
+                                                                      maxLines: 1,
+                                                                      overflow: TextOverflow.ellipsis,
+                                                                    ),
                                                                   ),
-                                                                )
+                                                                ),
                                                               ],
                                                             ),
                                                             (myHistory[i][
@@ -1078,9 +1072,10 @@ myHistory[i]['requestBill']['data']['requested_currency_symbol'] +
                                                                           Expanded(
                                                                             child:
                                                                                 MyText(
-                                                                              text: myHistory[i]['drop_address'],
+                                                                              text: myHistory[i]['drop_address'] ?? '',
                                                                               size: media.width * twelve,
-                                                                              // maxLines: 1,
+                                                                              maxLines: 2,
+                                                                              overflow: TextOverflow.ellipsis,
                                                                             ),
                                                                           ),
                                                                         ],

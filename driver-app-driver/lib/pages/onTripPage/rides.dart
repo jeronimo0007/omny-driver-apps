@@ -1265,7 +1265,11 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                           userDetails.clear();
                                                         });
                                                       } else {
-                                                        setState(() {
+                                                        if (result == 'logout') {
+                                                          navigateLogout();
+                                                        }
+                                                        if (mounted) setState(() {
+                                                          _isLoading = false;
                                                           logout = true;
                                                         });
                                                       }

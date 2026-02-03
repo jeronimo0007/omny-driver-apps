@@ -14,6 +14,7 @@ import 'dart:async';
 import 'package:permission_handler/permission_handler.dart' as perm;
 import 'package:vector_math/vector_math.dart' as vector;
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../functions/functions.dart';
 import '../../functions/geohash.dart';
 import '../../functions/notifications.dart';
@@ -3488,9 +3489,17 @@ class _MapsState extends State<Maps>
                                                                                     }
                                                                                   } else if (driverReq['is_driver_arrived'] == 1 && driverReq['is_trip_start'] == 0) {
                                                                                     if (driverReq['show_otp_feature'] == true) {
-                                                                                      setState(() {
-                                                                                        getStartOtp = true;
-                                                                                      });
+                                                                                      if (kIsWeb) {
+                                                                                        // Web: pular etapa OTP para fins de teste (evita travar ao digitar)
+                                                                                        var val = await tripStartDispatcher();
+                                                                                        if (val == 'logout') {
+                                                                                          navigateLogout();
+                                                                                        }
+                                                                                      } else {
+                                                                                        setState(() {
+                                                                                          getStartOtp = true;
+                                                                                        });
+                                                                                      }
                                                                                     } else {
                                                                                       var val = await tripStartDispatcher();
                                                                                       if (val == 'logout') {
@@ -6210,8 +6219,10 @@ class _MapsState extends State<Maps>
                                                         } else if (result ==
                                                             'logout') {
                                                           navigateLogout();
+                                                          if (mounted) setState(() => _isLoading = false);
                                                         } else {
-                                                          setState(() {
+                                                          if (mounted) setState(() {
+                                                            _isLoading = false;
                                                             logout = true;
                                                           });
                                                         }

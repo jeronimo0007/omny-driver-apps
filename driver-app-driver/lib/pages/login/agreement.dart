@@ -22,7 +22,7 @@ class _AggreementPageState extends State<AggreementPage> {
   }
 
   bool ischeck = false;
-  
+
   @override
   Widget build(BuildContext context) {
     var media = MediaQuery.of(context).size;
@@ -96,7 +96,7 @@ class _AggreementPageState extends State<AggreementPage> {
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     openBrowser(
-                                        'https://driver.omny.app.br/privacy-policy');
+                                        'https://driver.omny.app.br/privacy');
                                   }),
                             TextSpan(
                                 text: languages[choosenLanguage]

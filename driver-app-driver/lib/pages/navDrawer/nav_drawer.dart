@@ -1019,29 +1019,22 @@ SizedBox(
                                                           'assets/images/faq.png',
                                                     ),
 
-                                                    //bank details
-                                                    userDetails['owner_id'] ==
-                                                                null &&
-                                                            userDetails[
-                                                                    'show_bank_info_feature_on_mobile_app'] ==
-                                                                "1"
-                                                        ? NavMenu(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              const BankDetails()));
-                                                            },
-                                                            text: languages[
-                                                                    choosenLanguage]
-                                                                [
-                                                                'text_updateBank'],
-                                                            icon: Icons
-                                                                .account_balance_outlined,
-                                                          )
-                                                        : Container(),
+                                                    //bank details (sempre visível para cadastrar/editar dados bancários)
+                                                    NavMenu(
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        const BankDetails()));
+                                                      },
+                                                      text: languages[
+                                                              choosenLanguage][
+                                                          'text_updateBank'],
+                                                      icon: Icons
+                                                          .account_balance_outlined,
+                                                    ),
 
                                                     //manage vehicle
                                                     userDetails['role'] ==

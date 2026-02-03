@@ -276,7 +276,10 @@ class _DriverEarningsState extends State<DriverEarnings> {
                             Container(
                               padding: EdgeInsets.all(media.width * 0.03),
                               decoration: BoxDecoration(
-                                  color: buttonColor,
+                                  color: Colors.transparent,
+                                  border: Border.all(
+                                      color: buttonColor,
+                                      width: 2),
                                   borderRadius: BorderRadius.circular(
                                       media.width * 0.02)),
                               width: media.width * 0.9,

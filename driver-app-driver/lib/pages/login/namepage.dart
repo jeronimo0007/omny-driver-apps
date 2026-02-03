@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translation/translation.dart';
@@ -34,7 +35,9 @@ class _NamePageState extends State<NamePage> {
   TextEditingController complementController = TextEditingController();
   TextEditingController neighborhoodController = TextEditingController();
   TextEditingController cityController = TextEditingController();
+  TextEditingController _referralController = TextEditingController();
 
+  final FocusNode _referralFocusNode = FocusNode();
   final FocusNode _firstnameFocusNode = FocusNode();
   final FocusNode _lastnameFocusNode = FocusNode();
   final FocusNode _emailFocusNode = FocusNode();
@@ -63,6 +66,7 @@ class _NamePageState extends State<NamePage> {
   bool _isStateFocused = false;
   bool _isGenderFocused = false;
   bool _isPassengerPreferenceFocused = false;
+  bool _isReferralFocused = false;
   bool _loadingCep = false;
   MaskTextInputFormatter? _phoneMaskFormatter;
   MaskTextInputFormatter? _cpfMaskFormatter;
@@ -140,6 +144,8 @@ class _NamePageState extends State<NamePage> {
     _passengerPreferenceFocusNode.addListener(() => setState(() =>
         _isPassengerPreferenceFocused =
             _passengerPreferenceFocusNode.hasFocus));
+    _referralFocusNode.addListener(() =>
+        setState(() => _isReferralFocused = _referralFocusNode.hasFocus));
 
     _firstnameFocusNode.addListener(() {
       setState(() {
@@ -301,6 +307,8 @@ class _NamePageState extends State<NamePage> {
 
   @override
   void dispose() {
+    _referralController.dispose();
+    _referralFocusNode.dispose();
     _firstnameFocusNode.dispose();
     _lastnameFocusNode.dispose();
     _emailFocusNode.dispose();
@@ -359,6 +367,48 @@ class _NamePageState extends State<NamePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(height: media.height * 0.02),
+                        // Código de indicação (Opcional) - primeira opção no cadastro
+                        MyText(
+                          text: (languages[choosenLanguage]?['text_referral_optional'] ??
+                              'Código de indicação (Opcional)'),
+                          size: media.width * fourteen,
+                          color: hintColor,
+                        ),
+                        SizedBox(height: media.height * 0.01),
+                        Container(
+                          height: 48,
+                          width: media.width * 0.9,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: _isReferralFocused
+                                  ? const Color(0xFF9A03E9)
+                                  : textColor.withOpacity(0.5),
+                              width: _isReferralFocused ? 2.0 : 1.0,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          alignment: Alignment.centerLeft,
+                          child: TextFormField(
+                            controller: _referralController,
+                            focusNode: _referralFocusNode,
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              hintText: languages[choosenLanguage]?['text_enter_referral'] ??
+                                  'Digite o código de indicação',
+                              hintStyle: GoogleFonts.poppins(
+                                fontSize: media.width * fourteen,
+                                color: hintColor,
+                              ),
+                            ),
+                            style: GoogleFonts.poppins(
+                              fontSize: media.width * fourteen,
+                              color: textColor,
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
                         SizedBox(height: media.height * 0.02),
                         MyText(
                           text: languages[choosenLanguage]['text_your_name'],
@@ -695,52 +745,37 @@ class _NamePageState extends State<NamePage> {
                                   SizedBox(height: media.width * 0.015),
                                   Focus(
                                     focusNode: _stateFocusNode,
-                                    child: Container(
-                                      height: media.width * 0.13,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: _isStateFocused
-                                              ? const Color(0xFF9A03E9)
-                                              : textColor,
-                                          width: _isStateFocused ? 2.0 : 1.0,
+                                    child: DropdownSearch<String>(
+                                      selectedItem: _selectedState.isEmpty ? null : _selectedState,
+                                      items: brazilianStates.map((s) => s['uf']!).toList(),
+                                      itemAsString: (String s) {
+                                        final e = brazilianStates.firstWhere(
+                                          (e) => e['uf'] == s,
+                                          orElse: () => {'uf': s, 'name': s},
+                                        );
+                                        return '${e['uf']} - ${e['name']}';
+                                      },
+                                      onChanged: (v) {
+                                        setState(() {
+                                          _selectedState = v ?? '';
+                                          userState = _selectedState;
+                                        });
+                                      },
+                                      popupProps: PopupProps.menu(
+                                        showSearchBox: true,
+                                        searchFieldProps: TextFieldProps(
+                                          decoration: InputDecoration(
+                                            hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
                                         ),
                                       ),
-                                      padding: const EdgeInsets.only(
-                                          left: 8, right: 8),
-                                      child: DropdownButtonHideUnderline(
-                                        child: DropdownButton<String>(
-                                          value: _selectedState.isEmpty
-                                              ? null
-                                              : _selectedState,
-                                          onTap: () =>
-                                              _stateFocusNode.requestFocus(),
-                                          hint: Text(
-                                            languages[choosenLanguage]
-                                                    ['text_state_hint'] ??
-                                                'UF',
-                                            style: GoogleFonts.poppins(
-                                                fontSize:
-                                                    media.width * fourteen,
-                                                color: hintColor),
-                                          ),
-                                          isExpanded: true,
-                                          items: brazilianStates.map((s) {
-                                            return DropdownMenuItem<String>(
-                                              value: s['uf'],
-                                              child: Text(s['uf']!,
-                                                  style: GoogleFonts.poppins(
-                                                      fontSize: media.width *
-                                                          fourteen,
-                                                      color: textColor)),
-                                            );
-                                          }).toList(),
-                                          onChanged: (v) {
-                                            setState(() {
-                                              _selectedState = v ?? '';
-                                              userState = _selectedState;
-                                            });
-                                          },
+                                      dropdownDecoratorProps: DropDownDecoratorProps(
+                                        dropdownSearchDecoration: InputDecoration(
+                                          hintText: languages[choosenLanguage]['text_state_hint'] ?? 'UF',
+                                          hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: media.width * 0.03),
                                         ),
                                       ),
                                     ),
@@ -762,53 +797,36 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(height: media.width * 0.015),
                         Focus(
                           focusNode: _genderFocusNode,
-                          child: Container(
+                          child: SizedBox(
                             width: media.width * 0.9,
-                            height: media.width * 0.13,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: _isGenderFocused
-                                    ? const Color(0xFF9A03E9)
-                                    : textColor,
-                                width: _isGenderFocused ? 2.0 : 1.0,
-                              ),
-                            ),
-                            padding: const EdgeInsets.only(left: 12, right: 12),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedGender.isEmpty
-                                    ? null
-                                    : _selectedGender,
-                                onTap: () => _genderFocusNode.requestFocus(),
-                                hint: Text(
-                                  languages[choosenLanguage]
-                                          ['text_gender_hint'] ??
-                                      'Selecione o gênero',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: media.width * fourteen,
-                                      color: hintColor),
+                            child: DropdownSearch<String>(
+                              selectedItem: _selectedGender.isEmpty ? null : _selectedGender,
+                              items: genderOptions.map((g) => g['value']!).toList(),
+                              itemAsString: (String v) =>
+                                  languages[choosenLanguage]['text_gender_$v'] ??
+                                  genderOptions.firstWhere((e) => e['value'] == v, orElse: () => {'value': v, 'label_pt': v})['label_pt']!,
+                              onChanged: (v) {
+                                setState(() {
+                                  _selectedGender = v ?? '';
+                                  userGender = _selectedGender;
+                                });
+                              },
+                              popupProps: PopupProps.menu(
+                                showSearchBox: true,
+                                searchFieldProps: TextFieldProps(
+                                  decoration: InputDecoration(
+                                    hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
                                 ),
-                                isExpanded: true,
-                                items: genderOptions.map((g) {
-                                  return DropdownMenuItem<String>(
-                                    value: g['value'],
-                                    child: Text(
-                                      languages[choosenLanguage]
-                                              ['text_gender_${g['value']}'] ??
-                                          g['label_pt']!,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: media.width * fourteen,
-                                          color: textColor),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (v) {
-                                  setState(() {
-                                    _selectedGender = v ?? '';
-                                    userGender = _selectedGender;
-                                  });
-                                },
+                              ),
+                              dropdownDecoratorProps: DropDownDecoratorProps(
+                                dropdownSearchDecoration: InputDecoration(
+                                  hintText: languages[choosenLanguage]['text_gender_hint'] ?? 'Selecione o gênero',
+                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: media.width * 0.03),
+                                ),
                               ),
                             ),
                           ),
@@ -826,56 +844,36 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(height: media.width * 0.015),
                         Focus(
                           focusNode: _passengerPreferenceFocusNode,
-                          child: Container(
+                          child: SizedBox(
                             width: media.width * 0.9,
-                            height: media.width * 0.13,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: _isPassengerPreferenceFocused
-                                    ? const Color(0xFF9A03E9)
-                                    : textColor,
-                                width:
-                                    _isPassengerPreferenceFocused ? 2.0 : 1.0,
-                              ),
-                            ),
-                            padding: const EdgeInsets.only(left: 12, right: 12),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedPassengerPreference.isEmpty
-                                    ? null
-                                    : _selectedPassengerPreference,
-                                onTap: () => _passengerPreferenceFocusNode
-                                    .requestFocus(),
-                                hint: Text(
-                                  languages[choosenLanguage]
-                                          ['text_passenger_preference_hint'] ??
-                                      'Preferência de passageiro',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: media.width * fourteen,
-                                      color: hintColor),
+                            child: DropdownSearch<String>(
+                              selectedItem: _selectedPassengerPreference.isEmpty ? null : _selectedPassengerPreference,
+                              items: passengerPreferenceOptions.map((p) => p['value']!).toList(),
+                              itemAsString: (String v) =>
+                                  languages[choosenLanguage]['text_passenger_$v'] ??
+                                  passengerPreferenceOptions.firstWhere((e) => e['value'] == v, orElse: () => {'value': v, 'label_pt': v})['label_pt']!,
+                              onChanged: (v) {
+                                setState(() {
+                                  _selectedPassengerPreference = v ?? 'both';
+                                  userPassengerPreference = _selectedPassengerPreference;
+                                });
+                              },
+                              popupProps: PopupProps.menu(
+                                showSearchBox: true,
+                                searchFieldProps: TextFieldProps(
+                                  decoration: InputDecoration(
+                                    hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
                                 ),
-                                isExpanded: true,
-                                items: passengerPreferenceOptions.map((p) {
-                                  return DropdownMenuItem<String>(
-                                    value: p['value'],
-                                    child: Text(
-                                      languages[choosenLanguage][
-                                              'text_passenger_${p['value']}'] ??
-                                          p['label_pt']!,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: media.width * fourteen,
-                                          color: textColor),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (v) {
-                                  setState(() {
-                                    _selectedPassengerPreference = v ?? 'both';
-                                    userPassengerPreference =
-                                        _selectedPassengerPreference;
-                                  });
-                                },
+                              ),
+                              dropdownDecoratorProps: DropDownDecoratorProps(
+                                dropdownSearchDecoration: InputDecoration(
+                                  hintText: languages[choosenLanguage]['text_passenger_preference_hint'] ?? 'Preferência de passageiro',
+                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: media.width * 0.03),
+                                ),
                               ),
                             ),
                           ),
@@ -1264,6 +1262,7 @@ class _NamePageState extends State<NamePage> {
                                   setState(() {
                                     _error = '';
                                   });
+                                  loginReferralCode = _referralController.text.trim();
                                   loginLoading = true;
                                   valueNotifierLogin.incrementNotifier();
                                   String pattern =
@@ -1358,6 +1357,7 @@ class _NamePageState extends State<NamePage> {
                               userPassengerPreference =
                                   _selectedPassengerPreference;
                               FocusManager.instance.primaryFocus?.unfocus();
+                              loginReferralCode = _referralController.text.trim();
                               loginLoading = true;
                               valueNotifierLogin.incrementNotifier();
                               var val = await otpCall();

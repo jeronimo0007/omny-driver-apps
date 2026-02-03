@@ -2700,7 +2700,33 @@ getUserDetails() async {
         if (userDetails['sos'] != null && userDetails['sos']['data'] != null) {
           sosData = userDetails['sos']['data'];
         }
-        if (userDetails['onTripRequest'] != null) {
+        // Priorizar metaRequest (corrida nova para aceitar) sobre onTripRequest,
+        // para o motorista sempre ver Aceitar/Recusar antes da tela "Cheguei"
+        if (userDetails['metaRequest'] != null) {
+          driverReject = false;
+          userReject = false;
+          driverReq = userDetails['metaRequest']['data'];
+          // Garantir que corrida recebida como metaRequest mostre tela Aceitar/Recusar
+          if (driverReq.isNotEmpty) {
+            driverReq['accepted_at'] = null;
+          }
+          final metaStops =
+              userDetails['metaRequest']?['data']?['requestStops']?['data'];
+          tripStops = metaStops ?? tripStops;
+
+          if (duration == 0 || duration == 0.0) {
+            if (isBackground == true &&
+                platform == TargetPlatform.android &&
+                !kIsWeb) {
+              platforms.invokeMethod('awakeapp');
+            }
+            duration = double.parse(
+              userDetails['trip_accept_reject_duration_for_driver'].toString(),
+            );
+            sound();
+          }
+          valueNotifierHome.incrementNotifier();
+        } else if (userDetails['onTripRequest'] != null) {
           driverReq = userDetails['onTripRequest']['data'];
 
           if (payby == 0 && driverReq['is_paid'] == 1) {
@@ -2730,25 +2756,6 @@ getUserDetails() async {
           tripStops = reqStops ?? tripStops;
 
           valueNotifierHome.incrementNotifier();
-        } else if (userDetails['metaRequest'] != null) {
-          driverReject = false;
-          userReject = false;
-          driverReq = userDetails['metaRequest']['data'];
-          final metaStops =
-              userDetails['metaRequest']?['data']?['requestStops']?['data'];
-          tripStops = metaStops ?? tripStops;
-
-          if (duration == 0 || duration == 0.0) {
-            if (isBackground == true &&
-                platform == TargetPlatform.android &&
-                !kIsWeb) {
-              platforms.invokeMethod('awakeapp');
-            }
-            duration = double.parse(
-              userDetails['trip_accept_reject_duration_for_driver'].toString(),
-            );
-            sound();
-          }
         } else {
           // printWrapped(userDetails['metaRequest']['data'].toString());
           duration = 0;
@@ -5436,21 +5443,23 @@ getBankInfo() async {
   return result;
 }
 
-addBankData(accName, accNo, bankCode, bankName) async {
+addBankData(accName, accNo, bankCode, bankName, {String? type}) async {
   dynamic result;
   try {
+    var body = <String, dynamic>{
+      'account_name': accName,
+      'account_no': accNo,
+      'bank_code': bankCode,
+      'bank_name': bankName,
+    };
+    if (type != null && type.isNotEmpty) body['type'] = type;
     var response = await http.post(
       Uri.parse('${url}api/v1/user/update-bank-info'),
       headers: {
         'Authorization': 'Bearer ${bearerToken[0].token}',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'account_name': accName,
-        'account_no': accNo,
-        'bank_code': bankCode,
-        'bank_name': bankName,
-      }),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode == 200) {

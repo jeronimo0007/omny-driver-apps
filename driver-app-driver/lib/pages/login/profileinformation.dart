@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:pinput/pinput.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translation/translation.dart';
@@ -643,51 +644,34 @@ class _ProfileInformationState extends State<ProfileInformation>
                                                   ['text_state'] ??
                                               'Estado'),
                                       SizedBox(height: media.height * 0.01),
-                                      Container(
-                                        height: media.width * 0.13,
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          border: Border.all(
-                                              color: (isDarkTheme == true)
-                                                  ? textColor.withOpacity(0.4)
-                                                  : underline),
-                                          color: (isDarkTheme == true)
-                                              ? Colors.black
-                                              : const Color(0xffF8F8F8),
+                                      DropdownSearch<String>(
+                                        selectedItem: _selectedState.isEmpty ? null : _selectedState,
+                                        items: brazilianStates.map((s) => s['uf']!).toList(),
+                                        itemAsString: (String s) {
+                                          final e = brazilianStates.firstWhere(
+                                            (e) => e['uf'] == s,
+                                            orElse: () => {'uf': s, 'name': s},
+                                          );
+                                          return '${e['uf']} - ${e['name']}';
+                                        },
+                                        onChanged: (v) => setState(() => _selectedState = v ?? ''),
+                                        popupProps: PopupProps.menu(
+                                          showSearchBox: true,
+                                          searchFieldProps: TextFieldProps(
+                                            decoration: InputDecoration(
+                                              hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                            ),
+                                          ),
                                         ),
-                                        padding: const EdgeInsets.only(
-                                            left: 8, right: 8),
-                                        child: DropdownButtonHideUnderline(
-                                          child: DropdownButton<String>(
-                                            value: _selectedState.isEmpty
-                                                ? null
-                                                : _selectedState,
-                                            hint: Text(
-                                                languages[choosenLanguage]
-                                                        ['text_state_hint'] ??
-                                                    'UF',
-                                                style: GoogleFonts.poppins(
-                                                    fontSize:
-                                                        media.width * fourteen,
-                                                    color: hintColor)),
-                                            isExpanded: true,
-                                            items: brazilianStates
-                                                .map((s) => DropdownMenuItem<
-                                                        String>(
-                                                    value: s['uf'],
-                                                    child: Text(s['uf']!,
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                                fontSize: media
-                                                                        .width *
-                                                                    fourteen,
-                                                                color:
-                                                                    textColor))))
-                                                .toList(),
-                                            onChanged: (v) => setState(() {
-                                              _selectedState = v ?? '';
-                                            }),
+                                        dropdownDecoratorProps: DropDownDecoratorProps(
+                                          dropdownSearchDecoration: InputDecoration(
+                                            hintText: languages[choosenLanguage]['text_state_hint'] ?? 'UF',
+                                            hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                            filled: true,
+                                            fillColor: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                                           ),
                                         ),
                                       ),
@@ -701,48 +685,30 @@ class _ProfileInformationState extends State<ProfileInformation>
                                     ['text_gender'] ??
                                 'Sexo'),
                             SizedBox(height: media.height * 0.01),
-                            Container(
-                              height: media.width * 0.13,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                    color: (isDarkTheme == true)
-                                        ? textColor.withOpacity(0.4)
-                                        : underline),
-                                color: (isDarkTheme == true)
-                                    ? Colors.black
-                                    : const Color(0xffF8F8F8),
+                            DropdownSearch<String>(
+                              selectedItem: _selectedGender.isEmpty ? null : _selectedGender,
+                              items: genderOptions.map((g) => g['value']!).toList(),
+                              itemAsString: (String v) =>
+                                  languages[choosenLanguage]['text_gender_$v'] ??
+                                  genderOptions.firstWhere((e) => e['value'] == v, orElse: () => {'value': v, 'label_pt': v})['label_pt']!,
+                              onChanged: (v) => setState(() => _selectedGender = v ?? ''),
+                              popupProps: PopupProps.menu(
+                                showSearchBox: true,
+                                searchFieldProps: TextFieldProps(
+                                  decoration: InputDecoration(
+                                    hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                ),
                               ),
-                              padding:
-                                  const EdgeInsets.only(left: 12, right: 12),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _selectedGender.isEmpty
-                                      ? null
-                                      : _selectedGender,
-                                  hint: Text(
-                                      languages[choosenLanguage]
-                                              ['text_gender_hint'] ??
-                                          'Selecione',
-                                      style: GoogleFonts.poppins(
-                                          fontSize: media.width * fourteen,
-                                          color: hintColor)),
-                                  isExpanded: true,
-                                  items: genderOptions
-                                      .map((g) => DropdownMenuItem<String>(
-                                          value: g['value'],
-                                          child: Text(
-                                              languages[choosenLanguage][
-                                                      'text_gender_${g['value']}'] ??
-                                                  g['label_pt']!,
-                                              style: GoogleFonts.poppins(
-                                                  fontSize:
-                                                      media.width * fourteen,
-                                                  color: textColor))))
-                                      .toList(),
-                                  onChanged: (v) => setState(() {
-                                    _selectedGender = v ?? '';
-                                  }),
+                              dropdownDecoratorProps: DropDownDecoratorProps(
+                                dropdownSearchDecoration: InputDecoration(
+                                  hintText: languages[choosenLanguage]['text_gender_hint'] ?? 'Selecione',
+                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                  filled: true,
+                                  fillColor: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 ),
                               ),
                             ),
@@ -751,48 +717,30 @@ class _ProfileInformationState extends State<ProfileInformation>
                                     ['text_passenger_preference'] ??
                                 'Preferência de atendimento'),
                             SizedBox(height: media.height * 0.01),
-                            Container(
-                              height: media.width * 0.13,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                    color: (isDarkTheme == true)
-                                        ? textColor.withOpacity(0.4)
-                                        : underline),
-                                color: (isDarkTheme == true)
-                                    ? Colors.black
-                                    : const Color(0xffF8F8F8),
+                            DropdownSearch<String>(
+                              selectedItem: _selectedPassengerPreference.isEmpty ? null : _selectedPassengerPreference,
+                              items: passengerPreferenceOptions.map((p) => p['value']!).toList(),
+                              itemAsString: (String v) =>
+                                  languages[choosenLanguage]['text_passenger_$v'] ??
+                                  passengerPreferenceOptions.firstWhere((e) => e['value'] == v, orElse: () => {'value': v, 'label_pt': v})['label_pt']!,
+                              onChanged: (v) => setState(() => _selectedPassengerPreference = v ?? 'both'),
+                              popupProps: PopupProps.menu(
+                                showSearchBox: true,
+                                searchFieldProps: TextFieldProps(
+                                  decoration: InputDecoration(
+                                    hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                ),
                               ),
-                              padding:
-                                  const EdgeInsets.only(left: 12, right: 12),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _selectedPassengerPreference.isEmpty
-                                      ? null
-                                      : _selectedPassengerPreference,
-                                  hint: Text(
-                                      languages[choosenLanguage][
-                                              'text_passenger_preference_hint'] ??
-                                          'Preferência',
-                                      style: GoogleFonts.poppins(
-                                          fontSize: media.width * fourteen,
-                                          color: hintColor)),
-                                  isExpanded: true,
-                                  items: passengerPreferenceOptions
-                                      .map((p) => DropdownMenuItem<String>(
-                                          value: p['value'],
-                                          child: Text(
-                                              languages[choosenLanguage][
-                                                      'text_passenger_${p['value']}'] ??
-                                                  p['label_pt']!,
-                                              style: GoogleFonts.poppins(
-                                                  fontSize:
-                                                      media.width * fourteen,
-                                                  color: textColor))))
-                                      .toList(),
-                                  onChanged: (v) => setState(() {
-                                    _selectedPassengerPreference = v ?? 'both';
-                                  }),
+                              dropdownDecoratorProps: DropDownDecoratorProps(
+                                dropdownSearchDecoration: InputDecoration(
+                                  hintText: languages[choosenLanguage]['text_passenger_preference_hint'] ?? 'Preferência',
+                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                  filled: true,
+                                  fillColor: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 ),
                               ),
                             ),
