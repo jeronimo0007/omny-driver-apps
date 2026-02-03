@@ -12,7 +12,6 @@ import '../NavigatorPages/faq.dart';
 import '../NavigatorPages/favourite.dart';
 import '../NavigatorPages/history.dart';
 import '../NavigatorPages/makecomplaint.dart';
-import '../NavigatorPages/notification.dart';
 import '../NavigatorPages/referral.dart';
 import '../NavigatorPages/selectlanguage.dart';
 import '../NavigatorPages/sos.dart';
@@ -27,8 +26,6 @@ class NavDrawer extends StatefulWidget {
 }
 
 class _NavDrawerState extends State<NavDrawer> {
-  bool _isAccountExpanded = false;
-
   darkthemefun() async {
     if (isDarkTheme) {
       isDarkTheme = false;
@@ -274,563 +271,251 @@ class _NavDrawerState extends State<NavDrawer> {
                             padding: EdgeInsets.symmetric(
                               horizontal: media.width * 0.05,
                             ),
-                            child: AnimatedOpacity(
-                              opacity: _isAccountExpanded ? 0.3 : 1.0,
-                              duration: const Duration(milliseconds: 200),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.only(
-                                      top: media.width * 0.05,
-                                      left: media.width * 0.05,
-                                      right: media.width * 0.05,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        MyText(
-                                          text: languages[choosenLanguage]
-                                              ['text_general'],
-                                          size: media.width * eighteen,
-                                          fontweight: FontWeight.w700,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  //referral page
-                                  NavMenu(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const ReferralPage()));
-                                    },
-                                    text: languages[choosenLanguage]
-                                        ['text_enable_referal'],
-                                    image: 'assets/images/referral.png',
-                                  ),
-
-                                  //My orders
-                                  NavMenu(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const History()));
-                                    },
-                                    text: languages[choosenLanguage]
-                                        ['text_my_orders'],
-                                    image: 'assets/images/history.png',
-                                  ),
-
-                                  ValueListenableBuilder(
-                                      valueListenable:
-                                          valueNotifierNotification.value,
-                                      builder: (context, value, child) {
-                                        return InkWell(
-                                          splashColor: Colors.transparent,
-                                          highlightColor: Colors.transparent,
-                                          onTap: () {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const NotificationPage()));
-                                            setState(() {
-                                              userDetails[
-                                                  'notifications_count'] = 0;
-                                            });
-                                          },
-                                          child: Container(
-                                            padding: EdgeInsets.only(
-                                                top: media.width * 0.025),
-                                            child: Column(
+                            child: Column(
+                              children: [
+                                // 1 - Carteira e Saldo
+                                NavMenu(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const WalletPage()));
+                                  },
+                                  text: languages[choosenLanguage]['text_enable_wallet'],
+                                  image: 'assets/images/walletIcon.png',
+                                ),
+                                // 2 - Dados bancários
+                                NavMenu(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const BankDetails()));
+                                  },
+                                  text: languages[choosenLanguage]['text_bankDetails'],
+                                  icon: Icons.account_balance_outlined,
+                                ),
+                                // 3 - Favoritos
+                                NavMenu(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const Favorite()));
+                                  },
+                                  text: languages[choosenLanguage]['text_favourites'],
+                                  icon: Icons.bookmark,
+                                ),
+                                // 4 - Minhas viagens
+                                NavMenu(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const History()));
+                                  },
+                                  text: languages[choosenLanguage]['text_my_orders'],
+                                  image: 'assets/images/history.png',
+                                ),
+                                // 5 - Indicações
+                                NavMenu(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const ReferralPage()));
+                                  },
+                                  text: languages[choosenLanguage]['text_enable_referal'],
+                                  image: 'assets/images/referral.png',
+                                ),
+                                // 6 - SOS
+                                NavMenu(
+                                  onTap: () async {
+                                    var nav = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const Sos()));
+                                    if (nav) setState(() {});
+                                  },
+                                  text: languages[choosenLanguage]['text_sos'],
+                                  image: 'assets/images/sos.png',
+                                ),
+                                // 7 - Conversar conosco
+                                ValueListenableBuilder(
+                                  valueListenable: valueNotifierChat.value,
+                                  builder: (context, value, child) {
+                                    return InkWell(
+                                      splashColor: Colors.transparent,
+                                      highlightColor: Colors.transparent,
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => const AdminChatPage()));
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.only(top: media.width * 0.025),
+                                        child: Column(
+                                          children: [
+                                            Row(
                                               children: [
-                                                Row(
-                                                  children: [
-                                                    Image.asset(
-                                                      'assets/images/notification.png',
-                                                      fit: BoxFit.contain,
-                                                      width:
-                                                          media.width * 0.075,
-                                                      color: textColor
-                                                          .withOpacity(0.8),
-                                                    ),
-                                                    SizedBox(
-                                                      width:
-                                                          media.width * 0.025,
-                                                    ),
-                                                    Expanded(
-                                                      child: Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
+                                                Icon(Icons.chat, size: media.width * 0.075, color: textColor.withOpacity(0.8)),
+                                                SizedBox(width: media.width * 0.025),
+                                                Expanded(
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Expanded(
+                                                        child: MyText(
+                                                          text: languages[choosenLanguage]['text_chat_us'],
+                                                          overflow: TextOverflow.ellipsis,
+                                                          size: media.width * sixteen,
+                                                          color: textColor.withOpacity(0.8),
+                                                        ),
+                                                      ),
+                                                      Row(
+                                                        mainAxisSize: MainAxisSize.min,
                                                         children: [
-                                                          Expanded(
-                                                            child: MyText(
-                                                              text: languages[
-                                                                          choosenLanguage]
-                                                                      [
-                                                                      'text_notification']
-                                                                  .toString(),
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              size:
-                                                                  media.width *
-                                                                      sixteen,
-                                                              color: textColor
-                                                                  .withOpacity(
-                                                                      0.8),
-                                                            ),
+                                                          (unSeenChatCount == '0') ? Container() : Container(
+                                                            height: 20,
+                                                            width: 20,
+                                                            alignment: Alignment.center,
+                                                            decoration: BoxDecoration(shape: BoxShape.circle, color: buttonColor),
+                                                            child: Text(unSeenChatCount.isNotEmpty ? unSeenChatCount : '0', style: getGoogleFontStyle(fontSize: media.width * fourteen, color: buttonText)),
                                                           ),
-                                                          Row(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            children: [
-                                                              (userDetails[
-                                                                          'notifications_count'] ==
-                                                                      0)
-                                                                  ? Container()
-                                                                  : Container(
-                                                                      height:
-                                                                          20,
-                                                                      width: 20,
-                                                                      alignment:
-                                                                          Alignment
-                                                                              .center,
-                                                                      decoration:
-                                                                          BoxDecoration(
-                                                                        shape: BoxShape
-                                                                            .circle,
-                                                                        color:
-                                                                            buttonColor,
-                                                                      ),
-                                                                      child:
-                                                                          Text(
-                                                                        (userDetails['notifications_count'] ??
-                                                                                0)
-                                                                            .toString(),
-                                                                        style: getGoogleFontStyle(
-                                                                            fontSize: media.width *
-                                                                                fourteen,
-                                                                            color:
-                                                                                buttonText),
-                                                                      ),
-                                                                    ),
-                                                              SizedBox(
-                                                                  width: media
-                                                                          .width *
-                                                                      0.01),
-                                                              Icon(
-                                                                Icons
-                                                                    .arrow_forward_ios_outlined,
-                                                                size: media
-                                                                        .width *
-                                                                    0.05,
-                                                                color: textColor
-                                                                    .withOpacity(
-                                                                        0.8),
-                                                              ),
-                                                            ],
-                                                          ),
+                                                          SizedBox(width: media.width * 0.01),
+                                                          Icon(Icons.arrow_forward_ios_outlined, size: media.width * 0.05, color: textColor.withOpacity(0.8)),
                                                         ],
                                                       ),
-                                                    )
-                                                  ],
-                                                ),
-                                                Container(
-                                                  alignment:
-                                                      Alignment.centerRight,
-                                                  padding: EdgeInsets.only(
-                                                    top: media.width * 0.01,
-                                                    left: media.width * 0.09,
-                                                  ),
-                                                  child: Container(
-                                                    height: 1,
-                                                    decoration: BoxDecoration(
-                                                      gradient: LinearGradient(
-                                                        begin: Alignment
-                                                            .centerLeft,
-                                                        end: Alignment
-                                                            .centerRight,
-                                                        colors: [
-                                                          (isDarkTheme
-                                                                  ? theme
-                                                                  : buttonColor)
-                                                              .withOpacity(0.7),
-                                                          (isDarkTheme
-                                                                  ? theme
-                                                                  : buttonColor)
-                                                              .withOpacity(0.0),
-                                                        ],
-                                                      ),
-                                                    ),
+                                                    ],
                                                   ),
                                                 )
                                               ],
                                             ),
-                                          ),
-                                        );
-                                      }),
-
-                                  //wallet page (carteira sempre visível no menu)
-                                  NavMenu(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const WalletPage()));
-                                    },
-                                    text: languages[choosenLanguage]
-                                        ['text_enable_wallet'],
-                                    image: 'assets/images/walletIcon.png',
-                                  ),
-
-                                  //dados bancários
-                                  NavMenu(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const BankDetails()));
-                                    },
-                                    text: languages[choosenLanguage]
-                                        ['text_bankDetails'],
-                                    icon: Icons.account_balance_outlined,
-                                  ),
-
-                                  //saved address
-                                  NavMenu(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const Favorite()));
-                                    },
-                                    text: languages[choosenLanguage]
-                                        ['text_favourites'],
-                                    icon: Icons.bookmark,
-                                  ),
-
-                                  //select language
-                                  NavMenu(
-                                    onTap: () async {
-                                      var nav = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const SelectLanguage()));
-                                      if (nav) {
-                                        setState(() {});
-                                      }
-                                    },
-                                    text: languages[choosenLanguage]
-                                        ['text_change_language'],
-                                    image: 'assets/images/changeLanguage.png',
-                                  ),
-
-                                  //sos
-                                  NavMenu(
-                                    onTap: () async {
-                                      var nav = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const Sos()));
-                                      if (nav) {
-                                        setState(() {});
-                                      }
-                                    },
-                                    text: languages[choosenLanguage]
-                                        ['text_sos'],
-                                    image: 'assets/images/sos.png',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          InkWell(
-                            splashColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            onTap: () {
-                              setState(() {
-                                _isAccountExpanded = !_isAccountExpanded;
-                              });
-                            },
-                            child: Container(
-                              padding: EdgeInsets.only(
-                                top: media.width * 0.05,
-                                left: media.width * 0.05,
-                                right: media.width * 0.05,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  MyText(
-                                    text: languages[choosenLanguage]
-                                            ['text_account']
-                                        .toString()
-                                        .toUpperCase(),
-                                    size: media.width * twelve,
-                                    fontweight: FontWeight.w700,
-                                  ),
-                                  AnimatedRotation(
-                                    turns: _isAccountExpanded ? 0.5 : 0,
-                                    duration: const Duration(milliseconds: 200),
-                                    child: Icon(
-                                      Icons.keyboard_arrow_down,
-                                      size: media.width * 0.06,
-                                      color: textColor.withOpacity(0.8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 200),
-                            curve: Curves.easeInOut,
-                            child: _isAccountExpanded
-                                ? Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: media.width * 0.05,
-                                    ),
+                                            Container(
+                                              alignment: Alignment.centerRight,
+                                              padding: EdgeInsets.only(top: media.width * 0.01, left: media.width * 0.09),
+                                              child: Container(
+                                                color: buttonColor.withOpacity(0.5),
+                                                height: 1,
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                // 8 - Perguntas Frequentes
+                                NavMenu(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const Faq()));
+                                  },
+                                  text: languages[choosenLanguage]['text_faq'],
+                                  image: 'assets/images/faq.png',
+                                ),
+                                // 9 - Fazer reclamação
+                                NavMenu(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => MakeComplaint(fromPage: 1)));
+                                  },
+                                  text: languages[choosenLanguage]['text_make_complaints'],
+                                  image: 'assets/images/makecomplaint.png',
+                                ),
+                                // 10 - Política de privacidade
+                                NavMenu(
+                                  onTap: () {
+                                    openBrowser('${url}privacy');
+                                  },
+                                  text: languages[choosenLanguage]['text_privacy'],
+                                  image: 'assets/images/privacy_policy.png',
+                                ),
+                                // 11 - Alterar idioma
+                                NavMenu(
+                                  onTap: () async {
+                                    var nav = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => const SelectLanguage()));
+                                    if (nav) setState(() {});
+                                  },
+                                  text: languages[choosenLanguage]['text_change_language'],
+                                  image: 'assets/images/changeLanguage.png',
+                                ),
+                                // 12 - Selecionar tema (ícone alinhado à esquerda)
+                                InkWell(
+                                  splashColor: Colors.transparent,
+                                  highlightColor: Colors.transparent,
+                                  onTap: () async {
+                                    darkthemefun();
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.only(top: media.width * 0.025),
                                     child: Column(
                                       children: [
-                                        //privacy policy
-                                        NavMenu(
-                                          onTap: () {
-                                            openBrowser('${url}privacy');
-                                          },
-                                          text: languages[choosenLanguage]
-                                              ['text_privacy'],
-                                          image:
-                                              'assets/images/privacy_policy.png',
-                                        ),
-
-                                        ValueListenableBuilder(
-                                            valueListenable:
-                                                valueNotifierChat.value,
-                                            builder: (context, value, child) {
-                                              return InkWell(
-                                                splashColor: Colors.transparent,
-                                                highlightColor:
-                                                    Colors.transparent,
-                                                onTap: () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const AdminChatPage()));
-                                                },
-                                                child: Container(
-                                                  padding: EdgeInsets.only(
-                                                      top: media.width * 0.025),
-                                                  child: Column(
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Icon(Icons.chat,
-                                                              size:
-                                                                  media.width *
-                                                                      0.075,
-                                                              color: textColor
-                                                                  .withOpacity(
-                                                                      0.8)),
-                                                          SizedBox(
-                                                            width: media.width *
-                                                                0.025,
-                                                          ),
-                                                          Expanded(
-                                                            child: Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                Expanded(
-                                                                  child: MyText(
-                                                                    text: languages[
-                                                                            choosenLanguage]
-                                                                        [
-                                                                        'text_chat_us'],
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                    size: media
-                                                                            .width *
-                                                                        sixteen,
-                                                                    color: textColor
-                                                                        .withOpacity(
-                                                                            0.8),
-                                                                  ),
-                                                                ),
-                                                                Row(
-                                                                  mainAxisSize:
-                                                                      MainAxisSize
-                                                                          .min,
-                                                                  children: [
-                                                                    (unSeenChatCount ==
-                                                                            '0')
-                                                                        ? Container()
-                                                                        : Container(
-                                                                            height:
-                                                                                20,
-                                                                            width:
-                                                                                20,
-                                                                            alignment:
-                                                                                Alignment.center,
-                                                                            decoration:
-                                                                                BoxDecoration(
-                                                                              shape: BoxShape.circle,
-                                                                              color: buttonColor,
-                                                                            ),
-                                                                            child:
-                                                                                Text(
-                                                                              unSeenChatCount.isNotEmpty ? unSeenChatCount : '0',
-                                                                              style: getGoogleFontStyle(fontSize: media.width * fourteen, color: buttonText),
-                                                                            ),
-                                                                          ),
-                                                                    SizedBox(
-                                                                        width: media.width *
-                                                                            0.01),
-                                                                    Icon(
-                                                                      Icons
-                                                                          .arrow_forward_ios_outlined,
-                                                                      size: media
-                                                                              .width *
-                                                                          0.05,
-                                                                      color: textColor
-                                                                          .withOpacity(
-                                                                              0.8),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          )
-                                                        ],
-                                                      ),
-                                                      Container(
-                                                        alignment: Alignment
-                                                            .centerRight,
-                                                        padding:
-                                                            EdgeInsets.only(
-                                                          top: media.width *
-                                                              0.01,
-                                                          left: media.width *
-                                                              0.09,
-                                                        ),
-                                                        child: Container(
-                                                          color: buttonColor
-                                                              .withOpacity(0.5),
-                                                          height: 1,
-                                                        ),
-                                                      )
-                                                    ],
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              isDarkTheme ? Icons.brightness_4_outlined : Icons.brightness_3_rounded,
+                                              size: media.width * 0.075,
+                                              color: textColor.withOpacity(0.8),
+                                            ),
+                                            SizedBox(width: media.width * 0.025),
+                                            Expanded(
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      languages[choosenLanguage]['text_select_theme'],
+                                                      style: getGoogleFontStyle(
+                                                          fontSize: media.width * sixteen,
+                                                          color: textColor.withOpacity(0.8)),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
                                                   ),
-                                                ),
-                                              );
-                                            }),
-
-                                        //FAQ
-                                        NavMenu(
-                                          onTap: () {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const Faq()));
-                                          },
-                                          text: languages[choosenLanguage]
-                                              ['text_faq'],
-                                          image: 'assets/images/faq.png',
+                                                  Switch(
+                                                    value: isDarkTheme,
+                                                    activeThumbColor: theme,
+                                                    onChanged: (toggle) async {
+                                                      darkthemefun();
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ),
-
-                                        //Make Complaint
-                                        NavMenu(
-                                          onTap: () {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        MakeComplaint(
-                                                            fromPage: 1)));
-                                          },
-                                          text: languages[choosenLanguage]
-                                              ['text_make_complaints'],
-                                          image:
-                                              'assets/images/makecomplaint.png',
-                                        ),
-
-                                        //delete account
-                                        NavMenu(
-                                          onTap: () {
-                                            setState(() {
-                                              deleteAccount = true;
-                                            });
-                                            valueNotifierHome
-                                                .incrementNotifier();
-                                            Navigator.pop(context);
-                                          },
-                                          text: languages[choosenLanguage]
-                                              ['text_delete_account'],
-                                          icon: Icons.delete_forever,
+                                        Container(
+                                          alignment: Alignment.centerRight,
+                                          padding: EdgeInsets.only(top: media.width * 0.01, left: media.width * 0.09),
+                                          child: Container(
+                                            height: 1,
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.centerLeft,
+                                                end: Alignment.centerRight,
+                                                colors: [
+                                                  (isDarkTheme ? theme : buttonColor).withOpacity(0.7),
+                                                  (isDarkTheme ? theme : buttonColor).withOpacity(0.0),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  )
-                                : Container(height: 0),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: media.width * 0.05,
-                      vertical: media.width * 0.025,
-                    ),
-                    child: InkWell(
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      onTap: () async {
-                        darkthemefun();
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(
-                            isDarkTheme
-                                ? Icons.brightness_4_outlined
-                                : Icons.brightness_3_rounded,
-                            size: media.width * 0.075,
-                            color: textColor.withOpacity(0.8),
-                          ),
-                          SizedBox(
-                            width: media.width * 0.025,
-                          ),
-                          Expanded(
-                            child: Text(
-                              languages[choosenLanguage]['text_select_theme'],
-                              style: getGoogleFontStyle(
-                                  fontSize: media.width * sixteen,
-                                  color: textColor.withOpacity(0.8)),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Switch(
-                              value: isDarkTheme,
-                              activeThumbColor: theme,
-                              onChanged: (toggle) async {
-                                darkthemefun();
-                              }),
                         ],
                       ),
                     ),

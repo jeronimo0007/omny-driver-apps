@@ -233,9 +233,7 @@ class _ReferralPageState extends State<ReferralPage> {
                                   InkWell(
                                     onTap: () async {
                                       await Share.share(
-                                        (languages[choosenLanguage]['text_invitation_1'] ?? '').toString().replaceAll('55', _package?.appName ?? '') +
-                                            ' ' + (myReferralCode['refferal_code']?.toString() ?? '') +
-                                            ' ' + (languages[choosenLanguage]['text_invitation_2'] ?? '') +
+                                        '${(languages[choosenLanguage]['text_invitation_1'] ?? '').toString().replaceAll('55', _package?.appName ?? '')} ${myReferralCode['refferal_code']?.toString() ?? ''} ' + (languages[choosenLanguage]['text_invitation_2'] ?? '') +
                                             ' \n \n ' + (androidUrl ?? '') + '\n \n ' + (iosUrl ?? ''),
                                       );
                                     },

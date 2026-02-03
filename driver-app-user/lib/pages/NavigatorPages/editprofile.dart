@@ -1,7 +1,6 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:pinput/pinput.dart';
@@ -673,12 +672,23 @@ class _EditProfileState extends State<EditProfile> {
                                     : const Color(0xffF8F8F8)),
                             padding: const EdgeInsets.only(left: 5, right: 5),
                             child: DropdownSearch<String>(
-                              selectedItem: _genderOptions.contains(selectedGender) ? selectedGender : null,
+                              selectedItem:
+                                  _genderOptions.contains(selectedGender)
+                                      ? selectedGender
+                                      : null,
                               items: _genderOptions,
                               itemAsString: (String v) {
-                                if (v == 'masculino') return languages[choosenLanguage]['text_masculine'] ?? 'Masculino';
-                                if (v == 'feminino') return languages[choosenLanguage]['text_feminine'] ?? 'Feminino';
-                                return languages[choosenLanguage]['text_prefer_not_to_say'] ?? 'Prefiro não dizer';
+                                if (v == 'masculino')
+                                  return languages[choosenLanguage]
+                                          ['text_masculine'] ??
+                                      'Masculino';
+                                if (v == 'feminino')
+                                  return languages[choosenLanguage]
+                                          ['text_feminine'] ??
+                                      'Feminino';
+                                return languages[choosenLanguage]
+                                        ['text_prefer_not_to_say'] ??
+                                    'Prefiro não dizer';
                               },
                               onChanged: (String? value) {
                                 setState(() {
@@ -690,17 +700,28 @@ class _EditProfileState extends State<EditProfile> {
                                 showSearchBox: true,
                                 searchFieldProps: TextFieldProps(
                                   decoration: InputDecoration(
-                                    hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    hintText: languages[choosenLanguage]
+                                            ['text_search'] ??
+                                        'Buscar',
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8)),
                                   ),
                                 ),
                               ),
                               dropdownDecoratorProps: DropDownDecoratorProps(
                                 dropdownSearchDecoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_select_gender'] ?? 'Selecione o gênero',
+                                  hintText: languages[choosenLanguage]
+                                          ['text_select_gender'] ??
+                                      'Selecione o gênero',
                                   hintStyle: choosenLanguage == 'ar'
-                                      ? GoogleFonts.cairo(fontSize: media.width * fourteen, fontWeight: FontWeight.normal, color: textColor.withOpacity(0.3))
-                                      : GoogleFonts.poppins(fontSize: media.width * fourteen, fontWeight: FontWeight.normal, color: textColor.withOpacity(0.3)),
+                                      ? GoogleFonts.cairo(
+                                          fontSize: media.width * fourteen,
+                                          fontWeight: FontWeight.normal,
+                                          color: textColor.withOpacity(0.3))
+                                      : GoogleFonts.poppins(
+                                          fontSize: media.width * fourteen,
+                                          fontWeight: FontWeight.normal,
+                                          color: textColor.withOpacity(0.3)),
                                   border: InputBorder.none,
                                 ),
                               ),
@@ -868,12 +889,23 @@ class _EditProfileState extends State<EditProfile> {
                                     : const Color(0xffF8F8F8)),
                             padding: const EdgeInsets.only(left: 5, right: 5),
                             child: DropdownSearch<String>(
-                              selectedItem: _passengerPreferenceOptions.contains(selectedPassengerPreference) ? selectedPassengerPreference : null,
+                              selectedItem: _passengerPreferenceOptions
+                                      .contains(selectedPassengerPreference)
+                                  ? selectedPassengerPreference
+                                  : null,
                               items: _passengerPreferenceOptions,
                               itemAsString: (String v) {
-                                if (v == 'masculino') return languages[choosenLanguage]['text_masculine'] ?? 'Masculino';
-                                if (v == 'feminino') return languages[choosenLanguage]['text_feminine'] ?? 'Feminino';
-                                return languages[choosenLanguage]['text_no_preference'] ?? 'Não tenho preferência';
+                                if (v == 'masculino')
+                                  return languages[choosenLanguage]
+                                          ['text_masculine'] ??
+                                      'Masculino';
+                                if (v == 'feminino')
+                                  return languages[choosenLanguage]
+                                          ['text_feminine'] ??
+                                      'Feminino';
+                                return languages[choosenLanguage]
+                                        ['text_no_preference'] ??
+                                    'Não tenho preferência';
                               },
                               onChanged: (String? value) {
                                 setState(() {
@@ -886,17 +918,28 @@ class _EditProfileState extends State<EditProfile> {
                                 showSearchBox: true,
                                 searchFieldProps: TextFieldProps(
                                   decoration: InputDecoration(
-                                    hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    hintText: languages[choosenLanguage]
+                                            ['text_search'] ??
+                                        'Buscar',
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8)),
                                   ),
                                 ),
                               ),
                               dropdownDecoratorProps: DropDownDecoratorProps(
                                 dropdownSearchDecoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_passenger_preference'] ?? 'Preferência de Motorista',
+                                  hintText: languages[choosenLanguage]
+                                          ['text_passenger_preference'] ??
+                                      'Preferência de Motorista',
                                   hintStyle: choosenLanguage == 'ar'
-                                      ? GoogleFonts.cairo(fontSize: media.width * fourteen, fontWeight: FontWeight.normal, color: textColor.withOpacity(0.3))
-                                      : GoogleFonts.poppins(fontSize: media.width * fourteen, fontWeight: FontWeight.normal, color: textColor.withOpacity(0.3)),
+                                      ? GoogleFonts.cairo(
+                                          fontSize: media.width * fourteen,
+                                          fontWeight: FontWeight.normal,
+                                          color: textColor.withOpacity(0.3))
+                                      : GoogleFonts.poppins(
+                                          fontSize: media.width * fourteen,
+                                          fontWeight: FontWeight.normal,
+                                          color: textColor.withOpacity(0.3)),
                                   border: InputBorder.none,
                                 ),
                               ),
@@ -904,6 +947,33 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                           SizedBox(
                             height: media.height * 0.02,
+                          ),
+                          // Excluir Conta (última linha)
+                          Container(
+                            margin: EdgeInsets.only(top: media.width * 0.05),
+                            padding: EdgeInsets.all(media.width * 0.02),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withOpacity(0.1),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                deleteAccount = true;
+                                valueNotifierHome.incrementNotifier();
+                                Navigator.pop(context, true);
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_forever, color: Colors.red, size: media.width * 0.06),
+                                  SizedBox(width: media.width * 0.03),
+                                  MyText(
+                                    text: languages[choosenLanguage]['text_delete_account'],
+                                    size: media.width * sixteen,
+                                    color: Colors.red,
+                                    fontweight: FontWeight.w600,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -965,7 +1035,8 @@ class _EditProfileState extends State<EditProfile> {
                               // Normaliza orientação da foto só no envio (mantém como o usuário viu)
                               if (imageFile != null) {
                                 try {
-                                  final f = await FlutterExifRotation.rotateAndSaveImage(path: imageFile);
+                                  final f = await FlutterExifRotation
+                                      .rotateAndSaveImage(path: imageFile);
                                   imageFile = f.path;
                                 } catch (_) {}
                               }
@@ -1319,7 +1390,9 @@ class _EditProfileState extends State<EditProfile> {
                                         .signInWithCredential(credential);
                                     if (imageFile != null) {
                                       try {
-                                        final f = await FlutterExifRotation.rotateAndSaveImage(path: imageFile);
+                                        final f = await FlutterExifRotation
+                                            .rotateAndSaveImage(
+                                                path: imageFile);
                                         imageFile = f.path;
                                       } catch (_) {}
                                     }

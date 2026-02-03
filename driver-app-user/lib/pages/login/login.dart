@@ -583,8 +583,9 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                     InkWell(
                                                       onTap: () async {
                                                         // País fixo Brasil: sem opção de trocar (useApiCountries = false)
-                                                        if (!useApiCountries)
+                                                        if (!useApiCountries) {
                                                           return;
+                                                        }
                                                         if (countries
                                                             .isNotEmpty) {
                                                           //dialod box for select country for dial code

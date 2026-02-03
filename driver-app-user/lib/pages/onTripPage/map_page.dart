@@ -47,7 +47,6 @@ String favNameText = '';
 bool requestCancelledByDriver = false;
 bool cancelRequestByUser = false;
 bool logout = false;
-bool deleteAccount = false;
 bool _deleteAccountModalOpened = false;
 int choosenTransportType =
     (userDetails['enable_modules_for_applications'] == 'both' ||
@@ -1295,21 +1294,19 @@ class _MapsState extends State<Maps>
                                                                 .padding
                                                                 .top +
                                                             25,
-                                                        child: SizedBox(
-                                                          width:
-                                                              media.width * 0.9,
+                                                        left: 0,
+                                                        right: 0,
+                                                        child: Padding(
+                                                          padding: EdgeInsets.symmetric(horizontal: media.width * 0.05),
                                                           child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .start,
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                             children: [
                                                               Container(
                                                                 height: 35,
                                                                 width: 35,
                                                                 decoration: BoxDecoration(
                                                                     boxShadow: [
-                                                                      (_bottom ==
-                                                                              0)
+                                                                      (_bottom == 0)
                                                                           ? BoxShadow(
                                                                               blurRadius: (_bottom == 0) ? 2 : 0,
                                                                               color: (_bottom == 0) ? Colors.black.withOpacity(0.2) : Colors.transparent,
@@ -1317,43 +1314,79 @@ class _MapsState extends State<Maps>
                                                                           : const BoxShadow(),
                                                                     ],
                                                                     color: page,
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            4)),
-                                                                alignment:
-                                                                    Alignment
-                                                                        .center,
+                                                                    borderRadius: BorderRadius.circular(4)),
+                                                                alignment: Alignment.center,
                                                                 child: InkWell(
                                                                     onTap: () {
-                                                                      _scaffoldKey
-                                                                          .currentState
-                                                                          ?.openDrawer();
+                                                                      _scaffoldKey.currentState?.openDrawer();
                                                                     },
-                                                                    child: Icon(
-                                                                        Icons
-                                                                            .menu,
-                                                                        color:
-                                                                            textColor)),
-                                                              ),
-                                                              SizedBox(
-                                                                width: media
-                                                                        .width *
-                                                                    0.02,
+                                                                    child: Icon(Icons.menu, color: textColor)),
                                                               ),
                                                               (banners.isNotEmpty)
                                                                   ? SizedBox(
-                                                                      width: media
-                                                                              .width *
-                                                                          0.77,
-                                                                      height: media
-                                                                              .width *
-                                                                          0.15,
-                                                                      child:
-                                                                          const BannerImage())
-                                                                  : Container(),
+                                                                      width: media.width * 0.5,
+                                                                      height: media.width * 0.15,
+                                                                      child: const BannerImage())
+                                                                  : const SizedBox.shrink(),
+                                                              ValueListenableBuilder(
+                                                                valueListenable: valueNotifierNotification.value,
+                                                                builder: (context, value, child) {
+                                                                  return Container(
+                                                                    height: 35,
+                                                                    width: 35,
+                                                                    decoration: BoxDecoration(
+                                                                      boxShadow: [
+                                                                        BoxShadow(
+                                                                          blurRadius: 2,
+                                                                          color: Colors.black.withOpacity(0.2),
+                                                                          spreadRadius: 2,
+                                                                        ),
+                                                                      ],
+                                                                      color: page,
+                                                                      borderRadius: BorderRadius.circular(4),
+                                                                    ),
+                                                                    alignment: Alignment.center,
+                                                                    child: Stack(
+                                                                      clipBehavior: Clip.none,
+                                                                      children: [
+                                                                        InkWell(
+                                                                          onTap: () {
+                                                                            userDetails['notifications_count'] = 0;
+                                                                            Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(
+                                                                                builder: (context) => const NotificationPage(),
+                                                                              ),
+                                                                            );
+                                                                          },
+                                                                          child: Icon(Icons.notifications_outlined, color: textColor, size: 22),
+                                                                        ),
+                                                                        if ((userDetails['notifications_count'] ?? 0) > 0)
+                                                                          Positioned(
+                                                                            right: -2,
+                                                                            top: -2,
+                                                                            child: Container(
+                                                                              padding: const EdgeInsets.all(4),
+                                                                              decoration: const BoxDecoration(
+                                                                                shape: BoxShape.circle,
+                                                                                color: Colors.red,
+                                                                              ),
+                                                                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                                                              child: Text(
+                                                                                (userDetails['notifications_count'] ?? 0).toString(),
+                                                                                style: const TextStyle(fontSize: 10, color: Colors.white),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                      ],
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
                                                             ],
                                                           ),
-                                                        ))
+                                                        ),
+                                                    )
                                                     : Container(),
                                                 (_bottom == 0)
                                                     ? Positioned(

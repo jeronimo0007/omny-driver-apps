@@ -87,8 +87,9 @@ class _BankDetailsState extends State<BankDetails> {
         if (bankData.isNotEmpty && bankData['type'] != null) _selectedPixType = bankData['type'].toString();
         if (bankData.isNotEmpty && bankData['bank_name'] != null) {
           final bn = bankData['bank_name'].toString();
-          if (_bankNames.contains(bn)) _selectedBank = bn;
-          else { _selectedBank = _bankOutrosKey; bankOtherController.text = bn; }
+          if (_bankNames.contains(bn)) {
+            _selectedBank = bn;
+          } else { _selectedBank = _bankOutrosKey; bankOtherController.text = bn; }
         }
       });
     }

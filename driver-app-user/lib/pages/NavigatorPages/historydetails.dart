@@ -1008,7 +1008,7 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                           ['data'][
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  '${formatDecimalBr(myHistory[selectedHistory]['requestBill']['data']['service_tax'])}',
+                                                  formatDecimalBr(myHistory[selectedHistory]['requestBill']['data']['service_tax']),
                                               size: media.width * twelve,
                                             ),
                                           ],
@@ -1039,7 +1039,7 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                           ['data'][
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  '${formatDecimalBr(myHistory[selectedHistory]['requestBill']['data']['total_amount'])}',
+                                                  formatDecimalBr(myHistory[selectedHistory]['requestBill']['data']['total_amount']),
                                               size: media.width * twelve,
                                             ),
                                           ],

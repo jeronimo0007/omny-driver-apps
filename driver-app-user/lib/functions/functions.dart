@@ -1104,7 +1104,8 @@ getUserDetails() async {
   dynamic result;
   debugPrint('═══════════════════════════════════════════════════════════');
   debugPrint('👤 getUserDetails: Buscando detalhes do usuário...');
-  debugPrint('   [GETUSER] userRequestDriverJustRejected ao ENTRAR = $userRequestDriverJustRejected');
+  debugPrint(
+      '   [GETUSER] userRequestDriverJustRejected ao ENTRAR = $userRequestDriverJustRejected');
   debugPrint('───────────────────────────────────────────────────────────');
 
   try {
@@ -1166,14 +1167,18 @@ getUserDetails() async {
           }
 
           // Log do que o SERVIDOR retornou (debug: onTripRequest vs metaRequest)
-          debugPrint('📋 [GETUSER] Servidor: onTripRequest=${userDetails['onTripRequest'] != null}, metaRequest=${userDetails['metaRequest'] != null}');
+          debugPrint(
+              '📋 [GETUSER] Servidor: onTripRequest=${userDetails['onTripRequest'] != null}, metaRequest=${userDetails['metaRequest'] != null}');
           if (userDetails['onTripRequest'] != null) {
-            final reqData = userDetails['onTripRequest']['data'] as Map<String, dynamic>?;
-            debugPrint('📋 [GETUSER] onTripRequest.data: accepted_at=${reqData?['accepted_at']}, driverDetail!=null=${reqData?['driverDetail'] != null}');
+            final reqData =
+                userDetails['onTripRequest']['data'] as Map<String, dynamic>?;
+            debugPrint(
+                '📋 [GETUSER] onTripRequest.data: accepted_at=${reqData?['accepted_at']}, driverDetail!=null=${reqData?['driverDetail'] != null}');
             if (reqData?['driverDetail'] != null) {
               final dd = reqData!['driverDetail'];
               final data = (dd is Map) ? (dd['data'] ?? dd) : null;
-              debugPrint('📋 [GETUSER] driverDetail.data.id=${(data is Map) ? data['id'] : 'N/A'}');
+              debugPrint(
+                  '📋 [GETUSER] driverDetail.data.id=${(data is Map) ? data['id'] : 'N/A'}');
             }
           }
           if (userDetails['metaRequest'] != null) {
@@ -1185,23 +1190,31 @@ getUserDetails() async {
             addressList.clear();
             userRequestData = userDetails['onTripRequest']['data'];
             final driverJustRejected = userRequestDriverJustRejected;
-            debugPrint('📋 [GETUSER] userRequestDriverJustRejected(flag)=$driverJustRejected');
+            debugPrint(
+                '📋 [GETUSER] userRequestDriverJustRejected(flag)=$driverJustRejected');
             if (driverJustRejected) {
               userRequestDriverJustRejected = false;
               userRequestData['accepted_at'] = null;
               userRequestData['driverDetail'] = null;
-              debugPrint('🟢 [GETUSER] Decisão: MOTORISTA RECUSOU → tela PROCURANDO');
+              debugPrint(
+                  '🟢 [GETUSER] Decisão: MOTORISTA RECUSOU → tela PROCURANDO');
             } else {
               final dd = userRequestData['driverDetail'];
-              final driverData = (dd != null && dd is Map) ? (dd['data'] ?? dd) : null;
-              final hasValidDriver = driverData is Map && driverData.isNotEmpty && driverData['id'] != null;
-              debugPrint('📋 [GETUSER] hasValidDriver=$hasValidDriver, driverData.id=${(driverData is Map) ? driverData['id'] : 'N/A'}');
+              final driverData =
+                  (dd != null && dd is Map) ? (dd['data'] ?? dd) : null;
+              final hasValidDriver = driverData is Map &&
+                  driverData.isNotEmpty &&
+                  driverData['id'] != null;
+              debugPrint(
+                  '📋 [GETUSER] hasValidDriver=$hasValidDriver, driverData.id=${(driverData is Map) ? driverData['id'] : 'N/A'}');
               if (!hasValidDriver) {
                 userRequestData['accepted_at'] = null;
                 userRequestData['driverDetail'] = null;
-                debugPrint('🟢 [GETUSER] Decisão: sem motorista válido → tela PROCURANDO');
+                debugPrint(
+                    '🟢 [GETUSER] Decisão: sem motorista válido → tela PROCURANDO');
               } else {
-                debugPrint('🟢 [GETUSER] Decisão: motorista válido → tela CÓDIGO/ACEITOU');
+                debugPrint(
+                    '🟢 [GETUSER] Decisão: motorista válido → tela CÓDIGO/ACEITOU');
               }
             }
             debugPrint('   Request ID: ${userRequestData['id']}');
@@ -1304,7 +1317,8 @@ getUserDetails() async {
             valueNotifierHome.incrementNotifier();
             valueNotifierBook.incrementNotifier();
           } else if (userDetails['metaRequest'] != null) {
-            debugPrint('🟢 [GETUSER] Entrando em metaRequest → tela PROCURANDO');
+            debugPrint(
+                '🟢 [GETUSER] Entrando em metaRequest → tela PROCURANDO');
             addressList.clear();
             userRequestData = userDetails['metaRequest']['data'];
             userRequestData['accepted_at'] = null;
@@ -1386,7 +1400,8 @@ getUserDetails() async {
             valueNotifierHome.incrementNotifier();
             valueNotifierBook.incrementNotifier();
           } else {
-            debugPrint('🟢 [GETUSER] Sem onTripRequest e sem metaRequest → userRequestData limpo');
+            debugPrint(
+                '🟢 [GETUSER] Sem onTripRequest e sem metaRequest → userRequestData limpo');
             chatList.clear();
             userRequestData = {};
             requestStreamStart?.cancel();
@@ -1519,6 +1534,7 @@ class ValueNotifyingLogin {
   }
 }
 
+bool deleteAccount = false;
 ValueNotifyingHome valueNotifierHome = ValueNotifyingHome();
 ValueNotifyingChat valueNotifierChat = ValueNotifyingChat();
 ValueNotifyingKey valueNotifierKey = ValueNotifyingKey();
@@ -2973,7 +2989,8 @@ cancelRequest() async {
         requestStreamStart = null;
         requestStreamEnd = null;
       }
-      if (rideStreamUpdate?.isPaused == false || rideStreamStart?.isPaused == false) {
+      if (rideStreamUpdate?.isPaused == false ||
+          rideStreamStart?.isPaused == false) {
         rideStreamUpdate?.cancel();
         rideStreamStart?.cancel();
         rideStreamUpdate = null;
@@ -4487,7 +4504,7 @@ getGeneralComplaint(type) async {
 makeGeneralComplaint(complaintDesc, [String? complaintTitleId]) async {
   dynamic result;
   const endpoint = 'api/v1/common/make-complaint';
-  final fullUrl = '${url}$endpoint';
+  final fullUrl = '$url$endpoint';
   try {
     // Se não tiver complaintTitleId, usar o da lista ou null
     String? titleId = complaintTitleId ??
@@ -4615,8 +4632,10 @@ streamRequest() {
       .handleError((onError) {
     requestStreamStart?.cancel();
   }).listen((event) async {
-    debugPrint('🔴 [MOTORISTA RECUSOU] request-meta onChildRemoved disparado (request_id=${userRequestData['id']})');
-    debugPrint('🔴 [MOTORISTA RECUSOU] Setando userRequestDriverJustRejected = true antes de getUserDetails()');
+    debugPrint(
+        '🔴 [MOTORISTA RECUSOU] request-meta onChildRemoved disparado (request_id=${userRequestData['id']})');
+    debugPrint(
+        '🔴 [MOTORISTA RECUSOU] Setando userRequestDriverJustRejected = true antes de getUserDetails()');
     userRequestDriverJustRejected = true;
     await getUserDetails();
     requestStreamEnd?.cancel();

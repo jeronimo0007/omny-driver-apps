@@ -32,7 +32,7 @@ class _NamePageState extends State<NamePage> {
   TextEditingController controller = TextEditingController();
   TextEditingController cpfController = TextEditingController();
   TextEditingController birthDateController = TextEditingController();
-  TextEditingController _referralController = TextEditingController();
+  final TextEditingController _referralController = TextEditingController();
   FocusNode referralFocus = FocusNode();
   FocusNode firstnameFocus = FocusNode();
   FocusNode lastnameFocus = FocusNode();
@@ -170,7 +170,8 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(height: media.height * 0.02),
                         // Código de indicação (Opcional) - primeira opção no cadastro
                         MyText(
-                          text: languages[choosenLanguage]['text_referral_optional'] ??
+                          text: languages[choosenLanguage]
+                                  ['text_referral_optional'] ??
                               'Código de indicação (Opcional)',
                           size: media.width * fourteen,
                           color: hintColor,
@@ -195,7 +196,8 @@ class _NamePageState extends State<NamePage> {
                             focusNode: referralFocus,
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText: languages[choosenLanguage]['text_enter_referral'] ??
+                              hintText: languages[choosenLanguage]
+                                      ['text_enter_referral'] ??
                                   'Digite o código de indicação',
                               hintStyle: TextStyle(
                                 fontSize: media.width * fourteen,
@@ -423,32 +425,53 @@ class _NamePageState extends State<NamePage> {
                           padding: const EdgeInsets.only(left: 5, right: 5),
                           child: DropdownSearch<String>(
                             selectedItem: selectedGender,
-                            items: const ['masculino', 'feminino', 'prefiro_nao_dizer'],
+                            items: const [
+                              'masculino',
+                              'feminino',
+                              'prefiro_nao_dizer'
+                            ],
                             itemAsString: (String v) {
-                              if (v == 'masculino') return languages[choosenLanguage]['text_masculine'] ?? 'Masculino';
-                              if (v == 'feminino') return languages[choosenLanguage]['text_feminine'] ?? 'Feminino';
-                              return languages[choosenLanguage]['text_prefer_not_to_say'] ?? 'Prefiro não dizer';
+                              if (v == 'masculino')
+                                return languages[choosenLanguage]
+                                        ['text_masculine'] ??
+                                    'Masculino';
+                              if (v == 'feminino')
+                                return languages[choosenLanguage]
+                                        ['text_feminine'] ??
+                                    'Feminino';
+                              return languages[choosenLanguage]
+                                      ['text_prefer_not_to_say'] ??
+                                  'Prefiro não dizer';
                             },
                             onChanged: (String? value) {
                               setState(() {
                                 selectedGender = value;
                                 gender = value ?? '';
-                                if (genderError && value != null && value.isNotEmpty) genderError = false;
+                                if (genderError &&
+                                    value != null &&
+                                    value.isNotEmpty) genderError = false;
                               });
                             },
                             popupProps: PopupProps.menu(
                               showSearchBox: true,
                               searchFieldProps: TextFieldProps(
                                 decoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  hintText: languages[choosenLanguage]
+                                          ['text_search'] ??
+                                      'Buscar',
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                 ),
                               ),
                             ),
                             dropdownDecoratorProps: DropDownDecoratorProps(
                               dropdownSearchDecoration: InputDecoration(
-                                hintText: languages[choosenLanguage]['text_select_gender'] ?? 'Selecione o gênero',
-                                hintStyle: getGoogleFontStyle(fontSize: media.width * fourteen, color: hintColor),
+                                hintText: languages[choosenLanguage]
+                                        ['text_select_gender'] ??
+                                    'Selecione o gênero',
+                                hintStyle: getGoogleFontStyle(
+                                    fontSize: media.width * fourteen,
+                                    color: hintColor),
                                 border: InputBorder.none,
                               ),
                             ),
@@ -614,32 +637,54 @@ class _NamePageState extends State<NamePage> {
                           padding: const EdgeInsets.only(left: 5, right: 5),
                           child: DropdownSearch<String>(
                             selectedItem: selectedPassengerPreference,
-                            items: const ['masculino', 'feminino', 'nao_tenho_preferencia'],
+                            items: const [
+                              'masculino',
+                              'feminino',
+                              'nao_tenho_preferencia'
+                            ],
                             itemAsString: (String v) {
-                              if (v == 'masculino') return languages[choosenLanguage]['text_masculine'] ?? 'Masculino';
-                              if (v == 'feminino') return languages[choosenLanguage]['text_feminine'] ?? 'Feminino';
-                              return languages[choosenLanguage]['text_no_preference'] ?? 'Não tenho preferência';
+                              if (v == 'masculino')
+                                return languages[choosenLanguage]
+                                        ['text_masculine'] ??
+                                    'Masculino';
+                              if (v == 'feminino')
+                                return languages[choosenLanguage]
+                                        ['text_feminine'] ??
+                                    'Feminino';
+                              return languages[choosenLanguage]
+                                      ['text_no_preference'] ??
+                                  'Não tenho preferência';
                             },
                             onChanged: (String? value) {
                               setState(() {
                                 selectedPassengerPreference = value;
                                 passengerPreference = value ?? '';
-                                if (passengerPreferenceError && value != null && value.isNotEmpty) passengerPreferenceError = false;
+                                if (passengerPreferenceError &&
+                                    value != null &&
+                                    value.isNotEmpty)
+                                  passengerPreferenceError = false;
                               });
                             },
                             popupProps: PopupProps.menu(
                               showSearchBox: true,
                               searchFieldProps: TextFieldProps(
                                 decoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  hintText: languages[choosenLanguage]
+                                          ['text_search'] ??
+                                      'Buscar',
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                 ),
                               ),
                             ),
                             dropdownDecoratorProps: DropDownDecoratorProps(
                               dropdownSearchDecoration: InputDecoration(
-                                hintText: languages[choosenLanguage]['text_passenger_preference'] ?? 'Preferência de Motorista',
-                                hintStyle: getGoogleFontStyle(fontSize: media.width * fourteen, color: hintColor),
+                                hintText: languages[choosenLanguage]
+                                        ['text_passenger_preference'] ??
+                                    'Preferência de Motorista',
+                                hintStyle: getGoogleFontStyle(
+                                    fontSize: media.width * fourteen,
+                                    color: hintColor),
                                 border: InputBorder.none,
                               ),
                             ),
@@ -1001,7 +1046,8 @@ class _NamePageState extends State<NamePage> {
                                           setState(() {
                                             _error = '';
                                           });
-                                          loginReferralCode = _referralController.text.trim();
+                                          loginReferralCode =
+                                              _referralController.text.trim();
                                           loginLoading = true;
                                           valueNotifierLogin
                                               .incrementNotifier();
@@ -1095,7 +1141,8 @@ class _NamePageState extends State<NamePage> {
                                       }
                                       FocusManager.instance.primaryFocus
                                           ?.unfocus();
-                                      loginReferralCode = _referralController.text.trim();
+                                      loginReferralCode =
+                                          _referralController.text.trim();
                                       loginLoading = true;
                                       valueNotifierLogin.incrementNotifier();
                                       var val = await otpCall();
