@@ -79,32 +79,25 @@ class _ChatPageState extends State<ChatPage> {
                         color: page,
                         child: Column(
                           children: [
-                            Stack(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  width: media.width * 0.9,
-                                  height: media.width * 0.1,
-                                  alignment: Alignment.center,
-                                  child: MyText(
-                                    text: driverReq['userDetail']['data']
-                                        ['name'],
-                                    size: media.width * twenty,
-                                    fontweight: FontWeight.w600,
+                                InkWell(
+                                  onTap: () => Navigator.pop(context, true),
+                                  child: Container(
+                                    height: media.width * 0.1,
+                                    width: media.width * 0.1,
+                                    alignment: Alignment.centerLeft,
+                                    child: const Icon(Icons.arrow_back_ios),
                                   ),
                                 ),
-                                Positioned(
-                                  child: InkWell(
-                                    onTap: () {
-                                      Navigator.pop(context, true);
-                                    },
-                                    child: Container(
-                                      height: media.width * 0.1,
-                                      width: media.width * 0.1,
-                                      alignment: Alignment.center,
-                                      child: const Icon(Icons.arrow_back_ios),
-                                    ),
-                                  ),
-                                )
+                                SizedBox(height: media.width * 0.02),
+                                MyText(
+                                  text: driverReq['userDetail']['data']['name'],
+                                  size: media.width * twenty,
+                                  fontweight: FontWeight.w600,
+                                ),
                               ],
                             ),
                             Expanded(
@@ -136,16 +129,11 @@ class _ChatPageState extends State<ChatPage> {
                                                   padding: EdgeInsets.all(
                                                       media.width * 0.04),
                                                   decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              media.width *
-                                                                  0.02),
-                                                      color: (chatList[i][
-                                                                  'from_type'] ==
-                                                              2)
-                                                          ? buttonColor
-                                                          : const Color(
-                                                              0xffE7EDEF)),
+                                                      borderRadius: BorderRadius.circular(media.width * 0.02),
+                                                      color: const Color(0xffE7EDEF),
+                                                      border: (chatList[i]['from_type'] == 2)
+                                                          ? Border.all(color: const Color(0xFF7B1FA2), width: 1.5)
+                                                          : null),
                                                   child: MyText(
                                                     text: chatList[i]
                                                         ['message'],

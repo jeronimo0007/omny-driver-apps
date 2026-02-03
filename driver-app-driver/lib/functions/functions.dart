@@ -33,6 +33,7 @@ import '../pages/onTripPage/invoice.dart';
 import '../pages/onTripPage/map_page.dart';
 import '../pages/onTripPage/review_page.dart';
 import '../pages/onTripPage/rides.dart';
+import '../config/api_config.dart';
 import '../styles/styles.dart';
 import 'geohash.dart';
 
@@ -138,7 +139,8 @@ void logApiError(String functionName, int statusCode, String responseBody) {
 /// Formata o objeto [errors] da resposta 422 (validação) em uma mensagem legível.
 /// Ex: {"postal_code": ["The postal code may not be greater than 6 characters."]}
 /// -> "CEP: The postal code may not be greater than 6 characters."
-String formatValidationErrors(dynamic errors, {String fallbackMessage = 'Os dados enviados são inválidos.'}) {
+String formatValidationErrors(dynamic errors,
+    {String fallbackMessage = 'Os dados enviados são inválidos.'}) {
   if (errors == null) return fallbackMessage;
   if (errors is! Map) return fallbackMessage;
   final map = Map<String, dynamic>.from(errors);
@@ -197,11 +199,27 @@ dynamic centerCheck;
 String ischeckownerordriver = '';
 String transportType = '';
 
-//base url
-String url =
-    'https://driver.omny.app.br/'; //add '/' at the end of the url as 'https://url.com/'
+//base url (local em debug, produção em release - ver lib/config/api_config.dart)
+String url = apiBaseUrl;
 String mapkey = 'AIzaSyDIFOaDalHwTa--63nbVUVVM13X3EWTI6Q';
 String mapStyle = '';
+
+/// Formata número para exibição no padrão brasileiro (vírgula como decimal).
+/// Apenas para exibição; envio à API continua com ponto.
+String formatDecimalBr(dynamic value) {
+  if (value == null) return '0,00';
+  final s = value.toString().replaceFirst(',', '.');
+  final n = value is num ? value : (double.tryParse(s) ?? 0);
+  return n.toStringAsFixed(2).replaceAll('.', ',');
+}
+
+/// Símbolo de moeda para exibição (ex.: BRL → R$). Não altera o envio à API.
+String displayCurrencySymbol(dynamic symbol) {
+  if (symbol == null) return '';
+  final s = symbol.toString().trim().toUpperCase();
+  if (s == 'BRL') return 'R\$';
+  return symbol.toString().trim();
+}
 
 getDetailsOfDevice() async {
   var connectivityResult = await (Connectivity().checkConnectivity());
@@ -269,7 +287,8 @@ validateEmail(email) async {
         final body = jsonDecode(response.body);
         result = formatValidationErrors(
           body['errors'],
-          fallbackMessage: body['message']?.toString() ?? 'Os dados enviados são inválidos.',
+          fallbackMessage:
+              body['message']?.toString() ?? 'Os dados enviados são inválidos.',
         );
       } catch (_) {
         result = 'Os dados enviados são inválidos.';
@@ -441,7 +460,7 @@ uploadDocs() async {
     final bearerTokenValue =
         bearerToken.isNotEmpty ? bearerToken[0].token : 'N/A';
     debugPrint(
-        '📄 [API] uploadDocs - Bearer Token: ${bearerTokenValue.length > 20 ? bearerTokenValue.substring(0, 20) + '...' : bearerTokenValue}');
+        '📄 [API] uploadDocs - Bearer Token: ${bearerTokenValue.length > 20 ? '${bearerTokenValue.substring(0, 20)}...' : bearerTokenValue}');
 
     response.headers.addAll({
       'Authorization': 'Bearer ${bearerToken[0].token}',
@@ -493,7 +512,7 @@ uploadDocs() async {
     debugPrint('📄 [API] uploadDocs - Status Code: ${request.statusCode}');
     debugPrint('📄 [API] uploadDocs - Response Headers: ${respon.headers}');
     debugPrint(
-        '📄 [API] uploadDocs - Response Body (primeiros 500 chars): ${respon.body.length > 500 ? respon.body.substring(0, 500) + '...' : respon.body}');
+        '📄 [API] uploadDocs - Response Body (primeiros 500 chars): ${respon.body.length > 500 ? '${respon.body.substring(0, 500)}...' : respon.body}');
     if (respon.body.length > 500) {
       debugPrint(
           '📄 [API] uploadDocs - Response Body completo (${respon.body.length} chars)');
@@ -616,7 +635,8 @@ getCountryCode() async {
           return code == '+55' || iso == 'BR';
         });
         phcode = (brazilIndex >= 0) ? brazilIndex : 0;
-        debugPrint('🌐 [API] getCountryCode - Brasil forçado como padrão, phcode: $phcode');
+        debugPrint(
+            '🌐 [API] getCountryCode - Brasil forçado como padrão, phcode: $phcode');
       } else {
         phcode = 0;
         debugPrint('🌐 [API] getCountryCode - Lista vazia, phcode = 0');
@@ -670,7 +690,8 @@ phoneAuth(String phone) async {
       phoneNumber: phone,
       verificationCompleted: (PhoneAuthCredential credential) async {
         // Não usar auto-complete: exigir que o usuário digite o código SMS
-        debugPrint('🔥 [FIREBASE] phoneAuth - verificationCompleted (ignorado: exigir código manual)');
+        debugPrint(
+            '🔥 [FIREBASE] phoneAuth - verificationCompleted (ignorado: exigir código manual)');
       },
       forceResendingToken: resendTokenId,
       verificationFailed: (FirebaseAuthException e) {
@@ -1085,8 +1106,8 @@ getVehicleMake({transportType, myVehicleIconFor}) async {
         debugPrint('🚗 [API] getVehicleMake - JSON decodificado com sucesso');
 
         if (jsonResponse.containsKey('data')) {
-          vehicleMake = List<Map<String, dynamic>>.from(
-              jsonResponse['data'] ?? []);
+          vehicleMake =
+              List<Map<String, dynamic>>.from(jsonResponse['data'] ?? []);
 
           // Ordenar por nome
           vehicleMake.sort((a, b) => (a['name'] ?? '')
@@ -1622,7 +1643,8 @@ registerDriver() async {
     response.fields.addAll(fields);
     // Garantir que gender e passenger_preference sejam sempre enviados
     response.fields['gender'] = userGender.toString();
-    response.fields['passenger_preference'] = userPassengerPreference.toString();
+    response.fields['passenger_preference'] =
+        userPassengerPreference.toString();
 
     debugPrint(
         '🌐🌐🌐 [API] registerDriver - ========== ENVIANDO REQUISIÇÃO ==========');
@@ -1634,7 +1656,7 @@ registerDriver() async {
     debugPrint('🌐 [API] registerDriver - Status Code: ${request.statusCode}');
     debugPrint('🌐 [API] registerDriver - Response Headers: ${respon.headers}');
     debugPrint(
-        '🌐 [API] registerDriver - Response Body (primeiros 500 chars): ${respon.body.length > 500 ? respon.body.substring(0, 500) + '...' : respon.body}');
+        '🌐 [API] registerDriver - Response Body (primeiros 500 chars): ${respon.body.length > 500 ? '${respon.body.substring(0, 500)}...' : respon.body}');
     if (respon.body.length > 500) {
       debugPrint(
           '🌐 [API] registerDriver - Response Body completo (${respon.body.length} chars)');
@@ -1704,13 +1726,15 @@ registerDriver() async {
         final body = jsonDecode(respon.body);
         result = formatValidationErrors(
           body['errors'],
-          fallbackMessage: body['message']?.toString() ?? 'Os dados enviados são inválidos.',
+          fallbackMessage:
+              body['message']?.toString() ?? 'Os dados enviados são inválidos.',
         );
       } catch (_) {
         result = 'Os dados enviados são inválidos.';
       }
     } else {
-      debugPrint('🌐 [API] registerDriver - ERRO ${respon.statusCode} (ex: 400)');
+      debugPrint(
+          '🌐 [API] registerDriver - ERRO ${respon.statusCode} (ex: 400)');
       debugPrint('🌐 [API] registerDriver - Response: ${respon.body}');
       try {
         final body = jsonDecode(respon.body);
@@ -2185,7 +2209,7 @@ getDocumentsNeeded() async {
     final bearerTokenValue =
         bearerToken.isNotEmpty ? bearerToken[0].token : 'N/A';
     debugPrint(
-        '📄 [API] getDocumentsNeeded - Bearer Token: ${bearerTokenValue.length > 20 ? bearerTokenValue.substring(0, 20) + '...' : bearerTokenValue}');
+        '📄 [API] getDocumentsNeeded - Bearer Token: ${bearerTokenValue.length > 20 ? '${bearerTokenValue.substring(0, 20)}...' : bearerTokenValue}');
 
     final headers = {
       'Authorization': 'Bearer ${bearerToken[0].token}',
@@ -2207,7 +2231,7 @@ getDocumentsNeeded() async {
     debugPrint(
         '📄 [API] getDocumentsNeeded - Response Headers: ${response.headers}');
     debugPrint(
-        '📄 [API] getDocumentsNeeded - Response Body (primeiros 500 chars): ${response.body.length > 500 ? response.body.substring(0, 500) + '...' : response.body}');
+        '📄 [API] getDocumentsNeeded - Response Body (primeiros 500 chars): ${response.body.length > 500 ? '${response.body.substring(0, 500)}...' : response.body}');
     if (response.body.length > 500) {
       debugPrint(
           '📄 [API] getDocumentsNeeded - Response Body completo (${response.body.length} chars)');
@@ -2465,7 +2489,8 @@ verifyUser(String number) async {
         final body = jsonDecode(response.body);
         val = formatValidationErrors(
           body['errors'],
-          fallbackMessage: body['message']?.toString() ?? 'Os dados enviados são inválidos.',
+          fallbackMessage:
+              body['message']?.toString() ?? 'Os dados enviados são inválidos.',
         );
       } catch (_) {
         val = 'Os dados enviados são inválidos.';
@@ -2610,7 +2635,8 @@ getUserDetails() async {
     debugPrint('🌐 [API] getUserDetails - ========== BUSCAR PERFIL ==========');
     debugPrint('🌐 [API] getUserDetails - URL: $requestUrl');
     debugPrint('🌐 [API] getUserDetails - Método: GET');
-    debugPrint('🌐 [API] getUserDetails - Headers: Authorization: Bearer ${authToken.substring(0, 20)}...');
+    debugPrint(
+        '🌐 [API] getUserDetails - Headers: Authorization: Bearer ${authToken.substring(0, 20)}...');
     debugPrint('🌐 [API] getUserDetails - (GET não envia body)');
 
     var response = await http.get(
@@ -2627,24 +2653,42 @@ getUserDetails() async {
     if (response.statusCode == 200) {
       userDetails = jsonDecode(response.body)['data'];
       debugPrint('🌐 [API] getUserDetails - ✅ Status 200 - Perfil recebido');
-      debugPrint('🌐 [API] getUserDetails - userDetails ID: ${userDetails['id']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails role: ${userDetails['role']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails name: ${userDetails['name']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails email: ${userDetails['email']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails mobile: ${userDetails['mobile']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails document (CPF): ${userDetails['document']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails birth_date: ${userDetails['birth_date']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails gender: ${userDetails['gender']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails passenger_preference: ${userDetails['passenger_preference']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails postal_code: ${userDetails['postal_code']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails address: ${userDetails['address']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails address_number: ${userDetails['address_number']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails complement: ${userDetails['complement']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails neighborhood: ${userDetails['neighborhood']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails city: ${userDetails['city']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails state: ${userDetails['state']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails active: ${userDetails['active']}');
-      debugPrint('🌐 [API] getUserDetails - userDetails approve: ${userDetails['approve']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails ID: ${userDetails['id']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails role: ${userDetails['role']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails name: ${userDetails['name']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails email: ${userDetails['email']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails mobile: ${userDetails['mobile']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails document (CPF): ${userDetails['document']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails birth_date: ${userDetails['birth_date']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails gender: ${userDetails['gender']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails passenger_preference: ${userDetails['passenger_preference']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails postal_code: ${userDetails['postal_code']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails address: ${userDetails['address']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails address_number: ${userDetails['address_number']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails complement: ${userDetails['complement']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails neighborhood: ${userDetails['neighborhood']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails city: ${userDetails['city']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails state: ${userDetails['state']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails active: ${userDetails['active']}');
+      debugPrint(
+          '🌐 [API] getUserDetails - userDetails approve: ${userDetails['approve']}');
 
       if (userDetails['notifications_count'] != 0 &&
           userDetails['notifications_count'] != null) {
@@ -2681,7 +2725,8 @@ getUserDetails() async {
           if (driverReq['accepted_at'] != null) {
             getCurrentMessages();
           }
-          final reqStops = userDetails['onTripRequest']?['data']?['requestStops']?['data'];
+          final reqStops =
+              userDetails['onTripRequest']?['data']?['requestStops']?['data'];
           tripStops = reqStops ?? tripStops;
 
           valueNotifierHome.incrementNotifier();
@@ -2689,7 +2734,8 @@ getUserDetails() async {
           driverReject = false;
           userReject = false;
           driverReq = userDetails['metaRequest']['data'];
-          final metaStops = userDetails['metaRequest']?['data']?['requestStops']?['data'];
+          final metaStops =
+              userDetails['metaRequest']?['data']?['requestStops']?['data'];
           tripStops = metaStops ?? tripStops;
 
           if (duration == 0 || duration == 0.0) {
@@ -3369,6 +3415,31 @@ openMap(lat, lng) async {
   }
 }
 
+/// Abre o Waze com navegação até as coordenadas (lat, lng).
+openWaze(lat, lng) async {
+  try {
+    final latStr = lat?.toString() ?? '';
+    final lngStr = lng?.toString() ?? '';
+    if (latStr.isEmpty || lngStr.isEmpty) return;
+    final String params = '?ll=$latStr,$lngStr&navigate=yes';
+    final String wazeApp = 'waze://$params'; // waze://?ll=lat,lng&navigate=yes
+    final String wazeWeb = 'https://waze.com/ul$params';
+    // ignore: deprecated_member_use
+    if (await canLaunch(wazeApp)) {
+      // ignore: deprecated_member_use
+      await launch(wazeApp, forceSafariVC: false);
+    } else if (await canLaunch(wazeWeb)) {
+      // ignore: deprecated_member_use
+      await launch(wazeWeb, forceSafariVC: false);
+    }
+  } catch (e) {
+    if (e is SocketException) {
+      internet = false;
+    }
+    debugPrint('openWaze error: $e');
+  }
+}
+
 //trip start with otp
 
 tripStart() async {
@@ -4021,13 +4092,18 @@ userRating() async {
 //making call to user
 
 makingPhoneCall(phnumber) async {
-  var mobileCall = 'tel:$phnumber';
-  // ignore: deprecated_member_use
-  if (await canLaunch(mobileCall)) {
+  try {
+    final String raw = phnumber?.toString() ?? '';
+    final String digits = raw.replaceAll(RegExp(r'[^\d+]'), '');
+    if (digits.isEmpty) return;
+    final String mobileCall = 'tel:$digits';
     // ignore: deprecated_member_use
-    await launch(mobileCall);
-  } else {
-    throw 'Could not launch $mobileCall';
+    if (await canLaunch(mobileCall)) {
+      // ignore: deprecated_member_use
+      await launch(mobileCall);
+    }
+  } catch (e) {
+    debugPrint('makingPhoneCall error: $e');
   }
 }
 
@@ -4321,7 +4397,8 @@ updateVehicle() async {
         final errBody = jsonDecode(response.body);
         result = formatValidationErrors(
           errBody['errors'],
-          fallbackMessage: errBody['message']?.toString() ?? 'Os dados enviados são inválidos.',
+          fallbackMessage: errBody['message']?.toString() ??
+              'Os dados enviados são inválidos.',
         );
       } catch (_) {
         result = 'Os dados enviados são inválidos.';
@@ -4367,7 +4444,8 @@ updateProfile(name, email) async {
     response.fields['name'] = name;
     response.fields['birth_date'] = userBirthDate.toString();
     response.fields['gender'] = userGender.toString();
-    response.fields['passenger_preference'] = userPassengerPreference.toString();
+    response.fields['passenger_preference'] =
+        userPassengerPreference.toString();
     response.fields['postal_code'] = userCep.toString();
     response.fields['address'] = userAddress.toString();
     response.fields['address_number'] = userNumber.toString();
@@ -4376,20 +4454,24 @@ updateProfile(name, email) async {
     response.fields['city'] = userCity.toString();
     response.fields['state'] = userState.toString();
 
-    debugPrint('🌐 [API] updateProfile - ========== ATUALIZAR PERFIL (com imagem?) ==========');
-    debugPrint('🌐 [API] updateProfile - URL: ${url}api/v1/user/driver-profile');
+    debugPrint(
+        '🌐 [API] updateProfile - ========== ATUALIZAR PERFIL (com imagem?) ==========');
+    debugPrint(
+        '🌐 [API] updateProfile - URL: ${url}api/v1/user/driver-profile');
     debugPrint('🌐 [API] updateProfile - Método: POST (multipart/form-data)');
     debugPrint('🌐 [API] updateProfile - Parâmetros enviados:');
     for (final entry in response.fields.entries) {
       debugPrint('🌐 [API] updateProfile -   ${entry.key}: ${entry.value}');
     }
-    debugPrint('🌐 [API] updateProfile - profile_picture: ${proImageFile != null ? "arquivo anexado ($proImageFile)" : "não enviado"}');
+    debugPrint(
+        '🌐 [API] updateProfile - profile_picture: ${proImageFile != null ? "arquivo anexado ($proImageFile)" : "não enviado"}');
 
     var request = await response.send();
     var respon = await http.Response.fromStream(request);
     final val = jsonDecode(respon.body);
     debugPrint('🌐 [API] updateProfile - Status Code: ${request.statusCode}');
-    debugPrint('🌐 [API] updateProfile - Response: ${respon.body.length > 300 ? respon.body.substring(0, 300) + "..." : respon.body}');
+    debugPrint(
+        '🌐 [API] updateProfile - Response: ${respon.body.length > 300 ? "${respon.body.substring(0, 300)}..." : respon.body}');
     if (request.statusCode == 200) {
       result = 'success';
       if (val['success'] == true) {
@@ -4431,7 +4513,8 @@ updateProfileWithoutImage(name, email) async {
     response.fields['name'] = name;
     response.fields['birth_date'] = userBirthDate.toString();
     response.fields['gender'] = userGender.toString();
-    response.fields['passenger_preference'] = userPassengerPreference.toString();
+    response.fields['passenger_preference'] =
+        userPassengerPreference.toString();
     response.fields['postal_code'] = userCep.toString();
     response.fields['address'] = userAddress.toString();
     response.fields['address_number'] = userNumber.toString();
@@ -4440,19 +4523,25 @@ updateProfileWithoutImage(name, email) async {
     response.fields['city'] = userCity.toString();
     response.fields['state'] = userState.toString();
 
-    debugPrint('🌐 [API] updateProfileWithoutImage - ========== ATUALIZAR PERFIL (sem imagem) ==========');
-    debugPrint('🌐 [API] updateProfileWithoutImage - URL: ${url}api/v1/user/driver-profile');
-    debugPrint('🌐 [API] updateProfileWithoutImage - Método: POST (multipart/form-data)');
+    debugPrint(
+        '🌐 [API] updateProfileWithoutImage - ========== ATUALIZAR PERFIL (sem imagem) ==========');
+    debugPrint(
+        '🌐 [API] updateProfileWithoutImage - URL: ${url}api/v1/user/driver-profile');
+    debugPrint(
+        '🌐 [API] updateProfileWithoutImage - Método: POST (multipart/form-data)');
     debugPrint('🌐 [API] updateProfileWithoutImage - Parâmetros enviados:');
     for (final entry in response.fields.entries) {
-      debugPrint('🌐 [API] updateProfileWithoutImage -   ${entry.key}: ${entry.value}');
+      debugPrint(
+          '🌐 [API] updateProfileWithoutImage -   ${entry.key}: ${entry.value}');
     }
 
     var request = await response.send();
     var respon = await http.Response.fromStream(request);
     final val = jsonDecode(respon.body);
-    debugPrint('🌐 [API] updateProfileWithoutImage - Status Code: ${request.statusCode}');
-    debugPrint('🌐 [API] updateProfileWithoutImage - Response: ${respon.body.length > 300 ? respon.body.substring(0, 300) + "..." : respon.body}');
+    debugPrint(
+        '🌐 [API] updateProfileWithoutImage - Status Code: ${request.statusCode}');
+    debugPrint(
+        '🌐 [API] updateProfileWithoutImage - Response: ${respon.body.length > 300 ? "${respon.body.substring(0, 300)}..." : respon.body}');
     if (request.statusCode == 200) {
       result = 'success';
       if (val['success'] == true) {
@@ -5651,12 +5740,15 @@ streamRequest() {
   rideStreamChanges = null;
   requestStreamEnd = null;
   final driverId = userDetails['id'];
-  final driverIdInt = driverId is int ? driverId : (int.tryParse(driverId.toString()) ?? 0);
+  final driverIdInt =
+      driverId is int ? driverId : (int.tryParse(driverId.toString()) ?? 0);
   final driverIdStr = driverId.toString();
-  debugPrint('🔔 [OMNY Driver] streamRequest iniciado – driver_id como número ($driverIdInt) e como string ("$driverIdStr")');
+  debugPrint(
+      '🔔 [OMNY Driver] streamRequest iniciado – driver_id como número ($driverIdInt) e como string ("$driverIdStr")');
   void onRequestReceived(DatabaseEvent event) async {
     final key = event.snapshot.key.toString();
-    debugPrint('🔔 [OMNY Driver] request-meta onChildAdded – request_id = $key');
+    debugPrint(
+        '🔔 [OMNY Driver] request-meta onChildAdded – request_id = $key');
     if (driverReq.isEmpty) {
       _cancelRequestStreams();
       streamEnd(key);
@@ -5664,6 +5756,7 @@ streamRequest() {
       valueNotifierHome.incrementNotifier();
     }
   }
+
   requestStreamStart = FirebaseDatabase.instance
       .ref('request-meta')
       .orderByChild('driver_id')

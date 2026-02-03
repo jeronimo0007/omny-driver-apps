@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translation/translation.dart';
@@ -220,14 +223,56 @@ class _NavDrawerState extends State<NavDrawer> {
                                             SizedBox(
                                               height: media.width * 0.01,
                                             ),
-                                            SizedBox(
+SizedBox(
                                               width: media.width * 0.45,
                                               child: MyText(
                                                 text: userDetails['mobile'],
                                                 size: media.width * fourteen,
                                                 maxLines: 1,
                                               ),
-                                            )
+                                            ),
+                                            SizedBox(height: media.width * 0.02),
+                                            SizedBox(
+                                              width: media.width * 0.45,
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: MyText(
+                                                      text: '${languages[choosenLanguage]['text_referral_earn_code'] ?? 'Código de indicação'}: ${myReferralCode['refferal_code']?.toString() ?? '—'}',
+                                                      size: media.width * twelve,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: media.width * 0.1,
+                                                    height: media.width * 0.1,
+                                                    child: InkWell(
+                                                      onTap: () async {
+                                                        if ((myReferralCode['refferal_code']?.toString() ?? '').isEmpty) {
+                                                          await getReferral();
+                                                          if (mounted) setState(() {});
+                                                        }
+                                                        final code = myReferralCode['refferal_code']?.toString() ?? '';
+                                                        if (code.isNotEmpty) {
+                                                          String storeText = '';
+                                                          if (defaultTargetPlatform == TargetPlatform.android) {
+                                                            final package = await PackageInfo.fromPlatform();
+                                                            storeText = '\n\n${languages[choosenLanguage]['text_download_app'] ?? 'Baixe o app'}: https://play.google.com/store/apps/details?id=${package.packageName}';
+                                                          } else {
+                                                            storeText = '\n\n${languages[choosenLanguage]['text_available_app_store'] ?? 'Disponível na App Store.'}';
+                                                          }
+                                                          await Share.share(
+                                                            '${languages[choosenLanguage]['text_referral_earn_code'] ?? 'Meu código de indicação'}: $code$storeText',
+                                                          );
+                                                        }
+                                                      },
+                                                      child: Icon(Icons.share, size: media.width * 0.06, color: buttonColor),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ],
                                         )
                                       ],
@@ -235,7 +280,7 @@ class _NavDrawerState extends State<NavDrawer> {
                                   ),
                                   Container(
                                     padding: EdgeInsets.only(
-                                        top: media.width * 0.02),
+                                      top: media.width * 0.02),
                                     width: media.width * 0.7,
                                     child: Column(
                                       children: [
@@ -396,7 +441,7 @@ class _NavDrawerState extends State<NavDrawer> {
                                                                           buttonColor
                                                                               .withOpacity(0.0),
                                                                         ],
-                                                                        stops: [
+                                                                        stops: const [
                                                                           0.0,
                                                                           0.3,
                                                                           0.6,
@@ -702,7 +747,7 @@ class _NavDrawerState extends State<NavDrawer> {
                                                                   .withOpacity(
                                                                       0.0),
                                                             ],
-                                                            stops: [
+                                                            stops: const [
                                                               0.0,
                                                               0.3,
                                                               0.6,
@@ -917,7 +962,7 @@ class _NavDrawerState extends State<NavDrawer> {
                                                                             buttonColor.withOpacity(0.4),
                                                                             buttonColor.withOpacity(0.0),
                                                                           ],
-                                                                          stops: [
+                                                                          stops: const [
                                                                             0.0,
                                                                             0.3,
                                                                             0.6,
@@ -1175,7 +1220,7 @@ class _NavDrawerState extends State<NavDrawer> {
                                           buttonColor.withOpacity(0.4),
                                           buttonColor.withOpacity(0.0),
                                         ],
-                                        stops: [0.0, 0.3, 0.6, 1.0],
+                                        stops: const [0.0, 0.3, 0.6, 1.0],
                                         begin: Alignment.centerLeft,
                                         end: Alignment.centerRight,
                                       ),

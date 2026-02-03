@@ -419,10 +419,9 @@ class _InvoiceState extends State<Invoice> {
                                                               ['data'][
                                                           'requested_currency_symbol'] +
                                                       ' ' +
-                                                      driverReq['requestBill']
+                                                      formatDecimalBr(driverReq['requestBill']
                                                                   ['data']
-                                                              ['total_amount']
-                                                          .toString(),
+                                                              ['total_amount']),
                                                   style: GoogleFonts.poppins(
                                                       fontSize: media.width *
                                                           twentysix,
@@ -497,12 +496,11 @@ class _InvoiceState extends State<Invoice> {
                                                                       ['data'][
                                                                   'requested_currency_symbol'] +
                                                               ' ' +
-                                                              driverReq['requestBill']
+                                                              formatDecimalBr(driverReq['requestBill']
                                                                           [
                                                                           'data']
                                                                       [
-                                                                      'base_price']
-                                                                  .toString(),
+                                                                      'base_price']),
                                                           size: media.width *
                                                               twelve,
                                                         ),
@@ -541,12 +539,11 @@ class _InvoiceState extends State<Invoice> {
                                                                       ['data'][
                                                                   'requested_currency_symbol'] +
                                                               ' ' +
-                                                              driverReq['requestBill']
+                                                              formatDecimalBr(driverReq['requestBill']
                                                                           [
                                                                           'data']
                                                                       [
-                                                                      'distance_price']
-                                                                  .toString(),
+                                                                      'distance_price']),
                                                           size: media.width *
                                                               twelve,
                                                         ),
@@ -585,12 +582,11 @@ class _InvoiceState extends State<Invoice> {
                                                                       ['data'][
                                                                   'requested_currency_symbol'] +
                                                               ' ' +
-                                                              driverReq['requestBill']
+                                                              formatDecimalBr(driverReq['requestBill']
                                                                           [
                                                                           'data']
                                                                       [
-                                                                      'time_price']
-                                                                  .toString(),
+                                                                      'time_price']),
                                                           size: media.width *
                                                               twelve,
                                                         ),
@@ -636,10 +632,9 @@ class _InvoiceState extends State<Invoice> {
                                                                         [
                                                                         'requested_currency_symbol'] +
                                                                     ' ' +
-                                                                    driverReq['requestBill']['data']
+                                                                    formatDecimalBr(driverReq['requestBill']['data']
                                                                             [
-                                                                            'cancellation_fee']
-                                                                        .toString(),
+                                                                            'cancellation_fee']),
                                                                 size: media
                                                                         .width *
                                                                     twelve,
@@ -689,10 +684,9 @@ class _InvoiceState extends State<Invoice> {
                                                                         [
                                                                         'requested_currency_symbol'] +
                                                                     ' ' +
-                                                                    driverReq['requestBill']['data']
+                                                                    formatDecimalBr(driverReq['requestBill']['data']
                                                                             [
-                                                                            'airport_surge_fee']
-                                                                        .toString(),
+                                                                            'airport_surge_fee']),
                                                                 size: media
                                                                         .width *
                                                                     twelve,
@@ -731,11 +725,10 @@ class _InvoiceState extends State<Invoice> {
                                                                       ['data'][
                                                                   'requested_currency_symbol'] +
                                                               ' ' +
-                                                              driverReq['requestBill']
+                                                              formatDecimalBr(driverReq['requestBill']
                                                                           ['data']
                                                                       [
-                                                                      'waiting_charge_per_min']
-                                                                  .toString() +
+                                                                      'waiting_charge_per_min']) +
                                                               ' x ' +
                                                               driverReq['requestBill']
                                                                           [
@@ -754,12 +747,11 @@ class _InvoiceState extends State<Invoice> {
                                                                       ['data'][
                                                                   'requested_currency_symbol'] +
                                                               ' ' +
-                                                              driverReq['requestBill']
+                                                              formatDecimalBr(driverReq['requestBill']
                                                                           [
                                                                           'data']
                                                                       [
-                                                                      'waiting_charge']
-                                                                  .toString(),
+                                                                      'waiting_charge']),
                                                           size: media.width *
                                                               twelve,
                                                         ),
@@ -805,10 +797,9 @@ class _InvoiceState extends State<Invoice> {
                                                                         [
                                                                         'requested_currency_symbol'] +
                                                                     ' ' +
-                                                                    driverReq['requestBill']['data']
+                                                                    formatDecimalBr(driverReq['requestBill']['data']
                                                                             [
-                                                                            'admin_commision']
-                                                                        .toString(),
+                                                                            'admin_commision']),
                                                                 size: media
                                                                         .width *
                                                                     twelve,
@@ -860,10 +851,9 @@ class _InvoiceState extends State<Invoice> {
                                                                         [
                                                                         'requested_currency_symbol'] +
                                                                     ' ' +
-                                                                    driverReq['requestBill']['data']
+                                                                    formatDecimalBr(driverReq['requestBill']['data']
                                                                             [
-                                                                            'promo_discount']
-                                                                        .toString(),
+                                                                            'promo_discount']),
                                                                 size: media
                                                                         .width *
                                                                     twelve,
@@ -910,7 +900,7 @@ class _InvoiceState extends State<Invoice> {
                                                                       [
                                                                       'requested_currency_symbol'] +
                                                                   ' ' +
-                                                                  '${driverReq['requestBill']['data']['service_tax']}',
+                                                                  '${formatDecimalBr(driverReq['requestBill']['data']['service_tax'])}',
                                                           size: media.width *
                                                               twelve,
                                                         ),
@@ -947,12 +937,11 @@ class _InvoiceState extends State<Invoice> {
                                                           text:
                                                               // ignore: prefer_interpolation_to_compose_strings
                                                               '${driverReq['requestBill']['data']['requested_currency_symbol']} ' +
-                                                                  driverReq['requestBill']
+                                                                  formatDecimalBr(driverReq['requestBill']
                                                                               [
                                                                               'data']
                                                                           [
-                                                                          'total_amount']
-                                                                      .toString(),
+                                                                          'total_amount']),
                                                           size: media.width *
                                                               twelve,
                                                         ),
@@ -1022,7 +1011,7 @@ class _InvoiceState extends State<Invoice> {
                                       ),
                                       MyText(
                                         text:
-                                            ' ${driverReq['requestBill']['data']['total_amount']}',
+                                            ' ${formatDecimalBr(driverReq['requestBill']['data']['total_amount'])}',
                                         size: media.width * twenty,
                                         fontweight: FontWeight.w800,
                                       ),

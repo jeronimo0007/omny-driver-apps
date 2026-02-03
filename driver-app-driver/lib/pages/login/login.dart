@@ -36,14 +36,14 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
   String _error = '';
   // bool _resend = false;
   MaskTextInputFormatter? _phoneMaskFormatter;
-  FocusNode _phoneFocusNode = FocusNode();
-  FocusNode _emailFocusNode = FocusNode();
-  FocusNode _referralFocusNode = FocusNode();
+  final FocusNode _phoneFocusNode = FocusNode();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _referralFocusNode = FocusNode();
   bool _isPhoneFocused = false;
   bool _isEmailFocused = false;
   bool _isReferralFocused = false;
-  TextEditingController _referralController = TextEditingController();
-  
+  final TextEditingController _referralController = TextEditingController();
+
   // Callback para atualizar o estado quando o texto mudar
   void _onTextChanged() {
     if (mounted) {
@@ -103,13 +103,13 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
         _isReferralFocused = _referralFocusNode.hasFocus;
       });
     });
-    
+
     // Adicionar listener ao controller para atualizar o botão quando o texto mudar
     controller.addListener(_onTextChanged);
 
     countryCode();
     super.initState();
-    
+
     // Focar no campo apropriado após a tela carregar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && currentPage == 0) {
@@ -257,7 +257,8 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                           // Header com logo centralizado
                           Container(
                             padding: EdgeInsets.only(
-                              top: MediaQuery.of(context).padding.top + media.width * 0.05,
+                              top: MediaQuery.of(context).padding.top +
+                                  media.width * 0.05,
                               bottom: media.width * 0.05,
                             ),
                             width: media.width * 1,
@@ -268,7 +269,8 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                               height: media.width * 0.14,
                               decoration: const BoxDecoration(
                                 image: DecorationImage(
-                                  image: AssetImage('assets/images/logo_mini.png'),
+                                  image:
+                                      AssetImage('assets/images/logo_mini.png'),
                                   fit: BoxFit.contain,
                                 ),
                               ),
@@ -585,8 +587,8 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                       children: [
                                         // Código de indicação (Opcional) - acima do celular
                                         MyText(
-                                          text: (languages[choosenLanguage]?[
-                                                  'text_referral_optional'] ??
+                                          text: (languages[choosenLanguage]
+                                                  ?['text_referral_optional'] ??
                                               'Código de indicação (Opcional)'),
                                           size: media.width * fourteen,
                                           color: hintColor,
@@ -596,24 +598,32 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                           height: 48,
                                           width: media.width * 0.9,
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                             border: Border.all(
                                               color: _isReferralFocused
                                                   ? const Color(0xFF9A03E9)
                                                   : textColor.withOpacity(0.5),
-                                              width: _isReferralFocused ? 2.0 : 1.0,
+                                              width: _isReferralFocused
+                                                  ? 2.0
+                                                  : 1.0,
                                             ),
                                           ),
-                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
                                           alignment: Alignment.centerLeft,
                                           child: TextFormField(
                                             controller: _referralController,
                                             focusNode: _referralFocusNode,
                                             decoration: InputDecoration(
                                               border: InputBorder.none,
-                                              hintText: languages[choosenLanguage]?['text_enter_referral'] ?? 'Digite o código de indicação',
+                                              hintText: languages[
+                                                          choosenLanguage]?[
+                                                      'text_enter_referral'] ??
+                                                  'Digite o código de indicação',
                                               hintStyle: GoogleFonts.poppins(
-                                                fontSize: media.width * fourteen,
+                                                fontSize:
+                                                    media.width * fourteen,
                                                 color: hintColor,
                                               ),
                                             ),
@@ -670,15 +680,22 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                     Image.network(
                                                       (countries.isNotEmpty &&
                                                               phcode != null &&
-                                                              countries[phcode] != null &&
-                                                              countries[phcode]['flag'] != null
-                                                          ? countries[phcode]['flag']
+                                                              countries[
+                                                                      phcode] !=
+                                                                  null &&
+                                                              countries[phcode][
+                                                                      'flag'] !=
+                                                                  null
+                                                          ? countries[phcode]
+                                                              ['flag']
                                                           : 'https://flagcdn.com/w40/br.png'),
                                                       width: 24,
                                                       height: 24,
                                                       fit: BoxFit.contain,
                                                     ),
-                                                    SizedBox(width: media.width * 0.02),
+                                                    SizedBox(
+                                                        width:
+                                                            media.width * 0.02),
                                                   ],
                                                 ),
                                               ),
@@ -920,7 +937,10 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                                 8
                                                             : 8)) {
                                                       _error = '';
-                                                      loginReferralCode = _referralController.text.trim();
+                                                      loginReferralCode =
+                                                          _referralController
+                                                              .text
+                                                              .trim();
                                                       FocusManager
                                                           .instance.primaryFocus
                                                           ?.unfocus();
@@ -929,12 +949,11 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                       });
                                                       // Sempre usar Firebase OTP para celular: envia SMS e exige código
                                                       phoneAuthCheck = true;
-                                                      await phoneAuth(
-                                                          (countries[phcode]
-                                                                      ?[
-                                                                      'dial_code'] ??
-                                                                  '') +
-                                                              phnumber);
+                                                      await phoneAuth((countries[
+                                                                      phcode]?[
+                                                                  'dial_code'] ??
+                                                              '') +
+                                                          phnumber);
                                                       value = 0;
                                                       currentPage = 1;
                                                       loginLoading = false;

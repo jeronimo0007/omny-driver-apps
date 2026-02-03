@@ -910,7 +910,7 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                                           .width *
                                                                       0.9,
                                                                   child: Text(
-                                                                    '${rideList[key]['currency']} ${rideList[key]['price']}',
+                                                                    '${rideList[key]['currency']} ${formatDecimalBr(rideList[key]['price'])}',
                                                                     style: GoogleFonts.poppins(
                                                                         fontSize:
                                                                             media.width *
@@ -1607,7 +1607,7 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                                           .width *
                                                                       0.9,
                                                                   child: Text(
-                                                                    '${waitingList[0]['currency']} ${waitingList[0]['drivers']['driver_${userDetails["id"]}']['price']}',
+                                                                    '${waitingList[0]['currency']} ${formatDecimalBr(waitingList[0]['drivers']['driver_${userDetails["id"]}']['price'])}',
                                                                     style: GoogleFonts.poppins(
                                                                         fontSize:
                                                                             media.width *

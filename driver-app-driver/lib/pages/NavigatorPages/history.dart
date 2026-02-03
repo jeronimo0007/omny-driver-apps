@@ -106,7 +106,7 @@ class _HistoryState extends State<History> {
                         BoxShadow(
                             blurRadius: 2,
                             spreadRadius: 2,
-                            color: (isDarkTheme) 
+                            color: (isDarkTheme)
                                 ? buttonColor.withOpacity(0.2)
                                 : Colors.grey.withOpacity(0.2))
                       ]),
@@ -141,7 +141,7 @@ class _HistoryState extends State<History> {
                                   boxShadow: [
                                     BoxShadow(
                                         color: (_showHistory == 1)
-                                            ? (isDarkTheme 
+                                            ? (isDarkTheme
                                                 ? buttonColor.withOpacity(0.3)
                                                 : Colors.black.withOpacity(0.2))
                                             : page,
@@ -187,7 +187,7 @@ class _HistoryState extends State<History> {
                                   boxShadow: [
                                     BoxShadow(
                                         color: (_showHistory == 2)
-                                            ? (isDarkTheme 
+                                            ? (isDarkTheme
                                                 ? buttonColor.withOpacity(0.3)
                                                 : Colors.black.withOpacity(0.2))
                                             : page,
@@ -266,8 +266,12 @@ class _HistoryState extends State<History> {
                                                             BorderRadius
                                                                 .circular(12),
                                                         color: (isDarkTheme)
-                                                            ? buttonColor.withOpacity(0.1)
-                                                            : Colors.grey.withOpacity(0.1),
+                                                            ? buttonColor
+                                                                .withOpacity(
+                                                                    0.1)
+                                                            : Colors.grey
+                                                                .withOpacity(
+                                                                    0.1),
                                                       ),
                                                       child: Column(
                                                         crossAxisAlignment:
@@ -306,7 +310,8 @@ class _HistoryState extends State<History> {
                                                                   fontweight:
                                                                       FontWeight
                                                                           .w600,
-                                                                  color: textColor,
+                                                                  color:
+                                                                      textColor,
                                                                 ),
                                                               ),
                                                               MyText(
@@ -439,7 +444,8 @@ class _HistoryState extends State<History> {
                                                                         .circle,
                                                                     color: (isDarkTheme)
                                                                         ? buttonColor
-                                                                        : Colors.green),
+                                                                        : Colors
+                                                                            .green),
                                                                 child:
                                                                     Container(
                                                                   height: media
@@ -452,8 +458,11 @@ class _HistoryState extends State<History> {
                                                                       shape: BoxShape
                                                                           .circle,
                                                                       color: (isDarkTheme)
-                                                                          ? Colors.black.withOpacity(0.8)
-                                                                          : Colors.white.withOpacity(0.8)),
+                                                                          ? Colors.black.withOpacity(
+                                                                              0.8)
+                                                                          : Colors
+                                                                              .white
+                                                                              .withOpacity(0.8)),
                                                                 ),
                                                               ),
                                                               SizedBox(
@@ -498,8 +507,11 @@ class _HistoryState extends State<History> {
                                                                     shape: BoxShape
                                                                         .circle,
                                                                     color: (isDarkTheme)
-                                                                        ? buttonColor.withOpacity(0.2)
-                                                                        : Colors.red.withOpacity(0.1)),
+                                                                        ? buttonColor.withOpacity(
+                                                                            0.2)
+                                                                        : Colors
+                                                                            .red
+                                                                            .withOpacity(0.1)),
                                                                 child: Icon(
                                                                   Icons
                                                                       .location_on_outlined,
@@ -740,9 +752,9 @@ class _HistoryState extends State<History> {
                                                                     maxLines: 1,
                                                                     text:
                                                                         // ignore: prefer_interpolation_to_compose_strings
-                                                                        myHistory[i]['requestBill']['data']['requested_currency_symbol'] +
-                                                                            ' ' +
-                                                                            myHistory[i]['requestBill']['data']['total_amount'].toString(),
+myHistory[i]['requestBill']['data']['requested_currency_symbol'] +
+                                                                        ' ' +
+                                                                            formatDecimalBr(myHistory[i]['requestBill']['data']['total_amount']),
                                                                     size: media
                                                                             .width *
                                                                         fourteen,
@@ -795,8 +807,12 @@ class _HistoryState extends State<History> {
                                                               BorderRadius
                                                                   .circular(12),
                                                           color: (isDarkTheme)
-                                                              ? buttonColor.withOpacity(0.1)
-                                                              : Colors.grey.withOpacity(0.1),
+                                                              ? buttonColor
+                                                                  .withOpacity(
+                                                                      0.1)
+                                                              : Colors.grey
+                                                                  .withOpacity(
+                                                                      0.1),
                                                         ),
                                                         child: Column(
                                                           crossAxisAlignment:
@@ -834,7 +850,8 @@ class _HistoryState extends State<History> {
                                                                     fontweight:
                                                                         FontWeight
                                                                             .w600,
-                                                                    color: textColor,
+                                                                    color:
+                                                                        textColor,
                                                                   ),
                                                                 ),
                                                                 MyText(
@@ -1050,9 +1067,7 @@ class _HistoryState extends State<History> {
                                                                             child:
                                                                                 Icon(
                                                                               Icons.location_on_outlined,
-                                                                              color: (isDarkTheme)
-                                                                                  ? buttonColor
-                                                                                  : const Color(0xFFFF0000),
+                                                                              color: (isDarkTheme) ? buttonColor : const Color(0xFFFF0000),
                                                                               size: media.width * eighteen,
                                                                             ),
                                                                           ),
@@ -1235,10 +1250,9 @@ class _HistoryState extends State<History> {
                                                                       decoration: BoxDecoration(
                                                                           shape: BoxShape
                                                                               .circle,
-                                                                          color:
-                                                                              (isDarkTheme)
-                                                                                  ? buttonColor.withOpacity(0.3)
-                                                                                  : const Color(0xffFF0000).withOpacity(0.3)),
+                                                                          color: (isDarkTheme)
+                                                                              ? buttonColor.withOpacity(0.3)
+                                                                              : const Color(0xffFF0000).withOpacity(0.3)),
                                                                       child:
                                                                           Container(
                                                                         height: media.width *
@@ -1246,11 +1260,11 @@ class _HistoryState extends State<History> {
                                                                         width: media.width *
                                                                             0.025,
                                                                         decoration: BoxDecoration(
-                                                                            shape:
-                                                                                BoxShape.circle,
+                                                                            shape: BoxShape
+                                                                                .circle,
                                                                             color: (isDarkTheme)
                                                                                 ? buttonColor
-                                                                                : Color(0xffFF0000)),
+                                                                                : const Color(0xffFF0000)),
                                                                       ),
                                                                     ),
                                                                     SizedBox(
@@ -1286,15 +1300,11 @@ class _HistoryState extends State<History> {
                                                                               height: media.width * 0.05,
                                                                               width: media.width * 0.05,
                                                                               alignment: Alignment.center,
-                                                                              decoration: BoxDecoration(shape: BoxShape.circle, color: (isDarkTheme)
-                                                                                  ? buttonColor.withOpacity(0.3)
-                                                                                  : const Color(0xff319900).withOpacity(0.3)),
+                                                                              decoration: BoxDecoration(shape: BoxShape.circle, color: (isDarkTheme) ? buttonColor.withOpacity(0.3) : const Color(0xff319900).withOpacity(0.3)),
                                                                               child: Container(
                                                                                 height: media.width * 0.025,
                                                                                 width: media.width * 0.025,
-                                                                                decoration: BoxDecoration(shape: BoxShape.circle, color: (isDarkTheme)
-                                                                                    ? buttonColor
-                                                                                    : Color(0xff319900)),
+                                                                                decoration: BoxDecoration(shape: BoxShape.circle, color: (isDarkTheme) ? buttonColor : const Color(0xff319900)),
                                                                               ),
                                                                             ),
                                                                             SizedBox(

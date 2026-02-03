@@ -1238,7 +1238,7 @@ class _CarInformationState extends State<CarInformation> {
                                             child: Text(
                                               _getServiceLocationDisplayText(),
                                               key: ValueKey(
-                                                  'service_location_${myServiceId}_${myServiceLocation}'),
+                                                  'service_location_${myServiceId}_$myServiceLocation'),
                                               style: GoogleFonts.poppins(
                                                 fontSize:
                                                     media.width * fourteen,
@@ -1358,7 +1358,7 @@ class _CarInformationState extends State<CarInformation> {
                                                     // Forçar rebuild imediato para mostrar o nome ANTES de chamar getvehicleType
                                                     if (mounted) {
                                                       await Future.delayed(
-                                                          Duration(
+                                                          const Duration(
                                                               milliseconds:
                                                                   50));
                                                       setState(() {

@@ -352,7 +352,7 @@ class _NavMenuState extends State<NavMenu> {
                       buttonColor.withOpacity(0.4),
                       buttonColor.withOpacity(0.0),
                     ],
-                    stops: [0.0, 0.3, 0.6, 1.0],
+                    stops: const [0.0, 0.3, 0.6, 1.0],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -406,8 +406,8 @@ class _PaymentSuccessState extends State<PaymentSuccess> {
                 ),
                 MyText(
                   text: widget.transfer == null
-                      ? '${languages[choosenLanguage]['text_amount_of']} $addMoney ${userDetails['currency_symbol']} ${languages[choosenLanguage]['text_tranferred_to']} ${userDetails['mobile']}'
-                      : '${languages[choosenLanguage]['text_amount_of']} ${amount.text} ${userDetails['currency_symbol']} ${languages[choosenLanguage]['text_tranferred_to']} ${phonenumber.text}',
+                      ? '${languages[choosenLanguage]['text_amount_of']} ${formatDecimalBr(addMoney)} ${userDetails['currency_symbol']} ${languages[choosenLanguage]['text_tranferred_to']} ${userDetails['mobile']}'
+                      : '${languages[choosenLanguage]['text_amount_of']} ${formatDecimalBr(amount.text)} ${userDetails['currency_symbol']} ${languages[choosenLanguage]['text_tranferred_to']} ${phonenumber.text}',
                   textAlign: TextAlign.center,
                   size: media.width * eighteen,
                   fontweight: FontWeight.w600,

@@ -30,6 +30,33 @@ import 'digitalsignature.dart';
 import 'invoice.dart';
 import 'rides.dart';
 
+/// Rótulo do método de pagamento no idioma do app (apenas exibição).
+String _paymentMethodLabel(dynamic driverReq) {
+  final opt = driverReq['payment_opt']?.toString() ?? '';
+  if (opt == '0') return languages[choosenLanguage]['text_card'] ?? 'Card';
+  if (opt == '1') return languages[choosenLanguage]['text_cashpayment'] ?? 'Cash';
+  if (opt == '2') return languages[choosenLanguage]['text_walletpayment'] ?? 'Wallet';
+  return driverReq['payment_type_string']?.toString() ?? '';
+}
+
+/// Retorna lista de ícones de estrela para a nota (0–5).
+List<Widget> _driverRatingStars(double rating, double size, Color color) {
+  rating = rating.clamp(0.0, 5.0);
+  final full = rating.floor();
+  final hasHalf = (rating - full) >= 0.25 && full < 5;
+  final list = <Widget>[];
+  for (int i = 0; i < 5; i++) {
+    if (i < full) {
+      list.add(Icon(Icons.star, color: color, size: size));
+    } else if (i == full && hasHalf) {
+      list.add(Icon(Icons.star_half, color: color, size: size));
+    } else {
+      list.add(Icon(Icons.star_border, color: color, size: size));
+    }
+  }
+  return list;
+}
+
 class Maps extends StatefulWidget {
   const Maps({Key? key}) : super(key: key);
 
@@ -48,6 +75,7 @@ bool polylineGot = false;
 dynamic _timer;
 String cancelReasonText = '';
 bool notifyCompleted = false;
+DateTime? lastNotifyAdminTap;
 bool logout = false;
 bool deleteAccount = false;
 bool getStartOtp = false;
@@ -165,6 +193,44 @@ class _MapsState extends State<Maps>
         navigateLogout();
       }
     }
+  }
+
+  /// Mostra opção de abrir direção no Google Maps ou no Waze.
+  void _showDirectionAppChoice(dynamic lat, dynamic lng) {
+    if (lat == null || lng == null) return;
+    final title = languages[choosenLanguage]['text_open_direction_with'] ?? 'Open direction with';
+    final googleLabel = languages[choosenLanguage]['text_google_maps'] ?? 'Google Maps';
+    final wazeLabel = languages[choosenLanguage]['text_waze'] ?? 'Waze';
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          backgroundColor: page,
+          title: Text(title, style: GoogleFonts.roboto(color: textColor)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.map, color: Colors.green),
+                title: Text(googleLabel, style: GoogleFonts.roboto(color: textColor)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  openMap(lat, lng);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.navigation, color: Colors.blue[700]),
+                title: Text(wazeLabel, style: GoogleFonts.roboto(color: textColor)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  openWaze(lat, lng);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -2394,7 +2460,7 @@ class _MapsState extends State<Maps>
                                                                             () async {
                                                                           if (driverReq['is_trip_start'] ==
                                                                               0) {
-                                                                            openMap(driverReq['pick_lat'],
+                                                                            _showDirectionAppChoice(driverReq['pick_lat'],
                                                                                 driverReq['pick_lng']);
                                                                           } else if (tripStops
                                                                               .isNotEmpty) {
@@ -2402,7 +2468,7 @@ class _MapsState extends State<Maps>
                                                                               _tripOpenMap = true;
                                                                             });
                                                                           } else {
-                                                                            openMap(driverReq['drop_lat'],
+                                                                            _showDirectionAppChoice(driverReq['drop_lat'],
                                                                                 driverReq['drop_lng']);
                                                                           }
                                                                         },
@@ -2840,13 +2906,13 @@ class _MapsState extends State<Maps>
                                                                                                                   width: media.width * 0.02,
                                                                                                                 ),
                                                                                                                 MyText(
-                                                                                                                  text: driverReq['payment_type_string'].toString(),
+                                                                                                                  text: _paymentMethodLabel(driverReq),
                                                                                                                   size: media.width * sixteen,
                                                                                                                 ),
                                                                                                                 SizedBox(width: media.width * 0.02),
                                                 (driverReq['show_request_eta_amount'] == true && driverReq['request_eta_amount'] != null)
                                                     ? MyText(
-                                                                                                                        text: userDetails['currency_symbol'] + ' ' + driverReq['request_eta_amount'].toStringAsFixed(2),
+                                                                                                                        text: displayCurrencySymbol(userDetails['currency_symbol']) + ' ' + formatDecimalBr(driverReq['request_eta_amount']),
                                                                                                                         size: media.width * fourteen,
                                                                                                                         fontweight: FontWeight.w700,
                                                                                                                       )
@@ -3077,7 +3143,7 @@ class _MapsState extends State<Maps>
                                                                                             decoration: BoxDecoration(color: topBar, borderRadius: BorderRadius.circular(media.width * 0.02), border: Border.all(color: Colors.grey.withOpacity(0.5))),
                                                                                             child: (driverReq['accepted_at'] == null && driverReq['show_request_eta_amount'] == true && driverReq['request_eta_amount'] != null)
                                                                                                 ? MyText(
-                                                                                                    text: userDetails['currency_symbol'] + ' ' + ((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'].toString() : driverReq['request_eta_amount'].toString()),
+                                                                                                    text: displayCurrencySymbol(userDetails['currency_symbol']) + ' ' + formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount']),
                                                                                                     size: media.width * fourteen,
                                                                                                     color: isDarkTheme == true ? Colors.black : textColor,
                                                                                                   )
@@ -3250,186 +3316,115 @@ class _MapsState extends State<Maps>
                                                                             Column(children: [
                                                                               Container(
                                                                                 padding: EdgeInsets.all(media.width * 0.02),
-                                                                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: page, boxShadow: [
-                                                                                  BoxShadow(blurRadius: 2.0, spreadRadius: 2.0, color: (isDarkTheme == true) ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
-                                                                                ]),
-                                                                                child: Row(
+                                                                                decoration: BoxDecoration(
+                                                                                  borderRadius: BorderRadius.circular(12),
+                                                                                  color: page,
+                                                                                  border: Border.all(color: const Color(0xFF7B1FA2), width: 2),
+                                                                                  boxShadow: [
+                                                                                    BoxShadow(blurRadius: 2.0, spreadRadius: 2.0, color: (isDarkTheme == true) ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
+                                                                                  ],
+                                                                                ),
+                                                                                child: Column(
+                                                                                  mainAxisSize: MainAxisSize.min,
+                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
                                                                                   children: [
-                                                                                    Container(
-                                                                                      height: media.width * 0.15,
-                                                                                      width: media.width * 0.15,
-                                                                                      decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']['data']['profile_picture']), fit: BoxFit.cover)),
+                                                                                    Row(
+                                                                                      children: [
+                                                                                        Container(
+                                                                                          height: media.width * 0.15,
+                                                                                          width: media.width * 0.15,
+                                                                                          decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']['data']['profile_picture']), fit: BoxFit.cover)),
+                                                                                        ),
+                                                                                        SizedBox(width: media.width * 0.03),
+                                                                                        Expanded(
+                                                                                          child: MyText(
+                                                                                            text: driverReq['userDetail']['data']['name'],
+                                                                                            size: media.width * eighteen,
+                                                                                            color: textColor,
+                                                                                            maxLines: 1,
+                                                                                            overflow: TextOverflow.ellipsis,
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
                                                                                     ),
-                                                                                    SizedBox(width: media.width * 0.03),
-                                                                                    (driverReq['is_trip_start'] == 1)
-                                                                                        ? Row(
-                                                                                            children: [
-                                                                                              SizedBox(
-                                                                                                width: media.width * 0.3,
-                                                                                                child: MyText(
-                                                                                                  text: driverReq['userDetail']['data']['name'],
-                                                                                                  size: media.width * eighteen,
-                                                                                                  color: textColor,
-                                                                                                  maxLines: 1,
-                                                                                                ),
-                                                                                              ),
-                                                                                              SizedBox(
-                                                                                                width: media.width * 0.09,
-                                                                                              ),
-                                                                                              Row(
-                                                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                                                children: [
-                                                                                                  SizedBox(
-                                                                                                    width: media.width * 0.06,
-                                                                                                    child: (driverReq['payment_opt'].toString() == '1')
-                                                                                                        ? Image.asset(
-                                                                                                            'assets/images/cash.png',
-                                                                                                            fit: BoxFit.contain,
-                                                                                                          )
-                                                                                                        : (driverReq['payment_opt'].toString() == '2')
-                                                                                                            ? Image.asset(
-                                                                                                                'assets/images/wallet.png',
-                                                                                                                fit: BoxFit.contain,
-                                                                                                              )
-                                                                                                            : (driverReq['payment_opt'].toString() == '0')
-                                                                                                                ? Image.asset(
-                                                                                                                    'assets/images/card.png',
-                                                                                                                    fit: BoxFit.contain,
-                                                                                                                  )
-                                                                                                                : Container(),
-                                                                                                  ),
-                                                                                                  SizedBox(
-                                                                                                    width: media.width * 0.03,
-                                                                                                  ),
-                                                                                                  MyText(text: driverReq['payment_type_string'].toString(), size: media.width * sixteen, color: textColor),
-                                                                                                ],
-                                                                                              ),
-                                                                                            ],
-                                                                                          )
-                                                                                        : SizedBox(
-                                                                                            width: media.width * 0.3,
-                                                                                            height: media.width * 0.25,
-                                                                                            child: Column(
-                                                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                                                                    SizedBox(height: media.width * 0.02),
+                                                                                    Row(
+                                                                                      children: [
+                                                                                        Builder(
+                                                                                          builder: (context) {
+                                                                                            final rating = double.tryParse((driverReq['userDetail']['data']['rating'] ?? 0).toString()) ?? 0.0;
+                                                                                            final ratingStr = rating == rating.floor() ? rating.toInt().toString() : rating.toStringAsFixed(1);
+                                                                                            return Row(
                                                                                               children: [
-                                                                                                SizedBox(
-                                                                                                  width: media.width * 0.3,
-                                                                                                  child: MyText(
-                                                                                                    text: driverReq['userDetail']['data']['name'],
-                                                                                                    size: media.width * eighteen,
-                                                                                                    color: textColor,
-                                                                                                    maxLines: 1,
+                                                                                                Text(ratingStr, style: GoogleFonts.poppins(fontSize: media.width * twelve, color: textColor, fontWeight: FontWeight.w600)),
+                                                                                                SizedBox(width: media.width * 0.02),
+                                                                                                ..._driverRatingStars(rating, media.width * 0.045, buttonColor),
+                                                                                              ],
+                                                                                            );
+                                                                                          },
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                    SizedBox(height: media.width * 0.015),
+                                                                                    Row(
+                                                                                      children: [
+                                                                                        SizedBox(
+                                                                                          width: media.width * 0.06,
+                                                                                          child: (driverReq['payment_opt'].toString() == '1')
+                                                                                              ? Image.asset('assets/images/cash.png', fit: BoxFit.contain)
+                                                                                              : (driverReq['payment_opt'].toString() == '2')
+                                                                                                  ? Image.asset('assets/images/wallet.png', fit: BoxFit.contain)
+                                                                                                  : (driverReq['payment_opt'].toString() == '0')
+                                                                                                      ? Image.asset('assets/images/card.png', fit: BoxFit.contain)
+                                                                                                      : Container(),
+                                                                                        ),
+                                                                                        SizedBox(width: media.width * 0.02),
+                                                                                        Expanded(
+                                                                                          child: MyText(
+                                                                                            text: _paymentMethodLabel(driverReq),
+                                                                                            size: media.width * sixteen,
+                                                                                            color: textColor,
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                    SizedBox(height: media.width * 0.02),
+                                                                                    Row(
+                                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                      children: [
+                                                                                        Expanded(
+                                                                                          child: MyText(
+                                                                                            text: displayCurrencySymbol(driverReq['requested_currency_symbol'] ?? userDetails['currency_symbol']) + ' ' + formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount']),
+                                                                                            size: media.width * sixteen,
+                                                                                            color: textColor,
+                                                                                            fontweight: FontWeight.w700,
+                                                                                            maxLines: 1,
+                                                                                            overflow: TextOverflow.ellipsis,
+                                                                                          ),
+                                                                                        ),
+                                                                                        if (driverReq['is_trip_start'] != 1 && driverReq['if_dispatch'] != true)
+                                                                                          InkWell(
+                                                                                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatPage())),
+                                                                                            child: Stack(
+                                                                                              children: [
+                                                                                                Container(
+                                                                                                  alignment: Alignment.center,
+                                                                                                  height: media.width * 0.096,
+                                                                                                  width: media.width * 0.096,
+                                                                                                  decoration: BoxDecoration(border: Border.all(color: const Color(0XFFf3f3f3), width: 1.5)),
+                                                                                                  child: Image.asset('assets/images/ridemessage.png', width: media.width * 0.05),
+                                                                                                ),
+                                                                                                if (chatList.where((element) => element['from_type'] == 1 && element['seen'] == 0).isNotEmpty)
+                                                                                                  Positioned(
+                                                                                                    right: media.width * 0.01,
+                                                                                                    top: media.width * 0.01,
+                                                                                                    child: MyText(text: chatList.where((element) => element['from_type'] == 1 && element['seen'] == 0).length.toString(), size: media.width * twelve, color: const Color(0xffFF0000)),
                                                                                                   ),
-                                                                                                ),
-                                                                                                Row(
-                                                                                                  children: [
-                                                                                                    SizedBox(
-                                                                                                      width: media.width * 0.06,
-                                                                                                      child: (driverReq['payment_opt'].toString() == '1')
-                                                                                                          ? Image.asset(
-                                                                                                              'assets/images/cash.png',
-                                                                                                              fit: BoxFit.contain,
-                                                                                                            )
-                                                                                                          : (driverReq['payment_opt'].toString() == '2')
-                                                                                                              ? Image.asset(
-                                                                                                                  'assets/images/wallet.png',
-                                                                                                                  fit: BoxFit.contain,
-                                                                                                                )
-                                                                                                              : (driverReq['payment_opt'].toString() == '0')
-                                                                                                                  ? Image.asset(
-                                                                                                                      'assets/images/card.png',
-                                                                                                                      fit: BoxFit.contain,
-                                                                                                                    )
-                                                                                                                  : Container(),
-                                                                                                    ),
-                                                                                                    SizedBox(
-                                                                                                      width: media.width * 0.03,
-                                                                                                    ),
-                                                                                                    MyText(text: driverReq['payment_type_string'].toString(), size: media.width * sixteen, color: textColor),
-                                                                                                  ],
-                                                                                                ),
-                                                                                                Row(
-                                                                                                  children: [
-                                                                                                    Icon(
-                                                                                                      Icons.star,
-                                                                                                      color: buttonColor,
-                                                                                                    ),
-                                                                                                    SizedBox(
-                                                                                                      width: media.width * 0.01,
-                                                                                                    ),
-                                                                                                    Text(
-                                                                                                      driverReq['userDetail']['data']['rating'].toString(),
-                                                                                                      style: GoogleFonts.poppins(fontSize: media.width * sixteen, color: textColor),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
                                                                                               ],
                                                                                             ),
                                                                                           ),
-                                                                                    (driverReq['is_trip_start'] == 1)
-                                                                                        ? Container()
-                                                                                        : Expanded(
-                                                                                            child: Row(
-                                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                              children: [
-                                                                                                (driverReq['if_dispatch'] == true)
-                                                                                                    ? Container()
-                                                                                                    : InkWell(
-                                                                                                        onTap: () {
-                                                                                                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatPage()));
-                                                                                                        },
-                                                                                                        child: Column(
-                                                                                                          children: [
-                                                                                                            Row(
-                                                                                                              children: [
-                                                                                                                Stack(
-                                                                                                                  children: [
-                                                                                                                    Container(
-                                                                                                                      alignment: Alignment.center,
-                                                                                                                      height: media.width * 0.096,
-                                                                                                                      width: media.width * 0.096,
-                                                                                                                      decoration: BoxDecoration(border: Border.all(color: const Color(0XFFf3f3f3), width: 1.5)),
-                                                                                                                      child: Image.asset(
-                                                                                                                        'assets/images/ridemessage.png',
-                                                                                                                        width: media.width * 0.05,
-                                                                                                                      ),
-                                                                                                                    ),
-                                                                                                                    (chatList.where((element) => element['from_type'] == 1 && element['seen'] == 0).isNotEmpty)
-                                                                                                                        ? Positioned(
-                                                                                                                            right: media.width * 0.01,
-                                                                                                                            top: media.width * 0.01,
-                                                                                                                            child: MyText(
-                                                                                                                              text: chatList.where((element) => element['from_type'] == 1 && element['seen'] == 0).length.toString(),
-                                                                                                                              size: media.width * twelve,
-                                                                                                                              color: const Color(0xffFF0000),
-                                                                                                                            ))
-                                                                                                                        : Container()
-                                                                                                                  ],
-                                                                                                                ),
-                                                                                                              ],
-                                                                                                            ),
-                                                                                                          ],
-                                                                                                        ),
-                                                                                                      ),
-                                                                                                InkWell(
-                                                                                                  onTap: () {
-                                                                                                    makingPhoneCall(driverReq['userDetail']['data']['mobile']);
-                                                                                                  },
-                                                                                                  child: Container(
-                                                                                                    alignment: Alignment.center,
-                                                                                                    height: media.width * 0.096,
-                                                                                                    width: media.width * 0.096,
-                                                                                                    decoration: BoxDecoration(border: Border.all(color: const Color(0XFFf3f3f3), width: 1.5)),
-                                                                                                    child: Image.asset(
-                                                                                                      'assets/images/callride.png',
-                                                                                                      width: media.width * 0.05,
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                          ),
+                                                                                      ],
+                                                                                    ),
                                                                                   ],
                                                                                 ),
                                                                               ),
@@ -3617,7 +3612,7 @@ class _MapsState extends State<Maps>
                                                                                             decoration: BoxDecoration(color: topBar, borderRadius: BorderRadius.circular(media.width * 0.02), border: Border.all(color: Colors.grey.withOpacity(0.5))),
                                                                                             child: (driverReq['accepted_at'] == null && driverReq['show_request_eta_amount'] == true && driverReq['request_eta_amount'] != null)
                                                                                                 ? MyText(
-                                                                                                    text: userDetails['currency_symbol'] + ' ' + ((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'].toString() : driverReq['request_eta_amount'].toString()),
+                                                                                                    text: displayCurrencySymbol(userDetails['currency_symbol']) + ' ' + formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount']),
                                                                                                     size: media.width * fourteen,
                                                                                                     color: isDarkTheme == true ? Colors.black : textColor,
                                                                                                   )
@@ -4004,202 +3999,115 @@ class _MapsState extends State<Maps>
                                                                             ),
                                                                             Container(
                                                                               padding: EdgeInsets.all(media.width * 0.02),
-                                                                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: page, boxShadow: [
-                                                                                BoxShadow(blurRadius: 2.0, spreadRadius: 2.0, color: (isDarkTheme == true) ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
-                                                                              ]),
-                                                                              child: Row(
+                                                                              decoration: BoxDecoration(
+                                                                                borderRadius: BorderRadius.circular(12),
+                                                                                color: page,
+                                                                                border: Border.all(color: const Color(0xFF7B1FA2), width: 2),
+                                                                                boxShadow: [
+                                                                                  BoxShadow(blurRadius: 2.0, spreadRadius: 2.0, color: (isDarkTheme == true) ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2))
+                                                                                ],
+                                                                              ),
+                                                                              child: Column(
+                                                                                mainAxisSize: MainAxisSize.min,
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
                                                                                 children: [
-                                                                                  Container(
-                                                                                    height: media.width * 0.15,
-                                                                                    width: media.width * 0.15,
-                                                                                    decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']['data']['profile_picture']), fit: BoxFit.cover)),
+                                                                                  Row(
+                                                                                    children: [
+                                                                                      Container(
+                                                                                        height: media.width * 0.15,
+                                                                                        width: media.width * 0.15,
+                                                                                        decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']['data']['profile_picture']), fit: BoxFit.cover)),
+                                                                                      ),
+                                                                                      SizedBox(width: media.width * 0.03),
+                                                                                      Expanded(
+                                                                                        child: MyText(
+                                                                                          text: driverReq['userDetail']['data']['name'],
+                                                                                          size: media.width * eighteen,
+                                                                                          color: textColor,
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                        ),
+                                                                                      ),
+                                                                                    ],
                                                                                   ),
-                                                                                  SizedBox(width: media.width * 0.03),
-                                                                                  (driverReq['is_trip_start'] == 1)
-                                                                                      ? Row(
-                                                                                          children: [
-                                                                                            SizedBox(
-                                                                                              width: media.width * 0.3,
-                                                                                              child: MyText(
-                                                                                                text: driverReq['userDetail']['data']['name'],
-                                                                                                size: media.width * eighteen,
-                                                                                                color: textColor,
-                                                                                                maxLines: 1,
-                                                                                              ),
-                                                                                            ),
-                                                                                            SizedBox(
-                                                                                              width: media.width * 0.09,
-                                                                                            ),
-                                                                                            Column(
-                                                                                              children: [
-                                                                                                (driverReq['is_bid_ride'] == 1)
-                                                                                                    ? MyText(
-                                                                                                        text: driverReq['requested_currency_symbol'] + ' ' + driverReq['accepted_ride_fare'].toString(),
-                                                                                                        size: media.width * eighteen,
-                                                                                                        color: textColor,
-                                                                                                      )
-                                                                                                    : MyText(
-                                                                                                        text: driverReq['requested_currency_symbol'] + ' ' + driverReq['request_eta_amount'].toString(),
-                                                                                                        size: media.width * eighteen,
-                                                                                                        color: textColor,
-                                                                                                        maxLines: 1,
-                                                                                                      ),
-                                                                                                Row(
-                                                                                                  mainAxisAlignment: MainAxisAlignment.end,
-                                                                                                  children: [
-                                                                                                    SizedBox(
-                                                                                                      width: media.width * 0.06,
-                                                                                                      child: (driverReq['payment_opt'].toString() == '1')
-                                                                                                          ? Image.asset(
-                                                                                                              'assets/images/cash.png',
-                                                                                                              fit: BoxFit.contain,
-                                                                                                            )
-                                                                                                          : (driverReq['payment_opt'].toString() == '2')
-                                                                                                              ? Image.asset(
-                                                                                                                  'assets/images/wallet.png',
-                                                                                                                  fit: BoxFit.contain,
-                                                                                                                )
-                                                                                                              : (driverReq['payment_opt'].toString() == '0')
-                                                                                                                  ? Image.asset(
-                                                                                                                      'assets/images/card.png',
-                                                                                                                      fit: BoxFit.contain,
-                                                                                                                    )
-                                                                                                                  : Container(),
-                                                                                                    ),
-                                                                                                    SizedBox(
-                                                                                                      width: media.width * 0.03,
-                                                                                                    ),
-                                                                                                    MyText(text: driverReq['payment_type_string'].toString(), size: media.width * sixteen, color: textColor),
-                                                                                                  ],
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                          ],
-                                                                                        )
-                                                                                      : SizedBox(
-                                                                                          width: media.width * 0.3,
-                                                                                          height: media.width * 0.25,
-                                                                                          child: Column(
-                                                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                                                                  SizedBox(height: media.width * 0.02),
+                                                                                  Row(
+                                                                                    children: [
+                                                                                      Builder(
+                                                                                        builder: (context) {
+                                                                                          final rating = double.tryParse((driverReq['userDetail']['data']['rating'] ?? 0).toString()) ?? 0.0;
+                                                                                          final ratingStr = rating == rating.floor() ? rating.toInt().toString() : rating.toStringAsFixed(1);
+                                                                                          return Row(
                                                                                             children: [
-                                                                                              SizedBox(
-                                                                                                width: media.width * 0.3,
-                                                                                                child: MyText(
-                                                                                                  text: driverReq['userDetail']['data']['name'],
-                                                                                                  size: media.width * eighteen,
-                                                                                                  color: textColor,
-                                                                                                  maxLines: 1,
+                                                                                              Text(ratingStr, style: GoogleFonts.poppins(fontSize: media.width * twelve, color: textColor, fontWeight: FontWeight.w600)),
+                                                                                              SizedBox(width: media.width * 0.02),
+                                                                                              ..._driverRatingStars(rating, media.width * 0.045, buttonColor),
+                                                                                            ],
+                                                                                          );
+                                                                                        },
+                                                                                      ),
+                                                                                    ],
+                                                                                  ),
+                                                                                  SizedBox(height: media.width * 0.015),
+                                                                                  Row(
+                                                                                    children: [
+                                                                                      SizedBox(
+                                                                                        width: media.width * 0.06,
+                                                                                        child: (driverReq['payment_opt'].toString() == '1')
+                                                                                            ? Image.asset('assets/images/cash.png', fit: BoxFit.contain)
+                                                                                            : (driverReq['payment_opt'].toString() == '2')
+                                                                                                ? Image.asset('assets/images/wallet.png', fit: BoxFit.contain)
+                                                                                                : (driverReq['payment_opt'].toString() == '0')
+                                                                                                    ? Image.asset('assets/images/card.png', fit: BoxFit.contain)
+                                                                                                    : Container(),
+                                                                                      ),
+                                                                                      SizedBox(width: media.width * 0.02),
+                                                                                      Expanded(
+                                                                                        child: MyText(
+                                                                                          text: _paymentMethodLabel(driverReq),
+                                                                                          size: media.width * sixteen,
+                                                                                          color: textColor,
+                                                                                        ),
+                                                                                      ),
+                                                                                    ],
+                                                                                  ),
+                                                                                  SizedBox(height: media.width * 0.02),
+                                                                                  Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                    children: [
+                                                                                      Expanded(
+                                                                                        child: MyText(
+                                                                                          text: displayCurrencySymbol(driverReq['requested_currency_symbol'] ?? userDetails['currency_symbol']) + ' ' + formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount']),
+                                                                                          size: media.width * sixteen,
+                                                                                          color: textColor,
+                                                                                          fontweight: FontWeight.w700,
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                        ),
+                                                                                      ),
+                                                                                      if (driverReq['is_trip_start'] != 1 && driverReq['if_dispatch'] != true)
+                                                                                        InkWell(
+                                                                                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatPage())),
+                                                                                          child: Stack(
+                                                                                            children: [
+                                                                                              Container(
+                                                                                                alignment: Alignment.center,
+                                                                                                height: media.width * 0.096,
+                                                                                                width: media.width * 0.096,
+                                                                                                decoration: BoxDecoration(border: Border.all(color: const Color(0XFFf3f3f3), width: 1.5)),
+                                                                                                child: Image.asset('assets/images/ridemessage.png', width: media.width * 0.05),
+                                                                                              ),
+                                                                                              if (chatList.where((element) => element['from_type'] == 1 && element['seen'] == 0).isNotEmpty)
+                                                                                                Positioned(
+                                                                                                  right: media.width * 0.01,
+                                                                                                  top: media.width * 0.01,
+                                                                                                  child: MyText(text: chatList.where((element) => element['from_type'] == 1 && element['seen'] == 0).length.toString(), size: media.width * twelve, color: const Color(0xffFF0000)),
                                                                                                 ),
-                                                                                              ),
-                                                                                              Row(
-                                                                                                children: [
-                                                                                                  SizedBox(
-                                                                                                    width: media.width * 0.06,
-                                                                                                    child: (driverReq['payment_opt'].toString() == '1')
-                                                                                                        ? Image.asset(
-                                                                                                            'assets/images/cash.png',
-                                                                                                            fit: BoxFit.contain,
-                                                                                                          )
-                                                                                                        : (driverReq['payment_opt'].toString() == '2')
-                                                                                                            ? Image.asset(
-                                                                                                                'assets/images/wallet.png',
-                                                                                                                fit: BoxFit.contain,
-                                                                                                              )
-                                                                                                            : (driverReq['payment_opt'].toString() == '0')
-                                                                                                                ? Image.asset(
-                                                                                                                    'assets/images/card.png',
-                                                                                                                    fit: BoxFit.contain,
-                                                                                                                  )
-                                                                                                                : Container(),
-                                                                                                  ),
-                                                                                                  SizedBox(
-                                                                                                    width: media.width * 0.03,
-                                                                                                  ),
-                                                                                                  MyText(text: driverReq['payment_type_string'].toString(), size: media.width * sixteen, color: textColor),
-                                                                                                ],
-                                                                                              ),
-                                                                                              Row(
-                                                                                                children: [
-                                                                                                  Icon(
-                                                                                                    Icons.star,
-                                                                                                    color: buttonColor,
-                                                                                                  ),
-                                                                                                  SizedBox(
-                                                                                                    width: media.width * 0.01,
-                                                                                                  ),
-                                                                                                  Text(
-                                                                                                    driverReq['userDetail']['data']['rating'].toString(),
-                                                                                                    style: GoogleFonts.poppins(fontSize: media.width * sixteen, color: textColor),
-                                                                                                  ),
-                                                                                                ],
-                                                                                              ),
                                                                                             ],
                                                                                           ),
                                                                                         ),
-                                                                                  (driverReq['is_trip_start'] == 1)
-                                                                                      ? Container()
-                                                                                      : Expanded(
-                                                                                          child: Row(
-                                                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                            children: [
-                                                                                              (driverReq['if_dispatch'] == true)
-                                                                                                  ? Container()
-                                                                                                  : InkWell(
-                                                                                                      onTap: () {
-                                                                                                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatPage()));
-                                                                                                      },
-                                                                                                      child: Column(
-                                                                                                        children: [
-                                                                                                          Row(
-                                                                                                            children: [
-                                                                                                              Stack(
-                                                                                                                children: [
-                                                                                                                  Container(
-                                                                                                                    alignment: Alignment.center,
-                                                                                                                    height: media.width * 0.096,
-                                                                                                                    width: media.width * 0.096,
-                                                                                                                    decoration: BoxDecoration(border: Border.all(color: const Color(0XFFf3f3f3), width: 1.5)),
-                                                                                                                    child: Image.asset(
-                                                                                                                      'assets/images/ridemessage.png',
-                                                                                                                      width: media.width * 0.05,
-                                                                                                                    ),
-                                                                                                                  ),
-                                                                                                                  (chatList.where((element) => element['from_type'] == 1 && element['seen'] == 0).isNotEmpty)
-                                                                                                                      ? Positioned(
-                                                                                                                          right: media.width * 0.01,
-                                                                                                                          top: media.width * 0.01,
-                                                                                                                          child: MyText(
-                                                                                                                            text: chatList.where((element) => element['from_type'] == 1 && element['seen'] == 0).length.toString(),
-                                                                                                                            size: media.width * twelve,
-                                                                                                                            color: const Color(0xffFF0000),
-                                                                                                                          ))
-                                                                                                                      : Container()
-                                                                                                                ],
-                                                                                                              ),
-                                                                                                            ],
-                                                                                                          ),
-                                                                                                        ],
-                                                                                                      ),
-                                                                                                    ),
-                                                                                              InkWell(
-                                                                                                onTap: () {
-                                                                                                  makingPhoneCall(driverReq['userDetail']['data']['mobile']);
-                                                                                                },
-                                                                                                child: Container(
-                                                                                                  alignment: Alignment.center,
-                                                                                                  height: media.width * 0.096,
-                                                                                                  width: media.width * 0.096,
-                                                                                                  decoration: BoxDecoration(border: Border.all(color: const Color(0XFFf3f3f3), width: 1.5)),
-                                                                                                  child: Image.asset(
-                                                                                                    'assets/images/callride.png',
-                                                                                                    width: media.width * 0.05,
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
+                                                                                    ],
+                                                                                  ),
                                                                                 ],
                                                                               ),
                                                                             ),
@@ -4519,7 +4427,7 @@ class _MapsState extends State<Maps>
                                               padding: EdgeInsets.all(
                                                   media.width * 0.05),
                                               width: media.width * 0.8,
-                                              height: media.width * 0.7,
+                                              constraints: BoxConstraints(maxHeight: media.height * 0.75),
                                               decoration: BoxDecoration(
                                                   borderRadius:
                                                       BorderRadius.circular(10),
@@ -4531,7 +4439,9 @@ class _MapsState extends State<Maps>
                                                         spreadRadius: 2,
                                                         blurRadius: 2)
                                                   ]),
-                                              child: Column(
+                                              child: SingleChildScrollView(
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   Text(
                                                     languages[choosenLanguage]
@@ -4852,6 +4762,7 @@ class _MapsState extends State<Maps>
                                                   )
                                                 ],
                                               ),
+                                            ),
                                             ),
                                           ],
                                         ),
@@ -6527,6 +6438,17 @@ class _MapsState extends State<Maps>
                                                       children: [
                                                         InkWell(
                                                           onTap: () async {
+                                                            const cooldown = Duration(seconds: 10);
+                                                            final now = DateTime.now();
+                                                            if (lastNotifyAdminTap != null &&
+                                                                now.difference(lastNotifyAdminTap!) < cooldown) {
+                                                              final remaining = 10 - now.difference(lastNotifyAdminTap!).inSeconds;
+                                                              final msg = (languages[choosenLanguage]['text_wait_seconds_to_notify'] ?? 'Please wait %s seconds to notify again')
+                                                                  .replaceAll('%s', remaining.toString());
+                                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                                                              return;
+                                                            }
+                                                            lastNotifyAdminTap = now;
                                                             setState(() {
                                                               notifyCompleted =
                                                                   false;
@@ -6545,48 +6467,51 @@ class _MapsState extends State<Maps>
                                                                 .all(media
                                                                         .width *
                                                                     0.05),
-                                                            child: Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment.start,
                                                               children: [
-                                                                Column(
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .start,
+                                                                Text(
+                                                                  languages[
+                                                                          choosenLanguage]
+                                                                      [
+                                                                      'text_notifyadmin'],
+                                                                  style: GoogleFonts.poppins(
+                                                                      fontSize: media.width *
+                                                                          sixteen,
+                                                                      color:
+                                                                          textColor,
+                                                                      fontWeight:
+                                                                          FontWeight.w600),
+                                                                ),
+                                                                SizedBox(height: media.width * 0.03),
+                                                                Row(
                                                                   children: [
-                                                                    Text(
-                                                                      languages[
-                                                                              choosenLanguage]
-                                                                          [
-                                                                          'text_notifyadmin'],
-                                                                      style: GoogleFonts.poppins(
-                                                                          fontSize: media.width *
-                                                                              sixteen,
-                                                                          color:
-                                                                              textColor,
-                                                                          fontWeight:
-                                                                              FontWeight.w600),
+                                                                    Icon(Icons.notification_add, color: textColor, size: media.width * 0.1),
+                                                                    SizedBox(width: media.width * 0.03),
+                                                                    Expanded(
+                                                                      child: Text(
+                                                                        languages[choosenLanguage]['text_click_bell_to_notify'] ?? 'Click on the bell to notify',
+                                                                        style: GoogleFonts.poppins(
+                                                                          fontSize: media.width * twelve,
+                                                                          color: textColor.withOpacity(0.8),
+                                                                        ),
+                                                                      ),
                                                                     ),
-                                                                    (notifyCompleted ==
-                                                                            true)
-                                                                        ? Container(
-                                                                            padding:
-                                                                                EdgeInsets.only(top: media.width * 0.01),
-                                                                            child:
-                                                                                Text(
-                                                                              languages[choosenLanguage]['text_notifysuccess'],
-                                                                              style: GoogleFonts.poppins(
-                                                                                fontSize: media.width * twelve,
-                                                                                color: const Color(0xff319900),
-                                                                              ),
-                                                                            ),
-                                                                          )
-                                                                        : Container()
                                                                   ],
                                                                 ),
-                                                                const Icon(Icons
-                                                                    .notification_add)
+                                                                (notifyCompleted == true)
+                                                                    ? Padding(
+                                                                        padding: EdgeInsets.only(top: media.width * 0.02),
+                                                                        child: Text(
+                                                                          languages[choosenLanguage]['text_notifysuccess'],
+                                                                          style: GoogleFonts.poppins(
+                                                                            fontSize: media.width * twelve,
+                                                                            color: const Color(0xff319900),
+                                                                          ),
+                                                                        ),
+                                                                      )
+                                                                    : const SizedBox.shrink(),
                                                               ],
                                                             ),
                                                           ),
@@ -6767,7 +6692,7 @@ class _MapsState extends State<Maps>
                                                                     InkWell(
                                                                       onTap:
                                                                           () {
-                                                                        openMap(
+                                                                        _showDirectionAppChoice(
                                                                             tripStops[i]['latitude'],
                                                                             tripStops[i]['longitude']);
                                                                       },

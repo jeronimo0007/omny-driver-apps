@@ -52,9 +52,18 @@ class _ProfileInformationState extends State<ProfileInformation>
 
   @override
   void initState() {
-    _cpfMaskFormatter = MaskTextInputFormatter(mask: '###.###.###-##', filter: {"#": RegExp(r'[0-9]')}, type: MaskAutoCompletionType.lazy);
-    _cepMaskFormatter = MaskTextInputFormatter(mask: '#####-###', filter: {"#": RegExp(r'[0-9]')}, type: MaskAutoCompletionType.lazy);
-    _birthDateMaskFormatter = MaskTextInputFormatter(mask: '##/##/####', filter: {"#": RegExp(r'[0-9]')}, type: MaskAutoCompletionType.lazy);
+    _cpfMaskFormatter = MaskTextInputFormatter(
+        mask: '###.###.###-##',
+        filter: {"#": RegExp(r'[0-9]')},
+        type: MaskAutoCompletionType.lazy);
+    _cepMaskFormatter = MaskTextInputFormatter(
+        mask: '#####-###',
+        filter: {"#": RegExp(r'[0-9]')},
+        type: MaskAutoCompletionType.lazy);
+    _birthDateMaskFormatter = MaskTextInputFormatter(
+        mask: '##/##/####',
+        filter: {"#": RegExp(r'[0-9]')},
+        type: MaskAutoCompletionType.lazy);
     countryCode();
     super.initState();
     _controller = AnimationController(vsync: this);
@@ -98,7 +107,10 @@ class _ProfileInformationState extends State<ProfileInformation>
     var media = MediaQuery.of(context).size;
     return SizedBox(
       width: media.width * 0.9,
-      child: MyText(text: label, size: media.width * sixteen, fontweight: FontWeight.bold),
+      child: MyText(
+          text: label,
+          size: media.width * sixteen,
+          fontweight: FontWeight.bold),
     );
   }
 
@@ -108,17 +120,21 @@ class _ProfileInformationState extends State<ProfileInformation>
       height: media.width * 0.13,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: (isDarkTheme == true) ? textColor.withOpacity(0.4) : underline),
+        border: Border.all(
+            color:
+                (isDarkTheme == true) ? textColor.withOpacity(0.4) : underline),
         color: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
       ),
       padding: const EdgeInsets.only(left: 12, right: 12),
       child: TextFormField(
         controller: ctrl,
         onChanged: (_) => setState(() {}),
-        style: GoogleFonts.poppins(fontSize: media.width * sixteen, color: textColor),
+        style: GoogleFonts.poppins(
+            fontSize: media.width * sixteen, color: textColor),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.poppins(fontSize: media.width * sixteen, color: hintColor),
+          hintStyle: GoogleFonts.poppins(
+              fontSize: media.width * sixteen, color: hintColor),
           border: InputBorder.none,
         ),
       ),
@@ -140,30 +156,45 @@ class _ProfileInformationState extends State<ProfileInformation>
       emailText.text = userDetails['email'];
       userCpf = userDetails['document']?.toString() ?? userCpf;
       userBirthDate = userDetails['birth_date']?.toString() ?? userBirthDate;
-      userCep = userDetails['postal_code']?.toString() ?? userDetails['zipcode']?.toString() ?? userCep;
+      userCep = userDetails['postal_code']?.toString() ??
+          userDetails['zipcode']?.toString() ??
+          userCep;
       userAddress = userDetails['address']?.toString() ?? userAddress;
       userNumber = userDetails['address_number']?.toString() ?? userNumber;
       userComplement = userDetails['complement']?.toString() ?? userComplement;
-      userNeighborhood = userDetails['neighborhood']?.toString() ?? userNeighborhood;
+      userNeighborhood =
+          userDetails['neighborhood']?.toString() ?? userNeighborhood;
       userCity = userDetails['city']?.toString() ?? userCity;
       userState = userDetails['state']?.toString() ?? userState;
       userGender = userDetails['gender']?.toString() ?? userGender;
-      userPassengerPreference = userDetails['passenger_preference']?.toString() ?? userPassengerPreference;
+      userPassengerPreference =
+          userDetails['passenger_preference']?.toString() ??
+              userPassengerPreference;
       _selectedState = userState;
       _selectedGender = userGender;
       _selectedPassengerPreference = userPassengerPreference;
       final doc = (userDetails['document'] ?? userCpf).toString();
       final docDigits = doc.replaceAll(RegExp(r'[^\d]'), '');
-      if (docDigits.length == 11) cpfController.text = '${docDigits.substring(0, 3)}.${docDigits.substring(3, 6)}.${docDigits.substring(6, 9)}-${docDigits.substring(9)}';
-      else cpfController.text = doc;
+      if (docDigits.length == 11) {
+        cpfController.text =
+            '${docDigits.substring(0, 3)}.${docDigits.substring(3, 6)}.${docDigits.substring(6, 9)}-${docDigits.substring(9)}';
+      } else {
+        cpfController.text = doc;
+      }
       if (userBirthDate.isNotEmpty && userBirthDate.length >= 10) {
         final p = userBirthDate.split('-');
         if (p.length == 3) birthDateController.text = '${p[2]}/${p[1]}/${p[0]}';
       }
-      final pc = (userDetails['postal_code'] ?? userDetails['zipcode'] ?? userCep).toString();
+      final pc =
+          (userDetails['postal_code'] ?? userDetails['zipcode'] ?? userCep)
+              .toString();
       final pcDigits = pc.replaceAll(RegExp(r'[^\d]'), '');
-      if (pcDigits.length == 8) cepController.text = '${pcDigits.substring(0, 5)}-${pcDigits.substring(5)}';
-      else cepController.text = pc;
+      if (pcDigits.length == 8) {
+        cepController.text =
+            '${pcDigits.substring(0, 5)}-${pcDigits.substring(5)}';
+      } else {
+        cepController.text = pc;
+      }
       addressController.text = userAddress;
       numberController.text = userNumber;
       complementController.text = userComplement;
@@ -389,98 +420,161 @@ class _ProfileInformationState extends State<ProfileInformation>
                               )),
                           if (widget.from == 'edit') ...[
                             SizedBox(height: media.height * 0.02),
-                            _buildEditFieldLabel(languages[choosenLanguage]['text_cpf'] ?? 'CPF'),
+                            _buildEditFieldLabel(languages[choosenLanguage]
+                                    ['text_cpf'] ??
+                                'CPF'),
                             SizedBox(height: media.height * 0.01),
                             Container(
                               height: media.width * 0.13,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: (isDarkTheme == true) ? textColor.withOpacity(0.4) : underline),
-                                color: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                border: Border.all(
+                                    color: (isDarkTheme == true)
+                                        ? textColor.withOpacity(0.4)
+                                        : underline),
+                                color: (isDarkTheme == true)
+                                    ? Colors.black
+                                    : const Color(0xffF8F8F8),
                               ),
-                              padding: const EdgeInsets.only(left: 12, right: 12),
+                              padding:
+                                  const EdgeInsets.only(left: 12, right: 12),
                               child: TextFormField(
                                 controller: cpfController,
                                 readOnly: true,
-                                inputFormatters: _cpfMaskFormatter != null ? [_cpfMaskFormatter!] : [],
+                                inputFormatters: _cpfMaskFormatter != null
+                                    ? [_cpfMaskFormatter!]
+                                    : [],
                                 onChanged: (_) => setState(() {}),
                                 keyboardType: TextInputType.number,
-                                style: GoogleFonts.poppins(fontSize: media.width * sixteen, color: textColor),
+                                style: GoogleFonts.poppins(
+                                    fontSize: media.width * sixteen,
+                                    color: textColor),
                                 decoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_cpf_hint'] ?? '000.000.000-00',
-                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * sixteen, color: hintColor),
+                                  hintText: languages[choosenLanguage]
+                                          ['text_cpf_hint'] ??
+                                      '000.000.000-00',
+                                  hintStyle: GoogleFonts.poppins(
+                                      fontSize: media.width * sixteen,
+                                      color: hintColor),
                                   border: InputBorder.none,
                                 ),
                               ),
                             ),
                             SizedBox(height: media.height * 0.02),
-                            _buildEditFieldLabel(languages[choosenLanguage]['text_birth_date'] ?? 'Data de nascimento'),
+                            _buildEditFieldLabel(languages[choosenLanguage]
+                                    ['text_birth_date'] ??
+                                'Data de nascimento'),
                             SizedBox(height: media.height * 0.01),
                             Container(
                               height: media.width * 0.13,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: (isDarkTheme == true) ? textColor.withOpacity(0.4) : underline),
-                                color: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                border: Border.all(
+                                    color: (isDarkTheme == true)
+                                        ? textColor.withOpacity(0.4)
+                                        : underline),
+                                color: (isDarkTheme == true)
+                                    ? Colors.black
+                                    : const Color(0xffF8F8F8),
                               ),
-                              padding: const EdgeInsets.only(left: 12, right: 12),
+                              padding:
+                                  const EdgeInsets.only(left: 12, right: 12),
                               child: TextFormField(
                                 controller: birthDateController,
-                                inputFormatters: _birthDateMaskFormatter != null ? [_birthDateMaskFormatter!] : [],
+                                inputFormatters: _birthDateMaskFormatter != null
+                                    ? [_birthDateMaskFormatter!]
+                                    : [],
                                 onChanged: (_) => setState(() {}),
                                 keyboardType: TextInputType.number,
-                                style: GoogleFonts.poppins(fontSize: media.width * sixteen, color: textColor),
+                                style: GoogleFonts.poppins(
+                                    fontSize: media.width * sixteen,
+                                    color: textColor),
                                 decoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_birth_date_hint'] ?? 'dd/mm/aaaa',
-                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * sixteen, color: hintColor),
+                                  hintText: languages[choosenLanguage]
+                                          ['text_birth_date_hint'] ??
+                                      'dd/mm/aaaa',
+                                  hintStyle: GoogleFonts.poppins(
+                                      fontSize: media.width * sixteen,
+                                      color: hintColor),
                                   border: InputBorder.none,
                                 ),
                               ),
                             ),
                             SizedBox(height: media.height * 0.02),
-                            _buildEditFieldLabel(languages[choosenLanguage]['text_cep'] ?? 'CEP'),
+                            _buildEditFieldLabel(languages[choosenLanguage]
+                                    ['text_cep'] ??
+                                'CEP'),
                             SizedBox(height: media.height * 0.01),
                             Container(
                               height: media.width * 0.13,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: (isDarkTheme == true) ? textColor.withOpacity(0.4) : underline),
-                                color: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                border: Border.all(
+                                    color: (isDarkTheme == true)
+                                        ? textColor.withOpacity(0.4)
+                                        : underline),
+                                color: (isDarkTheme == true)
+                                    ? Colors.black
+                                    : const Color(0xffF8F8F8),
                               ),
-                              padding: const EdgeInsets.only(left: 12, right: 12),
+                              padding:
+                                  const EdgeInsets.only(left: 12, right: 12),
                               child: TextFormField(
                                 controller: cepController,
-                                inputFormatters: _cepMaskFormatter != null ? [_cepMaskFormatter!] : [],
+                                inputFormatters: _cepMaskFormatter != null
+                                    ? [_cepMaskFormatter!]
+                                    : [],
                                 onChanged: (val) {
-                                  userCep = val.replaceAll(RegExp(r'[^\d]'), '');
+                                  userCep =
+                                      val.replaceAll(RegExp(r'[^\d]'), '');
                                   if (userCep.length == 8) _onCepBlur();
                                   setState(() {});
                                 },
                                 onTapOutside: (_) => _onCepBlur(),
                                 keyboardType: TextInputType.number,
-                                style: GoogleFonts.poppins(fontSize: media.width * sixteen, color: textColor),
+                                style: GoogleFonts.poppins(
+                                    fontSize: media.width * sixteen,
+                                    color: textColor),
                                 decoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_cep_hint'] ?? '00000-000',
-                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * sixteen, color: hintColor),
+                                  hintText: languages[choosenLanguage]
+                                          ['text_cep_hint'] ??
+                                      '00000-000',
+                                  hintStyle: GoogleFonts.poppins(
+                                      fontSize: media.width * sixteen,
+                                      color: hintColor),
                                   border: InputBorder.none,
                                 ),
                               ),
                             ),
                             SizedBox(height: media.height * 0.02),
-                            _buildEditFieldLabel(languages[choosenLanguage]['text_address'] ?? 'Endereço'),
+                            _buildEditFieldLabel(languages[choosenLanguage]
+                                    ['text_address'] ??
+                                'Endereço'),
                             SizedBox(height: media.height * 0.01),
-                            _buildEditTextField(addressController, languages[choosenLanguage]['text_address_hint'] ?? 'Logradouro'),
+                            _buildEditTextField(
+                                addressController,
+                                languages[choosenLanguage]
+                                        ['text_address_hint'] ??
+                                    'Logradouro'),
                             SizedBox(height: media.height * 0.02),
                             Row(
                               children: [
                                 Expanded(
                                   flex: 2,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      _buildEditFieldLabel(languages[choosenLanguage]['text_number'] ?? 'Número'),
+                                      _buildEditFieldLabel(
+                                          languages[choosenLanguage]
+                                                  ['text_number'] ??
+                                              'Número'),
                                       SizedBox(height: media.height * 0.01),
-                                      _buildEditTextField(numberController, languages[choosenLanguage]['text_number_hint'] ?? 'Nº'),
+                                      _buildEditTextField(
+                                          numberController,
+                                          languages[choosenLanguage]
+                                                  ['text_number_hint'] ??
+                                              'Nº'),
                                     ],
                                   ),
                                 ),
@@ -488,56 +582,112 @@ class _ProfileInformationState extends State<ProfileInformation>
                                 Expanded(
                                   flex: 3,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      _buildEditFieldLabel(languages[choosenLanguage]['text_complement'] ?? 'Complemento'),
+                                      _buildEditFieldLabel(
+                                          languages[choosenLanguage]
+                                                  ['text_complement'] ??
+                                              'Complemento'),
                                       SizedBox(height: media.height * 0.01),
-                                      _buildEditTextField(complementController, languages[choosenLanguage]['text_complement_hint'] ?? 'Apto, bloco...'),
+                                      _buildEditTextField(
+                                          complementController,
+                                          languages[choosenLanguage]
+                                                  ['text_complement_hint'] ??
+                                              'Apto, bloco...'),
                                     ],
                                   ),
                                 ),
                               ],
                             ),
                             SizedBox(height: media.height * 0.02),
-                            _buildEditFieldLabel(languages[choosenLanguage]['text_neighborhood'] ?? 'Bairro'),
+                            _buildEditFieldLabel(languages[choosenLanguage]
+                                    ['text_neighborhood'] ??
+                                'Bairro'),
                             SizedBox(height: media.height * 0.01),
-                            _buildEditTextField(neighborhoodController, languages[choosenLanguage]['text_neighborhood_hint'] ?? 'Bairro'),
+                            _buildEditTextField(
+                                neighborhoodController,
+                                languages[choosenLanguage]
+                                        ['text_neighborhood_hint'] ??
+                                    'Bairro'),
                             SizedBox(height: media.height * 0.02),
                             Row(
                               children: [
                                 Expanded(
                                   flex: 2,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      _buildEditFieldLabel(languages[choosenLanguage]['text_city'] ?? 'Cidade'),
+                                      _buildEditFieldLabel(
+                                          languages[choosenLanguage]
+                                                  ['text_city'] ??
+                                              'Cidade'),
                                       SizedBox(height: media.height * 0.01),
-                                      _buildEditTextField(cityController, languages[choosenLanguage]['text_city_hint'] ?? 'Cidade'),
+                                      _buildEditTextField(
+                                          cityController,
+                                          languages[choosenLanguage]
+                                                  ['text_city_hint'] ??
+                                              'Cidade'),
                                     ],
                                   ),
                                 ),
                                 SizedBox(width: media.width * 0.03),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      _buildEditFieldLabel(languages[choosenLanguage]['text_state'] ?? 'Estado'),
+                                      _buildEditFieldLabel(
+                                          languages[choosenLanguage]
+                                                  ['text_state'] ??
+                                              'Estado'),
                                       SizedBox(height: media.height * 0.01),
                                       Container(
                                         height: media.width * 0.13,
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: (isDarkTheme == true) ? textColor.withOpacity(0.4) : underline),
-                                          color: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                              color: (isDarkTheme == true)
+                                                  ? textColor.withOpacity(0.4)
+                                                  : underline),
+                                          color: (isDarkTheme == true)
+                                              ? Colors.black
+                                              : const Color(0xffF8F8F8),
                                         ),
-                                        padding: const EdgeInsets.only(left: 8, right: 8),
+                                        padding: const EdgeInsets.only(
+                                            left: 8, right: 8),
                                         child: DropdownButtonHideUnderline(
                                           child: DropdownButton<String>(
-                                            value: _selectedState.isEmpty ? null : _selectedState,
-                                            hint: Text(languages[choosenLanguage]['text_state_hint'] ?? 'UF', style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor)),
+                                            value: _selectedState.isEmpty
+                                                ? null
+                                                : _selectedState,
+                                            hint: Text(
+                                                languages[choosenLanguage]
+                                                        ['text_state_hint'] ??
+                                                    'UF',
+                                                style: GoogleFonts.poppins(
+                                                    fontSize:
+                                                        media.width * fourteen,
+                                                    color: hintColor)),
                                             isExpanded: true,
-                                            items: brazilianStates.map((s) => DropdownMenuItem<String>(value: s['uf'], child: Text(s['uf']!, style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: textColor)))).toList(),
-                                            onChanged: (v) => setState(() { _selectedState = v ?? ''; }),
+                                            items: brazilianStates
+                                                .map((s) => DropdownMenuItem<
+                                                        String>(
+                                                    value: s['uf'],
+                                                    child: Text(s['uf']!,
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                                fontSize: media
+                                                                        .width *
+                                                                    fourteen,
+                                                                color:
+                                                                    textColor))))
+                                                .toList(),
+                                            onChanged: (v) => setState(() {
+                                              _selectedState = v ?? '';
+                                            }),
                                           ),
                                         ),
                                       ),
@@ -547,44 +697,102 @@ class _ProfileInformationState extends State<ProfileInformation>
                               ],
                             ),
                             SizedBox(height: media.height * 0.02),
-                            _buildEditFieldLabel(languages[choosenLanguage]['text_gender'] ?? 'Sexo'),
+                            _buildEditFieldLabel(languages[choosenLanguage]
+                                    ['text_gender'] ??
+                                'Sexo'),
                             SizedBox(height: media.height * 0.01),
                             Container(
                               height: media.width * 0.13,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: (isDarkTheme == true) ? textColor.withOpacity(0.4) : underline),
-                                color: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                border: Border.all(
+                                    color: (isDarkTheme == true)
+                                        ? textColor.withOpacity(0.4)
+                                        : underline),
+                                color: (isDarkTheme == true)
+                                    ? Colors.black
+                                    : const Color(0xffF8F8F8),
                               ),
-                              padding: const EdgeInsets.only(left: 12, right: 12),
+                              padding:
+                                  const EdgeInsets.only(left: 12, right: 12),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  value: _selectedGender.isEmpty ? null : _selectedGender,
-                                  hint: Text(languages[choosenLanguage]['text_gender_hint'] ?? 'Selecione', style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor)),
+                                  value: _selectedGender.isEmpty
+                                      ? null
+                                      : _selectedGender,
+                                  hint: Text(
+                                      languages[choosenLanguage]
+                                              ['text_gender_hint'] ??
+                                          'Selecione',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: media.width * fourteen,
+                                          color: hintColor)),
                                   isExpanded: true,
-                                  items: genderOptions.map((g) => DropdownMenuItem<String>(value: g['value'], child: Text(languages[choosenLanguage]['text_gender_${g['value']}'] ?? g['label_pt']!, style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: textColor)))).toList(),
-                                  onChanged: (v) => setState(() { _selectedGender = v ?? ''; }),
+                                  items: genderOptions
+                                      .map((g) => DropdownMenuItem<String>(
+                                          value: g['value'],
+                                          child: Text(
+                                              languages[choosenLanguage][
+                                                      'text_gender_${g['value']}'] ??
+                                                  g['label_pt']!,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize:
+                                                      media.width * fourteen,
+                                                  color: textColor))))
+                                      .toList(),
+                                  onChanged: (v) => setState(() {
+                                    _selectedGender = v ?? '';
+                                  }),
                                 ),
                               ),
                             ),
                             SizedBox(height: media.height * 0.02),
-                            _buildEditFieldLabel(languages[choosenLanguage]['text_passenger_preference'] ?? 'Preferência de atendimento'),
+                            _buildEditFieldLabel(languages[choosenLanguage]
+                                    ['text_passenger_preference'] ??
+                                'Preferência de atendimento'),
                             SizedBox(height: media.height * 0.01),
                             Container(
                               height: media.width * 0.13,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: (isDarkTheme == true) ? textColor.withOpacity(0.4) : underline),
-                                color: (isDarkTheme == true) ? Colors.black : const Color(0xffF8F8F8),
+                                border: Border.all(
+                                    color: (isDarkTheme == true)
+                                        ? textColor.withOpacity(0.4)
+                                        : underline),
+                                color: (isDarkTheme == true)
+                                    ? Colors.black
+                                    : const Color(0xffF8F8F8),
                               ),
-                              padding: const EdgeInsets.only(left: 12, right: 12),
+                              padding:
+                                  const EdgeInsets.only(left: 12, right: 12),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  value: _selectedPassengerPreference.isEmpty ? null : _selectedPassengerPreference,
-                                  hint: Text(languages[choosenLanguage]['text_passenger_preference_hint'] ?? 'Preferência', style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor)),
+                                  value: _selectedPassengerPreference.isEmpty
+                                      ? null
+                                      : _selectedPassengerPreference,
+                                  hint: Text(
+                                      languages[choosenLanguage][
+                                              'text_passenger_preference_hint'] ??
+                                          'Preferência',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: media.width * fourteen,
+                                          color: hintColor)),
                                   isExpanded: true,
-                                  items: passengerPreferenceOptions.map((p) => DropdownMenuItem<String>(value: p['value'], child: Text(languages[choosenLanguage]['text_passenger_${p['value']}'] ?? p['label_pt']!, style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: textColor)))).toList(),
-                                  onChanged: (v) => setState(() { _selectedPassengerPreference = v ?? 'both'; }),
+                                  items: passengerPreferenceOptions
+                                      .map((p) => DropdownMenuItem<String>(
+                                          value: p['value'],
+                                          child: Text(
+                                              languages[choosenLanguage][
+                                                      'text_passenger_${p['value']}'] ??
+                                                  p['label_pt']!,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize:
+                                                      media.width * fourteen,
+                                                  color: textColor))))
+                                      .toList(),
+                                  onChanged: (v) => setState(() {
+                                    _selectedPassengerPreference = v ?? 'both';
+                                  }),
                                 ),
                               ),
                             ),

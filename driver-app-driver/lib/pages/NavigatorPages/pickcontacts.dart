@@ -62,21 +62,18 @@ class _PickContactState extends State<PickContact> {
           // ignore: avoid_function_literals_in_foreach_calls
           contactsList.forEach((contact) {
             if (contact.phones.isNotEmpty) {
-              contact.phones.forEach((phone) {
-                String contactName = contact.displayName.isNotEmpty 
-                    ? contact.displayName 
-                    : (contact.name.first.isNotEmpty 
-                        ? contact.name.first 
+              for (var phone in contact.phones) {
+                String contactName = contact.displayName.isNotEmpty
+                    ? contact.displayName
+                    : (contact.name.first.isNotEmpty
+                        ? contact.name.first
                         : 'Sem nome');
-                contacts.add({
-                  'name': contactName,
-                  'phone': phone.number
-                });
-              });
+                contacts.add({'name': contactName, 'phone': phone.number});
+              }
             }
           });
         }
-        
+
         if (mounted) {
           setState(() {
             _isLoading = false;
