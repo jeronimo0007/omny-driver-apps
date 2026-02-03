@@ -124,78 +124,6 @@ String translateComplaintTitle(String title) {
   return title;
 }
 
-// Opções padrão de reclamação caso a API retorne poucas
-List<Map<String, dynamic>> getDefaultComplaintOptions(String type) {
-  List<Map<String, dynamic>> defaults = [];
-
-  if (type == "request") {
-    defaults = [
-      {
-        'id': 'default_1',
-        'title': languages[choosenLanguage]['text_complaint_driver_behavior'] ??
-            'Comportamento do Motorista'
-      },
-      {
-        'id': 'default_2',
-        'title': languages[choosenLanguage]['text_complaint_vehicle'] ??
-            'Condição do Veículo'
-      },
-      {
-        'id': 'default_3',
-        'title': languages[choosenLanguage]['text_complaint_route'] ??
-            'Problema com a Rota'
-      },
-      {
-        'id': 'default_4',
-        'title': languages[choosenLanguage]['text_complaint_delay'] ?? 'Atraso'
-      },
-      {
-        'id': 'default_5',
-        'title': languages[choosenLanguage]['text_complaint_safety'] ??
-            'Preocupação com Segurança'
-      },
-      {
-        'id': 'default_6',
-        'title': languages[choosenLanguage]['text_complaint_other'] ?? 'Outro'
-      },
-    ];
-  } else {
-    defaults = [
-      {
-        'id': 'default_1',
-        'title': languages[choosenLanguage]['text_complaint_service'] ??
-            'Qualidade do Serviço'
-      },
-      {
-        'id': 'default_2',
-        'title': languages[choosenLanguage]['text_complaint_payment'] ??
-            'Problema com Pagamento'
-      },
-      {
-        'id': 'default_3',
-        'title': languages[choosenLanguage]['text_complaint_app'] ??
-            'Problema com o Aplicativo'
-      },
-      {
-        'id': 'default_4',
-        'title': languages[choosenLanguage]['text_complaint_account'] ??
-            'Problema com a Conta'
-      },
-      {
-        'id': 'default_5',
-        'title': languages[choosenLanguage]['text_complaint_suggestion'] ??
-            'Sugestão'
-      },
-      {
-        'id': 'default_6',
-        'title': languages[choosenLanguage]['text_complaint_other'] ?? 'Outro'
-      },
-    ];
-  }
-
-  return defaults;
-}
-
 class _MakeComplaintState extends State<MakeComplaint> {
   bool _isLoading = true;
   bool _showOptions = false;
@@ -216,23 +144,18 @@ class _MakeComplaintState extends State<MakeComplaint> {
       complaintDesc = '';
       generalComplaintList = [];
     });
-    String type = widget.fromPage == 1 ? "request" : "general";
+    // Tipo para usuário (passageiro): "user" = reclamação geral do menu, "request" = reclamação de uma viagem.
+    String type = widget.fromPage == 1 ? "request" : "user";
+    debugPrint('📋 [RECLAMAÇÃO] getData (user): chamando API com complaint_type=$type (fromPage=${widget.fromPage})');
     await getGeneralComplaint(type);
-
-    // Se a API retornar poucas opções (menos de 3), adicionar opções padrão
-    if (generalComplaintList.length < 3) {
-      List<Map<String, dynamic>> defaults = getDefaultComplaintOptions(type);
-      // Adicionar apenas se não existirem já na lista
-      for (var defaultOption in defaults) {
-        bool exists = generalComplaintList.any((item) =>
-            translateComplaintTitle(item['title'].toString().toLowerCase()) ==
-            defaultOption['title'].toString().toLowerCase());
-        if (!exists) {
-          generalComplaintList.add(defaultOption);
-        }
-      }
+    debugPrint('📋 [RECLAMAÇÃO] getData (user): após tipo "$type" → ${generalComplaintList.length} itens');
+    // Se o backend ainda não tiver complaint_type "user", fallback para "general"
+    if (type == "user" && generalComplaintList.isEmpty) {
+      debugPrint('📋 [RECLAMAÇÃO] getData (user): lista vazia para "user", tentando complaint_type=general');
+      await getGeneralComplaint("general");
+      debugPrint('📋 [RECLAMAÇÃO] getData (user): após fallback "general" → ${generalComplaintList.length} itens');
     }
-
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
       if (generalComplaintList.isNotEmpty) {
@@ -532,34 +455,53 @@ class _MakeComplaintState extends State<MakeComplaint> {
                             child: Button(
                                 onTap: () async {
                                   if (complaintText.text.length >= 10) {
+                                    // Usar sempre o texto atual do campo
+                                    final textToSend = complaintText.text.trim();
+                                    complaintDesc = textToSend;
+                                    debugPrint('📋 [RECLAMAÇÃO] Enviar clicado: tipo=$complaintType descrição=${textToSend.length} chars');
                                     setState(() {
                                       _isLoading = true;
                                     });
                                     dynamic result;
 
-                                    // Verificar se é uma opção padrão (sem ID válido da API)
+                                    // Backend exige complaint_title_id obrigatório - opções "default" não têm ID válido
                                     String? complaintTitleId;
                                     if (generalComplaintList[complaintType]
                                             ['id']
                                         .toString()
                                         .startsWith('default_')) {
-                                      // Para opções padrão, usar null ou o título como descrição adicional
                                       complaintTitleId = null;
+                                      debugPrint('📋 [RECLAMAÇÃO] Opção padrão sem ID - não enviar');
                                     } else {
                                       complaintTitleId =
                                           generalComplaintList[complaintType]
                                                   ['id']
                                               .toString();
+                                      debugPrint('📋 [RECLAMAÇÃO] complaint_title_id=$complaintTitleId');
+                                    }
+
+                                    if (complaintTitleId == null || complaintTitleId.isEmpty) {
+                                      if (!mounted) return;
+                                      setState(() {
+                                        _error = languages[choosenLanguage]['text_complaint_type_required'] ?? 'Selecione um tipo de reclamação da lista acima.';
+                                        _isLoading = false;
+                                      });
+                                      return;
                                     }
 
                                     result = await makeGeneralComplaint(
-                                        complaintDesc, complaintTitleId);
+                                        textToSend, complaintTitleId);
 
+                                    debugPrint('📋 [RECLAMAÇÃO] Resposta da API: result=$result (success=${result == 'success'})');
+
+                                    if (!mounted) return;
                                     setState(() {
                                       if (result == 'success') {
                                         _success = true;
+                                        debugPrint('📋 [RECLAMAÇÃO] _success=true, exibindo tela de sucesso');
+                                      } else {
+                                        debugPrint('📋 [RECLAMAÇÃO] Falha ou logout: result=$result');
                                       }
-
                                       _isLoading = false;
                                     });
                                   } else {

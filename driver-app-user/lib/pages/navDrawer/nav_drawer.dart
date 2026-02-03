@@ -16,6 +16,7 @@ import '../NavigatorPages/notification.dart';
 import '../NavigatorPages/referral.dart';
 import '../NavigatorPages/selectlanguage.dart';
 import '../NavigatorPages/sos.dart';
+import '../NavigatorPages/bankdetails.dart';
 import '../NavigatorPages/walletpage.dart';
 import '../onTripPage/map_page.dart';
 
@@ -92,7 +93,7 @@ class _NavDrawerState extends State<NavDrawer> {
                                             MaterialPageRoute(
                                                 builder: (context) =>
                                                     const EditProfile()));
-                                        if (val) {
+                                        if (val == true) {
                                           setState(() {});
                                         }
                                       },
@@ -145,7 +146,7 @@ class _NavDrawerState extends State<NavDrawer> {
                                             MaterialPageRoute(
                                                 builder: (context) =>
                                                     const EditProfile()));
-                                        if (val) {
+                                        if (val == true) {
                                           setState(() {});
                                         }
                                       },
@@ -488,6 +489,20 @@ class _NavDrawerState extends State<NavDrawer> {
                                     text: languages[choosenLanguage]
                                         ['text_enable_wallet'],
                                     image: 'assets/images/walletIcon.png',
+                                  ),
+
+                                  //dados bancários
+                                  NavMenu(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const BankDetails()));
+                                    },
+                                    text: languages[choosenLanguage]
+                                        ['text_bankDetails'],
+                                    icon: Icons.account_balance_outlined,
                                   ),
 
                                   //saved address

@@ -1073,13 +1073,20 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                                   false;
                                                               setState(() {});
                                                             }
-                                                            //otp is false
+                                                            // otp is false: mesmo assim enviar SMS e exigir código (igual motorista)
                                                             else if (otpVal !=
                                                                     null &&
                                                                 otpVal.value ==
                                                                     false) {
                                                               phoneAuthCheck =
-                                                                  false;
+                                                                  true;
+                                                              await phoneAuth(
+                                                                  fullPhoneNumber);
+                                                              value = 0;
+                                                              await Future.delayed(
+                                                                  const Duration(
+                                                                      milliseconds:
+                                                                          500));
                                                               currentPage = 1;
                                                               loginLoading =
                                                                   false;

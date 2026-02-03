@@ -5,10 +5,13 @@ import 'functions/notifications.dart';
 import 'pages/loadingPage/loadingpage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Obrigatório antes de qualquer uso de Google Fonts - evita "Unable to load asset: AssetManifest.json"
+  GoogleFonts.config.allowRuntimeFetching = true;
   if (!kIsWeb) {
     // SystemChrome.setPreferredOrientations não é suportado no web
     SystemChrome.setPreferredOrientations([

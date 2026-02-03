@@ -36,7 +36,7 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
   bool _isVerifying = false; // Flag para evitar verificação duplicada
   bool _autoVerifying = false; // Flag para evitar auto-verificação múltipla
   StreamSubscription? _credentialsSubscription;
-  int _resendDuration = 30; // Duração inicial de 30 segundos
+  int _resendDuration = 90; // Primeiro tempo: 90 segundos
 
   String get timerString {
     Duration duration = aController.duration * aController.value;
@@ -52,11 +52,10 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
             ? _resendDuration.toDouble()
             : aController.value);
 
-    // Listener para detectar quando texto é colado
+    // Listener para truncar cola a 6 dígitos (sem auto-verificar; usuário deve tocar em Continuar)
     _pinPutController2.addListener(() {
       final text = _pinPutController2.text;
       if (text.length > 6) {
-        // Se colou mais de 6 caracteres, pegar apenas os 6 primeiros dígitos
         final digitsOnly = text.replaceAll(RegExp(r'[^0-9]'), '');
         if (digitsOnly.length > 6) {
           _pinPutController2.text = digitsOnly.substring(0, 6);
@@ -64,23 +63,6 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
             const TextPosition(offset: 6),
           );
           otpNumber = _pinPutController2.text;
-          // Auto-verificar se for código de telefone
-          if (otpNumber.length == 6 &&
-              phoneAuthCheck == true &&
-              !_isVerifying &&
-              !_autoVerifying &&
-              credentials == null) {
-            _autoVerifying = true;
-            Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted &&
-                  otpNumber.length == 6 &&
-                  !_isVerifying &&
-                  credentials == null) {
-                verifyOtp();
-              }
-              _autoVerifying = false;
-            });
-          }
         }
       }
     });
@@ -376,30 +358,6 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                           SingleChildScrollView(
                             child: Column(
                               children: [
-                                Container(
-                                  width: media.width * 0.9,
-                                  alignment: Alignment.center,
-                                  child: SizedBox(
-                                    height: 55,
-                                    width: 55,
-                                    child: CustomPaint(
-                                        // ignore: sort_child_properties_last
-                                        child: Center(
-                                          child: MyText(
-                                            text: timerString,
-                                            size: media.width * fourteen,
-                                            fontweight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        painter: CustomTimerPainter(
-                                            animation: aController,
-                                            backgroundColor: buttonColor,
-                                            color: const Color(0xffEDF0F4))),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: media.height * 0.02,
-                                ),
                                 (isfromomobile == true)
                                     ? SizedBox(
                                         child: MyText(
@@ -431,29 +389,7 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                                 Pinput(
                                   length: 6,
                                   onChanged: (val) {
-                                    // Atualizar otpNumber sem setState para evitar rebuilds desnecessários
                                     otpNumber = _pinPutController2.text;
-
-                                    // Auto-verificar quando 6 dígitos forem inseridos (apenas uma vez)
-                                    if (otpNumber.length == 6 &&
-                                        phoneAuthCheck == true &&
-                                        !_isVerifying &&
-                                        !_autoVerifying &&
-                                        credentials == null) {
-                                      _autoVerifying = true;
-                                      // Pequeno delay para garantir que o estado foi atualizado
-                                      Future.delayed(
-                                          const Duration(milliseconds: 500),
-                                          () {
-                                        if (mounted &&
-                                            otpNumber.length == 6 &&
-                                            !_isVerifying &&
-                                            credentials == null) {
-                                          verifyOtp();
-                                        }
-                                        _autoVerifying = false;
-                                      });
-                                    }
                                   },
                                   // onSubmitted: (String val) {},
                                   controller: _pinPutController2,
@@ -627,6 +563,28 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                                             : buttonText,
                                       ),
                                     )),
+                                SizedBox(height: media.height * 0.02),
+                                Container(
+                                  width: media.width * 0.9,
+                                  alignment: Alignment.center,
+                                  child: SizedBox(
+                                    height: 55,
+                                    width: 55,
+                                    child: CustomPaint(
+                                        // ignore: sort_child_properties_last
+                                        child: Center(
+                                          child: MyText(
+                                            text: timerString,
+                                            size: media.width * fourteen,
+                                            fontweight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        painter: CustomTimerPainter(
+                                            animation: aController,
+                                            backgroundColor: buttonColor,
+                                            color: const Color(0xffEDF0F4))),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -648,8 +606,8 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                       decoration: BoxDecoration(
                         color: Colors.red.shade50,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                            color: Colors.red.shade300, width: 1.5),
+                        border:
+                            Border.all(color: Colors.red.shade300, width: 1.5),
                       ),
                       child: Row(
                         children: [
@@ -686,164 +644,166 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                             loginLoading = true;
 
                             valueNotifierLogin.incrementNotifier();
-                            //firebase code send false
+                            // Sempre exigir código OTP (igual app do motorista)
                             if (phoneAuthCheck == false) {
-                              var verify = await verifyUser(phnumber);
-                              value = 0;
-                              navigate(verify);
-                            } else {
-                              // firebase code send true
-                              // Evitar verificação duplicada
-                              if (_isVerifying) {
+                              setState(() {
+                                _error = languages[choosenLanguage]
+                                        ['text_otp_error'] ??
+                                    'Digite o código de verificação para continuar';
+                              });
+                              loginLoading = false;
+                              valueNotifierLogin.incrementNotifier();
+                              return;
+                            }
+                            // firebase code send true
+                            // Evitar verificação duplicada
+                            if (_isVerifying) {
+                              debugPrint(
+                                  '⚠️ Verificação já em andamento, ignorando chamada duplicada');
+                              loginLoading = false;
+                              valueNotifierLogin.incrementNotifier();
+                              return;
+                            }
+
+                            // Verificar se o código OTP foi preenchido
+                            if (otpNumber.isEmpty || otpNumber.length != 6) {
+                              debugPrint(
+                                  '⚠️ Código OTP inválido: ${otpNumber.length} dígitos');
+                              setState(() {
+                                _error = languages[choosenLanguage]
+                                        ['text_otp_error'] ??
+                                    'Código inválido';
+                              });
+                              loginLoading = false;
+                              valueNotifierLogin.incrementNotifier();
+                              return;
+                            }
+
+                            // Verificar se temos verificationId
+                            if (verId.isEmpty) {
+                              debugPrint('❌ VerificationId não disponível');
+                              setState(() {
+                                _error = languages[choosenLanguage]
+                                        ['text_otp_error'] ??
+                                    'Erro na verificação';
+                              });
+                              loginLoading = false;
+                              valueNotifierLogin.incrementNotifier();
+                              return;
+                            }
+
+                            _isVerifying = true;
+                            try {
+                              debugPrint(
+                                  '═══════════════════════════════════════════════════════════');
+                              debugPrint('🔐 VERIFICANDO CÓDIGO OTP');
+                              debugPrint(
+                                  '───────────────────────────────────────────────────────────');
+                              debugPrint('📱 Número: $phnumber');
+                              debugPrint(
+                                  '🔢 Código: ${otpNumber.replaceAll(RegExp(r'.'), '*')}');
+                              debugPrint(
+                                  '🆔 VerificationId: ${verId.substring(0, 20)}...');
+                              debugPrint(
+                                  '═══════════════════════════════════════════════════════════');
+
+                              PhoneAuthCredential credential =
+                                  PhoneAuthProvider.credential(
+                                      verificationId: verId,
+                                      smsCode: otpNumber);
+
+                              // Sign the user in (or link) with the credential
+                              try {
+                                var userCredential = await FirebaseAuth.instance
+                                    .signInWithCredential(credential);
+                                // Pequeno delay para garantir que o Firebase termine de processar
+                                await Future.delayed(
+                                    const Duration(milliseconds: 500));
                                 debugPrint(
-                                    '⚠️ Verificação já em andamento, ignorando chamada duplicada');
+                                    '✅ Credencial verificada com sucesso, usuário: ${userCredential.user?.uid ?? 'N/A'}');
+                              } catch (e, stackTrace) {
+                                debugPrint(
+                                    '❌ Erro ao verificar credencial: $e');
+                                debugPrint('Stack trace: $stackTrace');
+                                _isVerifying = false;
                                 loginLoading = false;
                                 valueNotifierLogin.incrementNotifier();
+                                if (mounted) {
+                                  setState(() {
+                                    _pinPutController2.clear();
+                                    _error = languages[choosenLanguage]
+                                            ['text_otp_error'] ??
+                                        'Erro ao verificar código';
+                                  });
+                                }
                                 return;
                               }
 
-                              // Verificar se o código OTP foi preenchido
-                              if (otpNumber.isEmpty || otpNumber.length != 6) {
-                                debugPrint(
-                                    '⚠️ Código OTP inválido: ${otpNumber.length} dígitos');
+                              try {
+                                var verify = await verifyUser(phnumber);
+                                _isVerifying = false;
+
+                                debugPrint('✅ Resultado da validação: $verify');
+                                navigate(verify);
+                              } catch (e) {
+                                debugPrint('❌ Erro ao verificar usuário: $e');
+                                _isVerifying = false;
+                                loginLoading = false;
+                                valueNotifierLogin.incrementNotifier();
+                                if (mounted) {
+                                  setState(() {
+                                    _error = languages[choosenLanguage]
+                                            ['text_otp_error'] ??
+                                        'Erro ao validar usuário';
+                                  });
+                                }
+                              }
+
+                              value = 0;
+                            } on FirebaseAuthException catch (error) {
+                              _isVerifying = false;
+                              debugPrint(
+                                  '❌ Erro Firebase Auth: ${error.code} - ${error.message}');
+
+                              if (error.code == 'invalid-verification-code') {
                                 setState(() {
+                                  _pinPutController2.clear();
+                                  otpNumber = '';
                                   _error = languages[choosenLanguage]
                                           ['text_otp_error'] ??
                                       'Código inválido';
                                 });
-                                loginLoading = false;
-                                valueNotifierLogin.incrementNotifier();
-                                return;
-                              }
-
-                              // Verificar se temos verificationId
-                              if (verId.isEmpty) {
-                                debugPrint('❌ VerificationId não disponível');
+                              } else if (error.code == 'session-expired') {
+                                setState(() {
+                                  _error =
+                                      'Sessão expirada. Solicite um novo código.';
+                                });
+                              } else {
                                 setState(() {
                                   _error = languages[choosenLanguage]
                                           ['text_otp_error'] ??
                                       'Erro na verificação';
                                 });
-                                loginLoading = false;
-                                valueNotifierLogin.incrementNotifier();
-                                return;
                               }
-
-                              _isVerifying = true;
-                              try {
-                                debugPrint(
-                                    '═══════════════════════════════════════════════════════════');
-                                debugPrint('🔐 VERIFICANDO CÓDIGO OTP');
-                                debugPrint(
-                                    '───────────────────────────────────────────────────────────');
-                                debugPrint('📱 Número: $phnumber');
-                                debugPrint(
-                                    '🔢 Código: ${otpNumber.replaceAll(RegExp(r'.'), '*')}');
-                                debugPrint(
-                                    '🆔 VerificationId: ${verId.substring(0, 20)}...');
-                                debugPrint(
-                                    '═══════════════════════════════════════════════════════════');
-
-                                PhoneAuthCredential credential =
-                                    PhoneAuthProvider.credential(
-                                        verificationId: verId,
-                                        smsCode: otpNumber);
-
-                                // Sign the user in (or link) with the credential
-                                try {
-                                  var userCredential = await FirebaseAuth
-                                      .instance
-                                      .signInWithCredential(credential);
-                                  // Pequeno delay para garantir que o Firebase termine de processar
-                                  await Future.delayed(
-                                      const Duration(milliseconds: 500));
-                                  debugPrint(
-                                      '✅ Credencial verificada com sucesso, usuário: ${userCredential.user?.uid ?? 'N/A'}');
-                                } catch (e, stackTrace) {
-                                  debugPrint(
-                                      '❌ Erro ao verificar credencial: $e');
-                                  debugPrint('Stack trace: $stackTrace');
-                                  _isVerifying = false;
-                                  loginLoading = false;
-                                  valueNotifierLogin.incrementNotifier();
-                                  if (mounted) {
-                                    setState(() {
-                                      _pinPutController2.clear();
-                                      _error = languages[choosenLanguage]
-                                              ['text_otp_error'] ??
-                                          'Erro ao verificar código';
-                                    });
-                                  }
-                                  return;
-                                }
-
-                                try {
-                                  var verify = await verifyUser(phnumber);
-                                  _isVerifying = false;
-
-                                  debugPrint(
-                                      '✅ Resultado da validação: $verify');
-                                  navigate(verify);
-                                } catch (e) {
-                                  debugPrint('❌ Erro ao verificar usuário: $e');
-                                  _isVerifying = false;
-                                  loginLoading = false;
-                                  valueNotifierLogin.incrementNotifier();
-                                  if (mounted) {
-                                    setState(() {
-                                      _error = languages[choosenLanguage]
-                                              ['text_otp_error'] ??
-                                          'Erro ao validar usuário';
-                                    });
-                                  }
-                                }
-
-                                value = 0;
-                              } on FirebaseAuthException catch (error) {
-                                _isVerifying = false;
-                                debugPrint(
-                                    '❌ Erro Firebase Auth: ${error.code} - ${error.message}');
-
-                                if (error.code == 'invalid-verification-code') {
-                                  setState(() {
-                                    _pinPutController2.clear();
-                                    otpNumber = '';
-                                    _error = languages[choosenLanguage]
-                                            ['text_otp_error'] ??
-                                        'Código inválido';
-                                  });
-                                } else if (error.code == 'session-expired') {
-                                  setState(() {
-                                    _error =
-                                        'Sessão expirada. Solicite um novo código.';
-                                  });
-                                } else {
-                                  setState(() {
-                                    _error = languages[choosenLanguage]
-                                            ['text_otp_error'] ??
-                                        'Erro na verificação';
-                                  });
-                                }
-                                loginLoading = false;
-                                valueNotifierLogin.incrementNotifier();
-                              } catch (e) {
-                                _isVerifying = false;
-                                debugPrint('❌ Erro ao verificar OTP: $e');
-                                setState(() {
-                                  _error = languages[choosenLanguage]
-                                          ['text_otp_error'] ??
-                                      'Erro na verificação';
-                                });
-                                loginLoading = false;
-                                valueNotifierLogin.incrementNotifier();
-                              }
+                              loginLoading = false;
+                              valueNotifierLogin.incrementNotifier();
+                            } catch (e) {
+                              _isVerifying = false;
+                              debugPrint('❌ Erro ao verificar OTP: $e');
+                              setState(() {
+                                _error = languages[choosenLanguage]
+                                        ['text_otp_error'] ??
+                                    'Erro na verificação';
+                              });
+                              loginLoading = false;
+                              valueNotifierLogin.incrementNotifier();
                             }
-
                             loginLoading = false;
                             valueNotifierLogin.incrementNotifier();
                           }
                         },
-                        text: languages[choosenLanguage]['text_verify'],
+                        text: languages[choosenLanguage]['text_verify'] ??
+                            'Verificar',
                       ),
                     )
                   : Container(
@@ -908,16 +868,16 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                         horizontal: media.width * 0.04,
                         vertical: media.width * 0.035),
                     decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                              blurRadius: 2.0,
-                              spreadRadius: 2.0,
-                              color: Colors.black.withOpacity(0.2))
-                        ],
-                        color: verifyDeclined,
-                        border: Border.all(
-                            color: Colors.red.shade300, width: 1.5),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                            blurRadius: 2.0,
+                            spreadRadius: 2.0,
+                            color: Colors.black.withOpacity(0.2))
+                      ],
+                      color: verifyDeclined,
+                      border:
+                          Border.all(color: Colors.red.shade300, width: 1.5),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

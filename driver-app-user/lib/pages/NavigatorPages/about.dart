@@ -90,7 +90,7 @@ class _AboutState extends State<About> {
                     InkWell(
                       onTap: () {
                         openBrowser(
-                            'https://driver.omny.app.br/privacy-policy');
+                            'https://driver.omny.app.br/privacy');
                       },
                       child: Text(
                         languages[choosenLanguage]['text_termsandconditions'],
@@ -107,7 +107,7 @@ class _AboutState extends State<About> {
                     InkWell(
                       onTap: () {
                         openBrowser(
-                            'https://driver.omny.app.br/privacy-policy');
+                            'https://driver.omny.app.br/privacy');
                       },
                       child: Text(
                         languages[choosenLanguage]['text_privacy'],

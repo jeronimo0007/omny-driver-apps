@@ -1140,12 +1140,15 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                           }
                         }
 
+                        final driverDetailRaw = userRequestData['driverDetail'];
+                        final driverDetailData = driverDetailRaw == null
+                            ? null
+                            : (driverDetailRaw['data'] ?? driverDetailRaw) as Map<String, dynamic>?;
+                        final driverId = driverDetailData?['id']?.toString() ?? driverDetailRaw?['id']?.toString();
                         return StreamBuilder<DatabaseEvent>(
-                            stream: (userRequestData['driverDetail'] != null &&
-                                    pinLocationIcon != null)
+                            stream: (driverId != null && driverId.isNotEmpty && pinLocationIcon != null)
                                 ? FirebaseDatabase.instance
-                                    .ref(
-                                        'drivers/driver_${userRequestData['driverDetail']['data']['id']}')
+                                    .ref('drivers/driver_$driverId')
                                     .onValue
                                     .asBroadcastStream()
                                 : null,
@@ -1444,8 +1447,9 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                               children: [
                                                 InkWell(
                                                   onTap: () async {
+                                                    final d = driverDetailData;
                                                     await Share.share(
-                                                        'Your Driver is ${userRequestData['driverDetail']['data']['name']}. ${userRequestData['driverDetail']['data']['car_color']} ${userRequestData['driverDetail']['data']['car_make_name']} ${userRequestData['driverDetail']['data']['car_model_name']}, Vehicle Number: ${userRequestData['driverDetail']['data']['car_number']}. Track with link: ${url}track/request/${userRequestData['id']}');
+                                                        'Your Driver is ${d?['name'] ?? ''}. ${d?['car_color'] ?? ''} ${d?['car_make_name'] ?? ''} ${d?['car_model_name'] ?? ''}, Vehicle Number: ${d?['car_number'] ?? ''}. Track with link: ${url}track/request/${userRequestData['id']}');
                                                   },
                                                   child: Container(
                                                       height: media.width * 0.09,
@@ -4447,7 +4451,9 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                     onTap: () {
                                                       setState(() {
                                                         noDriverFound = false;
+                                                        cancelRequestByUser = true;
                                                       });
+                                                      valueNotifierBook.incrementNotifier();
                                                     },
                                                     text: languages[
                                                             choosenLanguage]
@@ -6320,6 +6326,16 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                           mainAxisSize: MainAxisSize.min,
                                                           crossAxisAlignment: CrossAxisAlignment.start,
                                                           children: [
+                                                            if (driverDetailData == null)
+                                                              Padding(
+                                                                padding: EdgeInsets.symmetric(vertical: media.width * 0.04),
+                                                                child: MyText(
+                                                                  text: languages[choosenLanguage]['text_driver_info_loading'] ?? 'Carregando dados do motorista...',
+                                                                  size: media.width * fourteen,
+                                                                  color: textColor,
+                                                                ),
+                                                              )
+                                                            else ...[
                                                             Row(
                                                               crossAxisAlignment: CrossAxisAlignment.center,
                                                               children: [
@@ -6329,7 +6345,7 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                                   decoration: BoxDecoration(
                                                                     shape: BoxShape.circle,
                                                                     image: DecorationImage(
-                                                                      image: NetworkImage(userRequestData['driverDetail']['data']['profile_picture']),
+                                                                      image: NetworkImage((driverDetailData['profile_picture'] ?? '') as String),
                                                                       fit: BoxFit.cover,
                                                                     ),
                                                                   ),
@@ -6337,7 +6353,7 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                                 SizedBox(width: media.width * 0.03),
                                                                 Expanded(
                                                                   child: MyText(
-                                                                    text: (userRequestData['driverDetail']['data']['name'] ?? '').toString().toUpperCase(),
+                                                                    text: ((driverDetailData['name'] ?? '') as String).toString().toUpperCase(),
                                                                     size: media.width * sixteen,
                                                                     fontweight: FontWeight.bold,
                                                                     color: const Color(0xFF4A148C),
@@ -6350,7 +6366,7 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                             SizedBox(height: media.width * 0.015),
                                                             Builder(
                                                               builder: (context) {
-                                                                final rating = double.tryParse((userRequestData['driverDetail']['data']['rating'] ?? 0).toString()) ?? 0.0;
+                                                                final rating = double.tryParse((driverDetailData['rating'] ?? 0).toString()) ?? 0.0;
                                                                 final ratingStr = rating == rating.floor() ? rating.toInt().toString() : rating.toStringAsFixed(1);
                                                                 return Row(
                                                                   mainAxisSize: MainAxisSize.min,
@@ -6397,7 +6413,7 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                               ),
                                                             if (widget.type == null) SizedBox(height: media.width * 0.015),
                                                             MyText(
-                                                              text: '${languages[choosenLanguage]['text_plate'] ?? 'Placa'}: ${userRequestData['driverDetail']['data']['car_number'] ?? ''}',
+                                                              text: '${languages[choosenLanguage]['text_plate'] ?? 'Placa'}: ${driverDetailData['car_number'] ?? ''}',
                                                               textAlign: TextAlign.start,
                                                               size: media.width * sixteen,
                                                               maxLines: 1,
@@ -6407,7 +6423,7 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                             ),
                                                             SizedBox(height: media.width * 0.01),
                                                             MyText(
-                                                              text: '${languages[choosenLanguage]['text_make'] ?? 'Marca'}: ${userRequestData['driverDetail']['data']['car_make_name'] ?? ''}',
+                                                              text: '${languages[choosenLanguage]['text_make'] ?? 'Marca'}: ${driverDetailData['car_make_name'] ?? ''}',
                                                               size: media.width * fourteen,
                                                               textAlign: TextAlign.start,
                                                               maxLines: 1,
@@ -6415,7 +6431,7 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                               fontweight: FontWeight.bold,
                                                             ),
                                                             MyText(
-                                                              text: '${languages[choosenLanguage]['text_model'] ?? 'Modelo'}: ${userRequestData['driverDetail']['data']['car_model_name'] ?? ''}',
+                                                              text: '${languages[choosenLanguage]['text_model'] ?? 'Modelo'}: ${driverDetailData['car_model_name'] ?? ''}',
                                                               size: media.width * fourteen,
                                                               textAlign: TextAlign.start,
                                                               maxLines: 1,
@@ -6423,7 +6439,7 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                               fontweight: FontWeight.bold,
                                                             ),
                                                             MyText(
-                                                              text: '${languages[choosenLanguage]['text_color'] ?? 'Cor'}: ${userRequestData['driverDetail']['data']['car_color'] ?? ''}',
+                                                              text: '${languages[choosenLanguage]['text_color'] ?? 'Cor'}: ${driverDetailData['car_color'] ?? ''}',
                                                               size: media.width * fourteen,
                                                               textAlign: TextAlign.start,
                                                               maxLines: 1,
@@ -6482,6 +6498,7 @@ class _BookingConfirmationState extends State<BookingConfirmation>
                                                                   ),
                                                                 ],
                                                               ),
+                                                            ],
                                                             ],
                                                           ],
                                                         ),

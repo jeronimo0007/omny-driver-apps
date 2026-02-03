@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translations/translation.dart';
@@ -31,6 +32,8 @@ class _NamePageState extends State<NamePage> {
   TextEditingController controller = TextEditingController();
   TextEditingController cpfController = TextEditingController();
   TextEditingController birthDateController = TextEditingController();
+  TextEditingController _referralController = TextEditingController();
+  FocusNode referralFocus = FocusNode();
   FocusNode firstnameFocus = FocusNode();
   FocusNode lastnameFocus = FocusNode();
   FocusNode emailFocus = FocusNode();
@@ -87,12 +90,15 @@ class _NamePageState extends State<NamePage> {
     passengerPreferenceFocus.addListener(() {
       setState(() {});
     });
+    referralFocus.addListener(() => setState(() {}));
 
     super.initState();
   }
 
   @override
   void dispose() {
+    _referralController.dispose();
+    referralFocus.dispose();
     firstnameFocus.dispose();
     lastnameFocus.dispose();
     emailFocus.dispose();
@@ -161,6 +167,48 @@ class _NamePageState extends State<NamePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(height: media.height * 0.02),
+                        // Código de indicação (Opcional) - primeira opção no cadastro
+                        MyText(
+                          text: languages[choosenLanguage]['text_referral_optional'] ??
+                              'Código de indicação (Opcional)',
+                          size: media.width * fourteen,
+                          color: hintColor,
+                        ),
+                        SizedBox(height: media.height * 0.01),
+                        Container(
+                          height: 48,
+                          width: media.width * 0.9,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: referralFocus.hasFocus
+                                  ? buttonColor
+                                  : textColor.withOpacity(0.5),
+                              width: referralFocus.hasFocus ? 2.0 : 1.0,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          alignment: Alignment.centerLeft,
+                          child: TextFormField(
+                            controller: _referralController,
+                            focusNode: referralFocus,
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              hintText: languages[choosenLanguage]['text_enter_referral'] ??
+                                  'Digite o código de indicação',
+                              hintStyle: TextStyle(
+                                fontSize: media.width * fourteen,
+                                color: hintColor,
+                              ),
+                            ),
+                            style: TextStyle(
+                              fontSize: media.width * fourteen,
+                              color: textColor,
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
                         SizedBox(height: media.height * 0.02),
                         MyText(
                           text: languages[choosenLanguage]['text_your_name'],
@@ -345,9 +393,8 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(
                           height: media.height * 0.02,
                         ),
-                        // Campo de Gênero (Dropdown)
+                        // Campo de Gênero (Dropdown com busca)
                         Container(
-                          height: media.width * 0.13,
                           decoration: BoxDecoration(
                             color: page,
                             borderRadius: BorderRadius.circular(10),
@@ -374,72 +421,37 @@ class _NamePageState extends State<NamePage> {
                                 : null,
                           ),
                           padding: const EdgeInsets.only(left: 5, right: 5),
-                          child: DropdownButtonFormField<String>(
-                            initialValue: selectedGender,
-                            focusNode: genderFocus,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: languages[choosenLanguage]
-                                      ['text_select_gender'] ??
-                                  'Selecione o gênero',
-                              hintStyle: getGoogleFontStyle(
-                                fontSize: media.width * fourteen,
-                                color: hintColor,
-                              ),
-                            ),
-                            style: getGoogleFontStyle(
-                              fontSize: media.width * fourteen,
-                              color: textColor,
-                            ),
-                            dropdownColor: page,
-                            items: [
-                              DropdownMenuItem<String>(
-                                value: 'masculino',
-                                child: Text(
-                                  languages[choosenLanguage]
-                                          ['text_masculine'] ??
-                                      'Masculino',
-                                  style: getGoogleFontStyle(
-                                    fontSize: media.width * fourteen,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'feminino',
-                                child: Text(
-                                  languages[choosenLanguage]['text_feminine'] ??
-                                      'Feminino',
-                                  style: getGoogleFontStyle(
-                                    fontSize: media.width * fourteen,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'prefiro_nao_dizer',
-                                child: Text(
-                                  languages[choosenLanguage]
-                                          ['text_prefer_not_to_say'] ??
-                                      'Prefiro não dizer',
-                                  style: getGoogleFontStyle(
-                                    fontSize: media.width * fourteen,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          child: DropdownSearch<String>(
+                            selectedItem: selectedGender,
+                            items: const ['masculino', 'feminino', 'prefiro_nao_dizer'],
+                            itemAsString: (String v) {
+                              if (v == 'masculino') return languages[choosenLanguage]['text_masculine'] ?? 'Masculino';
+                              if (v == 'feminino') return languages[choosenLanguage]['text_feminine'] ?? 'Feminino';
+                              return languages[choosenLanguage]['text_prefer_not_to_say'] ?? 'Prefiro não dizer';
+                            },
                             onChanged: (String? value) {
                               setState(() {
                                 selectedGender = value;
                                 gender = value ?? '';
-                                if (genderError &&
-                                    value != null &&
-                                    value.isNotEmpty) {
-                                  genderError = false;
-                                }
+                                if (genderError && value != null && value.isNotEmpty) genderError = false;
                               });
                             },
+                            popupProps: PopupProps.menu(
+                              showSearchBox: true,
+                              searchFieldProps: TextFieldProps(
+                                decoration: InputDecoration(
+                                  hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ),
+                            dropdownDecoratorProps: DropDownDecoratorProps(
+                              dropdownSearchDecoration: InputDecoration(
+                                hintText: languages[choosenLanguage]['text_select_gender'] ?? 'Selecione o gênero',
+                                hintStyle: getGoogleFontStyle(fontSize: media.width * fourteen, color: hintColor),
+                                border: InputBorder.none,
+                              ),
+                            ),
                           ),
                         ),
                         SizedBox(
@@ -569,9 +581,8 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(
                           height: media.height * 0.02,
                         ),
-                        // Campo de Preferência de Motorista (Dropdown)
+                        // Campo de Preferência de Motorista (Dropdown com busca)
                         Container(
-                          height: media.width * 0.13,
                           decoration: BoxDecoration(
                             color: page,
                             borderRadius: BorderRadius.circular(10),
@@ -601,72 +612,37 @@ class _NamePageState extends State<NamePage> {
                                 : null,
                           ),
                           padding: const EdgeInsets.only(left: 5, right: 5),
-                          child: DropdownButtonFormField<String>(
-                            initialValue: selectedPassengerPreference,
-                            focusNode: passengerPreferenceFocus,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: languages[choosenLanguage]
-                                      ['text_passenger_preference'] ??
-                                  'Preferência de Motorista',
-                              hintStyle: getGoogleFontStyle(
-                                fontSize: media.width * fourteen,
-                                color: hintColor,
-                              ),
-                            ),
-                            style: getGoogleFontStyle(
-                              fontSize: media.width * fourteen,
-                              color: textColor,
-                            ),
-                            dropdownColor: page,
-                            items: [
-                              DropdownMenuItem<String>(
-                                value: 'masculino',
-                                child: Text(
-                                  languages[choosenLanguage]
-                                          ['text_masculine'] ??
-                                      'Masculino',
-                                  style: getGoogleFontStyle(
-                                    fontSize: media.width * fourteen,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'feminino',
-                                child: Text(
-                                  languages[choosenLanguage]['text_feminine'] ??
-                                      'Feminino',
-                                  style: getGoogleFontStyle(
-                                    fontSize: media.width * fourteen,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'nao_tenho_preferencia',
-                                child: Text(
-                                  languages[choosenLanguage]
-                                          ['text_no_preference'] ??
-                                      'Não tenho preferência',
-                                  style: getGoogleFontStyle(
-                                    fontSize: media.width * fourteen,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          child: DropdownSearch<String>(
+                            selectedItem: selectedPassengerPreference,
+                            items: const ['masculino', 'feminino', 'nao_tenho_preferencia'],
+                            itemAsString: (String v) {
+                              if (v == 'masculino') return languages[choosenLanguage]['text_masculine'] ?? 'Masculino';
+                              if (v == 'feminino') return languages[choosenLanguage]['text_feminine'] ?? 'Feminino';
+                              return languages[choosenLanguage]['text_no_preference'] ?? 'Não tenho preferência';
+                            },
                             onChanged: (String? value) {
                               setState(() {
                                 selectedPassengerPreference = value;
                                 passengerPreference = value ?? '';
-                                if (passengerPreferenceError &&
-                                    value != null &&
-                                    value.isNotEmpty) {
-                                  passengerPreferenceError = false;
-                                }
+                                if (passengerPreferenceError && value != null && value.isNotEmpty) passengerPreferenceError = false;
                               });
                             },
+                            popupProps: PopupProps.menu(
+                              showSearchBox: true,
+                              searchFieldProps: TextFieldProps(
+                                decoration: InputDecoration(
+                                  hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ),
+                            dropdownDecoratorProps: DropDownDecoratorProps(
+                              dropdownSearchDecoration: InputDecoration(
+                                hintText: languages[choosenLanguage]['text_passenger_preference'] ?? 'Preferência de Motorista',
+                                hintStyle: getGoogleFontStyle(fontSize: media.width * fourteen, color: hintColor),
+                                border: InputBorder.none,
+                              ),
+                            ),
                           ),
                         ),
                         SizedBox(
@@ -1025,6 +1001,7 @@ class _NamePageState extends State<NamePage> {
                                           setState(() {
                                             _error = '';
                                           });
+                                          loginReferralCode = _referralController.text.trim();
                                           loginLoading = true;
                                           valueNotifierLogin
                                               .incrementNotifier();
@@ -1118,6 +1095,7 @@ class _NamePageState extends State<NamePage> {
                                       }
                                       FocusManager.instance.primaryFocus
                                           ?.unfocus();
+                                      loginReferralCode = _referralController.text.trim();
                                       loginLoading = true;
                                       valueNotifierLogin.incrementNotifier();
                                       var val = await otpCall();
