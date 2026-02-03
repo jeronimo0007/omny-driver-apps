@@ -98,52 +98,36 @@ class _ChatPageState extends State<ChatPage> {
                         color: page,
                         child: Column(
                           children: [
-                            Stack(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                    width: media.width * 0.9,
-                                    alignment: Alignment.center,
-                                    child: Column(
-                                      children: [
-                                        MyText(
-                                          text: userRequestData['driverDetail']
-                                                      ?['data']?['name']
-                                                  ?.toString() ??
-                                              'Motorista',
-                                          size: media.width * sixteen,
-                                          fontweight: FontWeight.bold,
-                                        ),
-                                        SizedBox(
-                                          height: media.width * 0.025,
-                                        ),
-                                        SizedBox(
-                                          width: media.width * 0.4,
-                                          child: MyText(
-                                            text:
-                                                '${userRequestData['driverDetail']?['data']?['car_color'] ?? ''} ${userRequestData['driverDetail']?['data']?['car_make_name'] ?? ''} ${userRequestData['driverDetail']?['data']?['car_model_name'] ?? ''}'
-                                                    .trim(),
-                                            size: media.width * fourteen,
-                                            textAlign: TextAlign.end,
-                                            maxLines: 1,
-                                            color: const Color(0xff8A8A8A),
-                                          ),
-                                        ),
-                                      ],
-                                    )),
-                                Positioned(
-                                  child: InkWell(
-                                    onTap: () {
-                                      Navigator.pop(context, true);
-                                    },
-                                    child: Container(
-                                      height: media.width * 0.1,
-                                      width: media.width * 0.1,
-                                      alignment: Alignment.center,
-                                      child: Icon(Icons.arrow_back_ios,
-                                          color: textColor),
-                                    ),
+                                InkWell(
+                                  onTap: () => Navigator.pop(context, true),
+                                  child: Container(
+                                    height: media.width * 0.1,
+                                    width: media.width * 0.1,
+                                    alignment: Alignment.centerLeft,
+                                    child: Icon(Icons.arrow_back_ios, color: textColor),
                                   ),
-                                )
+                                ),
+                                SizedBox(height: media.width * 0.02),
+                                MyText(
+                                  text: userRequestData['driverDetail']?['data']?['name']?.toString() ?? 'Motorista',
+                                  size: media.width * sixteen,
+                                  fontweight: FontWeight.bold,
+                                ),
+                                SizedBox(height: media.width * 0.015),
+                                SizedBox(
+                                  width: media.width * 0.4,
+                                  child: MyText(
+                                    text: '${userRequestData['driverDetail']?['data']?['car_color'] ?? ''} ${userRequestData['driverDetail']?['data']?['car_make_name'] ?? ''} ${userRequestData['driverDetail']?['data']?['car_model_name'] ?? ''}'.trim(),
+                                    size: media.width * fourteen,
+                                    textAlign: TextAlign.start,
+                                    maxLines: 1,
+                                    color: const Color(0xff8A8A8A),
+                                  ),
+                                ),
                               ],
                             ),
                             SizedBox(
@@ -178,20 +162,11 @@ class _ChatPageState extends State<ChatPage> {
                                                   padding: EdgeInsets.all(
                                                       media.width * 0.04),
                                                   decoration: BoxDecoration(
-                                                      borderRadius: (chatList[i]
-                                                                  [
-                                                                  'from_type'] ==
-                                                              1)
-                                                          ? BorderRadius
-                                                              .circular(8)
-                                                          : BorderRadius
-                                                              .circular(8),
-                                                      color: (chatList[i][
-                                                                  'from_type'] ==
-                                                              1)
-                                                          ? buttonColor
-                                                          : const Color(
-                                                              0xffE7EDEF)),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                      color: const Color(0xffE7EDEF),
+                                                      border: (chatList[i]['from_type'] == 1)
+                                                          ? Border.all(color: const Color(0xFF7B1FA2), width: 1.5)
+                                                          : null),
                                                   child: MyText(
                                                     text: chatList[i]
                                                         ['message'],

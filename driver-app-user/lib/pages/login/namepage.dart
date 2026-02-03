@@ -375,7 +375,7 @@ class _NamePageState extends State<NamePage> {
                           ),
                           padding: const EdgeInsets.only(left: 5, right: 5),
                           child: DropdownButtonFormField<String>(
-                            value: selectedGender,
+                            initialValue: selectedGender,
                             focusNode: genderFocus,
                             decoration: InputDecoration(
                               border: InputBorder.none,
@@ -602,7 +602,7 @@ class _NamePageState extends State<NamePage> {
                           ),
                           padding: const EdgeInsets.only(left: 5, right: 5),
                           child: DropdownButtonFormField<String>(
-                            value: selectedPassengerPreference,
+                            initialValue: selectedPassengerPreference,
                             focusNode: passengerPreferenceFocus,
                             decoration: InputDecoration(
                               border: InputBorder.none,
@@ -1052,7 +1052,8 @@ class _NamePageState extends State<NamePage> {
                                               currentPage = 3;
                                             } else {
                                               setState(() {
-                                                _error = serverErrorMessage.isNotEmpty
+                                                _error = serverErrorMessage
+                                                        .isNotEmpty
                                                     ? serverErrorMessage
                                                     : result.toString();
                                               });
@@ -1177,16 +1178,16 @@ class _NamePageState extends State<NamePage> {
                           horizontal: media.width * 0.04,
                           vertical: media.width * 0.035),
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                                blurRadius: 2.0,
-                                spreadRadius: 2.0,
-                                color: Colors.black.withOpacity(0.2))
-                          ],
-                          color: verifyDeclined,
-                          border: Border.all(
-                              color: Colors.red.shade300, width: 1.5),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                              blurRadius: 2.0,
+                              spreadRadius: 2.0,
+                              color: Colors.black.withOpacity(0.2))
+                        ],
+                        color: verifyDeclined,
+                        border:
+                            Border.all(color: Colors.red.shade300, width: 1.5),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,

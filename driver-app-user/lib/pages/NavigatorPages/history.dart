@@ -669,7 +669,7 @@ class _HistoryState extends State<History> {
                                                                                 25,
                                                                             child:
                                                                                 MyText(
-                                                                              text: '${myHistory[i]['requestBill']['data']['requested_currency_symbol']} ${myHistory[i]['requestBill']['data']['total_amount'].toString()}',
+                                                                              text: '${myHistory[i]['requestBill']['data']['requested_currency_symbol']} ${formatDecimalBr(myHistory[i]['requestBill']['data']['total_amount'])}',
                                                                               size: media.width * fourteen,
                                                                               fontweight: FontWeight.w600,
                                                                               maxLines: 1,

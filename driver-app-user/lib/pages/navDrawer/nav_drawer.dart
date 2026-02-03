@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translations/translation.dart';
@@ -205,6 +208,61 @@ class _NavDrawerState extends State<NavDrawer> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
+                                      SizedBox(height: media.width * 0.02),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: RichText(
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              text: TextSpan(
+                                                style: getGoogleFontStyle(
+                                                  fontSize: media.width * twelve,
+                                                  color: textColor,
+                                                ),
+                                                children: [
+                                                  TextSpan(
+                                                    text: '${languages[choosenLanguage]['text_referral_earn_code'] ?? 'Código de indicação'}: ',
+                                                  ),
+                                                  TextSpan(
+                                                    text: myReferralCode['refferal_code']?.toString() ?? '—',
+                                                    style: getGoogleFontStyle(
+                                                      fontSize: media.width * twelve,
+                                                      color: textColor,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () async {
+                                              if ((myReferralCode['refferal_code']?.toString() ?? '').isEmpty) {
+                                                await getReferral();
+                                                if (mounted) setState(() {});
+                                              }
+                                              final code = myReferralCode['refferal_code']?.toString() ?? '';
+                                              if (code.isNotEmpty) {
+                                                String storeText = '';
+                                                if (defaultTargetPlatform == TargetPlatform.android) {
+                                                  final package = await PackageInfo.fromPlatform();
+                                                  storeText = '\n\n${languages[choosenLanguage]['text_download_app'] ?? 'Baixe o app'}: https://play.google.com/store/apps/details?id=${package.packageName}';
+                                                } else {
+                                                  storeText = '\n\n${languages[choosenLanguage]['text_available_app_store'] ?? 'Disponível na App Store.'}';
+                                                }
+                                                await Share.share(
+                                                  '${languages[choosenLanguage]['text_referral_earn_code'] ?? 'Meu código de indicação'}: $code$storeText',
+                                                );
+                                              }
+                                            },
+                                            child: Padding(
+                                              padding: EdgeInsets.symmetric(horizontal: media.width * 0.02),
+                                              child: Icon(Icons.share, size: media.width * 0.06, color: buttonColor),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 )
@@ -219,271 +277,268 @@ class _NavDrawerState extends State<NavDrawer> {
                               opacity: _isAccountExpanded ? 0.3 : 1.0,
                               duration: const Duration(milliseconds: 200),
                               child: Column(
-                                  children: [
-                                    Container(
-                                      padding: EdgeInsets.only(
-                                        top: media.width * 0.05,
-                                        left: media.width * 0.05,
-                                        right: media.width * 0.05,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          MyText(
-                                            text: languages[choosenLanguage]
-                                                ['text_general'],
-                                            size: media.width * eighteen,
-                                            fontweight: FontWeight.w700,
-                                          ),
-                                        ],
-                                      ),
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.only(
+                                      top: media.width * 0.05,
+                                      left: media.width * 0.05,
+                                      right: media.width * 0.05,
                                     ),
-
-                                    //referral page
-                                    NavMenu(
-                                      onTap: () {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const ReferralPage()));
-                                      },
-                                      text: languages[choosenLanguage]
-                                          ['text_enable_referal'],
-                                      image: 'assets/images/referral.png',
+                                    child: Row(
+                                      children: [
+                                        MyText(
+                                          text: languages[choosenLanguage]
+                                              ['text_general'],
+                                          size: media.width * eighteen,
+                                          fontweight: FontWeight.w700,
+                                        ),
+                                      ],
                                     ),
+                                  ),
 
-                                    //My orders
-                                    NavMenu(
-                                      onTap: () {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const History()));
-                                      },
-                                      text: languages[choosenLanguage]
-                                          ['text_my_orders'],
-                                      image: 'assets/images/history.png',
-                                    ),
+                                  //referral page
+                                  NavMenu(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ReferralPage()));
+                                    },
+                                    text: languages[choosenLanguage]
+                                        ['text_enable_referal'],
+                                    image: 'assets/images/referral.png',
+                                  ),
 
-                                    ValueListenableBuilder(
-                                        valueListenable:
-                                            valueNotifierNotification.value,
-                                        builder: (context, value, child) {
-                                          return InkWell(
-                                            splashColor: Colors.transparent,
-                                            highlightColor: Colors.transparent,
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const NotificationPage()));
-                                              setState(() {
-                                                userDetails[
-                                                    'notifications_count'] = 0;
-                                              });
-                                            },
-                                            child: Container(
-                                              padding: EdgeInsets.only(
-                                                  top: media.width * 0.025),
-                                              child: Column(
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Image.asset(
-                                                        'assets/images/notification.png',
-                                                        fit: BoxFit.contain,
-                                                        width:
-                                                            media.width * 0.075,
-                                                        color: textColor
-                                                            .withOpacity(0.8),
-                                                      ),
-                                                      SizedBox(
-                                                        width:
-                                                            media.width * 0.025,
-                                                      ),
-                                                      Expanded(
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            Expanded(
-                                                              child: MyText(
-                                                                text: languages[
-                                                                            choosenLanguage]
-                                                                        [
-                                                                        'text_notification']
-                                                                    .toString(),
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
+                                  //My orders
+                                  NavMenu(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const History()));
+                                    },
+                                    text: languages[choosenLanguage]
+                                        ['text_my_orders'],
+                                    image: 'assets/images/history.png',
+                                  ),
+
+                                  ValueListenableBuilder(
+                                      valueListenable:
+                                          valueNotifierNotification.value,
+                                      builder: (context, value, child) {
+                                        return InkWell(
+                                          splashColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          onTap: () {
+                                            Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const NotificationPage()));
+                                            setState(() {
+                                              userDetails[
+                                                  'notifications_count'] = 0;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.only(
+                                                top: media.width * 0.025),
+                                            child: Column(
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Image.asset(
+                                                      'assets/images/notification.png',
+                                                      fit: BoxFit.contain,
+                                                      width:
+                                                          media.width * 0.075,
+                                                      color: textColor
+                                                          .withOpacity(0.8),
+                                                    ),
+                                                    SizedBox(
+                                                      width:
+                                                          media.width * 0.025,
+                                                    ),
+                                                    Expanded(
+                                                      child: Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Expanded(
+                                                            child: MyText(
+                                                              text: languages[
+                                                                          choosenLanguage]
+                                                                      [
+                                                                      'text_notification']
+                                                                  .toString(),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              size:
+                                                                  media.width *
+                                                                      sixteen,
+                                                              color: textColor
+                                                                  .withOpacity(
+                                                                      0.8),
+                                                            ),
+                                                          ),
+                                                          Row(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              (userDetails[
+                                                                          'notifications_count'] ==
+                                                                      0)
+                                                                  ? Container()
+                                                                  : Container(
+                                                                      height:
+                                                                          20,
+                                                                      width: 20,
+                                                                      alignment:
+                                                                          Alignment
+                                                                              .center,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        shape: BoxShape
+                                                                            .circle,
+                                                                        color:
+                                                                            buttonColor,
+                                                                      ),
+                                                                      child:
+                                                                          Text(
+                                                                        (userDetails['notifications_count'] ??
+                                                                                0)
+                                                                            .toString(),
+                                                                        style: getGoogleFontStyle(
+                                                                            fontSize: media.width *
+                                                                                fourteen,
+                                                                            color:
+                                                                                buttonText),
+                                                                      ),
+                                                                    ),
+                                                              SizedBox(
+                                                                  width: media
+                                                                          .width *
+                                                                      0.01),
+                                                              Icon(
+                                                                Icons
+                                                                    .arrow_forward_ios_outlined,
                                                                 size: media
                                                                         .width *
-                                                                    sixteen,
+                                                                    0.05,
                                                                 color: textColor
                                                                     .withOpacity(
                                                                         0.8),
                                                               ),
-                                                            ),
-                                                            Row(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children: [
-                                                                (userDetails[
-                                                                            'notifications_count'] ==
-                                                                        0)
-                                                                    ? Container()
-                                                                    : Container(
-                                                                        height:
-                                                                            20,
-                                                                        width:
-                                                                            20,
-                                                                        alignment:
-                                                                            Alignment.center,
-                                                                        decoration:
-                                                                            BoxDecoration(
-                                                                          shape:
-                                                                              BoxShape.circle,
-                                                                          color:
-                                                                              buttonColor,
-                                                                        ),
-                                                                        child:
-                                                                            Text(
-                                                                          (userDetails['notifications_count'] ?? 0)
-                                                                              .toString(),
-                                                                          style: getGoogleFontStyle(
-                                                                              fontSize: media.width * fourteen,
-                                                                              color: buttonText),
-                                                                        ),
-                                                                      ),
-                                                                SizedBox(
-                                                                    width: media
-                                                                            .width *
-                                                                        0.01),
-                                                                Icon(
-                                                                  Icons
-                                                                      .arrow_forward_ios_outlined,
-                                                                  size: media
-                                                                          .width *
-                                                                      0.05,
-                                                                  color: textColor
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      )
-                                                    ],
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    )
+                                                  ],
+                                                ),
+                                                Container(
+                                                  alignment:
+                                                      Alignment.centerRight,
+                                                  padding: EdgeInsets.only(
+                                                    top: media.width * 0.01,
+                                                    left: media.width * 0.09,
                                                   ),
-                                                  Container(
-                                                    alignment:
-                                                        Alignment.centerRight,
-                                                    padding: EdgeInsets.only(
-                                                      top: media.width * 0.01,
-                                                      left: media.width * 0.09,
-                                                    ),
-                                                    child: Container(
-                                                      height: 1,
-                                                      decoration: BoxDecoration(
-                                                        gradient:
-                                                            LinearGradient(
-                                                          begin: Alignment
-                                                              .centerLeft,
-                                                          end: Alignment
-                                                              .centerRight,
-                                                          colors: [
-                                                            (isDarkTheme
-                                                                    ? theme
-                                                                    : buttonColor)
-                                                                .withOpacity(
-                                                                    0.7),
-                                                            (isDarkTheme
-                                                                    ? theme
-                                                                    : buttonColor)
-                                                                .withOpacity(
-                                                                    0.0),
-                                                          ],
-                                                        ),
+                                                  child: Container(
+                                                    height: 1,
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        begin: Alignment
+                                                            .centerLeft,
+                                                        end: Alignment
+                                                            .centerRight,
+                                                        colors: [
+                                                          (isDarkTheme
+                                                                  ? theme
+                                                                  : buttonColor)
+                                                              .withOpacity(0.7),
+                                                          (isDarkTheme
+                                                                  ? theme
+                                                                  : buttonColor)
+                                                              .withOpacity(0.0),
+                                                        ],
                                                       ),
                                                     ),
-                                                  )
-                                                ],
-                                              ),
+                                                  ),
+                                                )
+                                              ],
                                             ),
-                                          );
-                                        }),
+                                          ),
+                                        );
+                                      }),
 
-                                    //wallet page
-                                    if (userDetails[
-                                            'show_wallet_feature_on_mobile_app'] ==
-                                        "1")
-                                      NavMenu(
-                                        onTap: () {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const WalletPage()));
-                                        },
-                                        text: languages[choosenLanguage]
-                                            ['text_enable_wallet'],
-                                        image: 'assets/images/walletIcon.png',
-                                      ),
+                                  //wallet page (carteira sempre visível no menu)
+                                  NavMenu(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const WalletPage()));
+                                    },
+                                    text: languages[choosenLanguage]
+                                        ['text_enable_wallet'],
+                                    image: 'assets/images/walletIcon.png',
+                                  ),
 
-                                    //saved address
-                                    NavMenu(
-                                      onTap: () {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const Favorite()));
-                                      },
-                                      text: languages[choosenLanguage]
-                                          ['text_favourites'],
-                                      icon: Icons.bookmark,
-                                    ),
+                                  //saved address
+                                  NavMenu(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const Favorite()));
+                                    },
+                                    text: languages[choosenLanguage]
+                                        ['text_favourites'],
+                                    icon: Icons.bookmark,
+                                  ),
 
-                                    //select language
-                                    NavMenu(
-                                      onTap: () async {
-                                        var nav = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const SelectLanguage()));
-                                        if (nav) {
-                                          setState(() {});
-                                        }
-                                      },
-                                      text: languages[choosenLanguage]
-                                          ['text_change_language'],
-                                      image: 'assets/images/changeLanguage.png',
-                                    ),
+                                  //select language
+                                  NavMenu(
+                                    onTap: () async {
+                                      var nav = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const SelectLanguage()));
+                                      if (nav) {
+                                        setState(() {});
+                                      }
+                                    },
+                                    text: languages[choosenLanguage]
+                                        ['text_change_language'],
+                                    image: 'assets/images/changeLanguage.png',
+                                  ),
 
-                                    //sos
-                                    NavMenu(
-                                      onTap: () async {
-                                        var nav = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const Sos()));
-                                        if (nav) {
-                                          setState(() {});
-                                        }
-                                      },
-                                      text: languages[choosenLanguage]
-                                          ['text_sos'],
-                                      image: 'assets/images/sos.png',
-                                    ),
-                                  ],
-                                ),
+                                  //sos
+                                  NavMenu(
+                                    onTap: () async {
+                                      var nav = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const Sos()));
+                                      if (nav) {
+                                        setState(() {});
+                                      }
+                                    },
+                                    text: languages[choosenLanguage]
+                                        ['text_sos'],
+                                    image: 'assets/images/sos.png',
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           InkWell(
@@ -757,7 +812,7 @@ class _NavDrawerState extends State<NavDrawer> {
                           ),
                           Switch(
                               value: isDarkTheme,
-                              activeColor: theme,
+                              activeThumbColor: theme,
                               onChanged: (toggle) async {
                                 darkthemefun();
                               }),

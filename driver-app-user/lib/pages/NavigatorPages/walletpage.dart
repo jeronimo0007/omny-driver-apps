@@ -158,9 +158,9 @@ class _WalletPageState extends State<WalletPage> {
                                         color: Colors.grey.withOpacity(0.1),
                                       ),
                                       child: MyText(
-                                        text: walletBalance['wallet_balance']
-                                                .toString() +
-                                            walletBalance['currency_symbol'],
+                                        text: walletBalance['currency_symbol'] +
+                                            ' ' +
+                                            formatDecimalBr(walletBalance['wallet_balance']),
                                         size: media.width * twenty,
                                         fontweight: FontWeight.w600,
                                       ),
@@ -286,11 +286,10 @@ class _WalletPageState extends State<WalletPage> {
                                                                           i][
                                                                       'currency_symbol'] +
                                                                   ' ' +
-                                                                  walletHistory[
+                                                                  formatDecimalBr(walletHistory[
                                                                               i]
                                                                           [
-                                                                          'amount']
-                                                                      .toString(),
+                                                                          'amount']),
                                                               size:
                                                                   media.width *
                                                                       twelve,
@@ -661,7 +660,7 @@ class _WalletPageState extends State<WalletPage> {
                                               child: MyText(
                                                 text: walletBalance[
                                                         'currency_symbol'] +
-                                                    '500',
+                                                    ' 500',
                                                 size: media.width * twelve,
                                                 fontweight: FontWeight.w600,
                                               ),
@@ -692,7 +691,7 @@ class _WalletPageState extends State<WalletPage> {
                                               child: MyText(
                                                 text: walletBalance[
                                                         'currency_symbol'] +
-                                                    '1000',
+                                                    ' 1000',
                                                 size: media.width * twelve,
                                                 fontweight: FontWeight.w600,
                                               ),

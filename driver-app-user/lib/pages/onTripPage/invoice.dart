@@ -107,8 +107,10 @@ class _InvoiceState extends State<Invoice> {
                                         width: media.width * 0.05,
                                       ),
                                       MyText(
-                                        text: userRequestData['driverDetail']
-                                            ['data']['name'],
+                                        text: () {
+                                          final name = (userRequestData['driverDetail']['data']['name'] ?? '').toString();
+                                          return name.length > 22 ? '${name.substring(0, 22)}...' : name;
+                                        }(),
                                         size: media.width * eighteen,
                                       )
                                     ],
@@ -404,10 +406,9 @@ class _InvoiceState extends State<Invoice> {
                                                           ['data'][
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  userRequestData['requestBill']
+                                                  formatDecimalBr(userRequestData['requestBill']
                                                               ['data']
-                                                          ['total_amount']
-                                                      .toString(),
+                                                          ['total_amount']),
                                               style: GoogleFonts.poppins(
                                                   fontSize:
                                                       media.width * twentysix,
@@ -486,10 +487,9 @@ class _InvoiceState extends State<Invoice> {
                                                                   ['data'][
                                                               'requested_currency_symbol'] +
                                                           ' ' +
-                                                          userRequestData['requestBill']
+                                                          formatDecimalBr(userRequestData['requestBill']
                                                                       ['data']
-                                                                  ['base_price']
-                                                              .toString(),
+                                                                  ['base_price']),
                                                       size:
                                                           media.width * twelve,
                                                     ),
@@ -526,10 +526,9 @@ class _InvoiceState extends State<Invoice> {
                                                                   ['data'][
                                                               'requested_currency_symbol'] +
                                                           ' ' +
-                                                          userRequestData['requestBill']
+                                                          formatDecimalBr(userRequestData['requestBill']
                                                                       ['data'][
-                                                                  'distance_price']
-                                                              .toString(),
+                                                                  'distance_price']),
                                                       size:
                                                           media.width * twelve,
                                                     ),
@@ -566,10 +565,9 @@ class _InvoiceState extends State<Invoice> {
                                                                   ['data'][
                                                               'requested_currency_symbol'] +
                                                           ' ' +
-                                                          userRequestData['requestBill']
+                                                          formatDecimalBr(userRequestData['requestBill']
                                                                       ['data']
-                                                                  ['time_price']
-                                                              .toString(),
+                                                                  ['time_price']),
                                                       size:
                                                           media.width * twelve,
                                                     ),
@@ -612,13 +610,12 @@ class _InvoiceState extends State<Invoice> {
                                                                     [
                                                                     'requested_currency_symbol'] +
                                                                 ' ' +
-                                                                userRequestData[
+                                                                formatDecimalBr(userRequestData[
                                                                                 'requestBill']
                                                                             [
                                                                             'data']
                                                                         [
-                                                                        'cancellation_fee']
-                                                                    .toString(),
+                                                                        'cancellation_fee']),
                                                             size: media.width *
                                                                 twelve,
                                                           ),
@@ -664,13 +661,12 @@ class _InvoiceState extends State<Invoice> {
                                                                     [
                                                                     'requested_currency_symbol'] +
                                                                 ' ' +
-                                                                userRequestData[
+                                                                formatDecimalBr(userRequestData[
                                                                                 'requestBill']
                                                                             [
                                                                             'data']
                                                                         [
-                                                                        'airport_surge_fee']
-                                                                    .toString(),
+                                                                        'airport_surge_fee']),
                                                             size: media.width *
                                                                 twelve,
                                                           ),
@@ -708,11 +704,10 @@ class _InvoiceState extends State<Invoice> {
                                                                   ['data'][
                                                               'requested_currency_symbol'] +
                                                           ' ' +
-                                                          userRequestData[
+                                                          formatDecimalBr(userRequestData[
                                                                           'requestBill']
                                                                       ['data'][
-                                                                  'waiting_charge_per_min']
-                                                              .toString() +
+                                                                  'waiting_charge_per_min']) +
                                                           ' x ' +
                                                           userRequestData[
                                                                           'requestBill']
@@ -730,10 +725,9 @@ class _InvoiceState extends State<Invoice> {
                                                                   ['data'][
                                                               'requested_currency_symbol'] +
                                                           ' ' +
-                                                          userRequestData['requestBill']
+                                                          formatDecimalBr(userRequestData['requestBill']
                                                                       ['data'][
-                                                                  'waiting_charge']
-                                                              .toString(),
+                                                                  'waiting_charge']),
                                                       size:
                                                           media.width * twelve,
                                                     ),
@@ -776,13 +770,12 @@ class _InvoiceState extends State<Invoice> {
                                                                     [
                                                                     'requested_currency_symbol'] +
                                                                 ' ' +
-                                                                userRequestData[
+                                                                formatDecimalBr(userRequestData[
                                                                                 'requestBill']
                                                                             [
                                                                             'data']
                                                                         [
-                                                                        'admin_commision']
-                                                                    .toString(),
+                                                                        'admin_commision']),
                                                             size: media.width *
                                                                 twelve,
                                                           ),
@@ -829,13 +822,12 @@ class _InvoiceState extends State<Invoice> {
                                                                     [
                                                                     'requested_currency_symbol'] +
                                                                 ' ' +
-                                                                userRequestData[
+                                                                formatDecimalBr(userRequestData[
                                                                                 'requestBill']
                                                                             [
                                                                             'data']
                                                                         [
-                                                                        'promo_discount']
-                                                                    .toString(),
+                                                                        'promo_discount']),
                                                             size: media.width *
                                                                 twelve,
                                                             color: Colors.red,
@@ -876,10 +868,9 @@ class _InvoiceState extends State<Invoice> {
                                                                   ['data'][
                                                               'requested_currency_symbol'] +
                                                           ' ' +
-                                                          userRequestData['requestBill']
+                                                          formatDecimalBr(userRequestData['requestBill']
                                                                       ['data'][
-                                                                  'service_tax']
-                                                              .toString(),
+                                                                  'service_tax']),
                                                       size:
                                                           media.width * twelve,
                                                     ),
@@ -916,10 +907,9 @@ class _InvoiceState extends State<Invoice> {
                                                                   ['data'][
                                                               'requested_currency_symbol'] +
                                                           ' ' +
-                                                          userRequestData['requestBill']
+                                                          formatDecimalBr(userRequestData['requestBill']
                                                                       ['data'][
-                                                                  'total_amount']
-                                                              .toString(),
+                                                                  'total_amount']),
                                                       size:
                                                           media.width * twelve,
                                                     ),
@@ -962,7 +952,7 @@ class _InvoiceState extends State<Invoice> {
                                     ),
                                     MyText(
                                       text:
-                                          ' ${userRequestData['requestBill']['data']['total_amount']}',
+                                          ' ${formatDecimalBr(userRequestData['requestBill']['data']['total_amount'])}',
                                       size: media.width * twenty,
                                       fontweight: FontWeight.bold,
                                     ),

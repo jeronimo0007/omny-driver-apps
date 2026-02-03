@@ -27,6 +27,7 @@ import '../pages/onTripPage/booking_confirmation.dart';
 import '../pages/onTripPage/map_page.dart';
 import '../pages/onTripPage/review_page.dart';
 import '../pages/referralcode/referral_code.dart';
+import '../config/api_config.dart';
 import '../styles/styles.dart';
 
 //languages code
@@ -41,10 +42,18 @@ bool internet = true;
 // Variável global para armazenar mensagem de erro do servidor
 String serverErrorMessage = '';
 
-//base url
-String url =
-    'https://driver.omny.app.br/'; //add '/' at the end of the url as 'https://url.com/'
+//base url (local em debug, produção em release - ver lib/config/api_config.dart)
+String url = apiBaseUrl;
 String mapkey = 'AIzaSyDIFOaDalHwTa--63nbVUVVM13X3EWTI6Q';
+
+/// Formata número para exibição no padrão brasileiro (vírgula como decimal).
+/// Apenas para exibição; envio à API continua com ponto.
+String formatDecimalBr(dynamic value) {
+  if (value == null) return '0,00';
+  final s = value.toString().replaceFirst(',', '.');
+  final n = value is num ? value : (double.tryParse(s) ?? 0);
+  return n.toStringAsFixed(2).replaceAll('.', ',');
+}
 
 // Função helper para extrair mensagem de erro do servidor
 // Suporta diferentes formatos de resposta de erro (400, 422, etc.)
@@ -1601,11 +1610,11 @@ getAutoAddress(input, sessionToken, lat, lng) async {
     if (userDetails['enable_country_restrict_on_map'] == '1' &&
         userDetails['country_code'] != null) {
       url =
-          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&library=places&location=$lat%2C$lng&radius=2000&components=country:$countryCode&key=$mapkey&sessiontoken=$sessionToken';
+          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&library=places&location=$lat%2C$lng&radius=2000&components=country:$countryCode&key=$mapkey&sessiontoken=$sessionToken&language=pt-BR';
       debugPrint('URL com restrição de país: $url');
     } else {
       url =
-          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&library=places&key=$mapkey&sessiontoken=$sessionToken';
+          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&library=places&key=$mapkey&sessiontoken=$sessionToken&language=pt-BR';
       debugPrint('URL sem restrição: $url');
     }
 
@@ -1715,7 +1724,7 @@ geoCodingForLatLng(placeid) async {
   try {
     var response = await http.get(
       Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeid&key=$mapkey',
+        'https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeid&key=$mapkey&language=pt-BR',
       ),
     );
 
@@ -3015,13 +3024,14 @@ cancelRequestWithReason(reason) async {
 //making call to user
 
 makingPhoneCall(phnumber) async {
-  var mobileCall = 'tel:$phnumber';
-  // ignore: deprecated_member_use
-  if (await canLaunch(mobileCall)) {
-    // ignore: deprecated_member_use
-    await launch(mobileCall);
-  } else {
-    throw 'Could not launch $mobileCall';
+  try {
+    final String raw = phnumber?.toString() ?? '';
+    final String digits = raw.replaceAll(RegExp(r'[^\d+]'), '');
+    if (digits.isEmpty) return;
+    final Uri telUri = Uri.parse('tel:$digits');
+    await launchUrl(telUri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    debugPrint('makingPhoneCall error: $e');
   }
 }
 

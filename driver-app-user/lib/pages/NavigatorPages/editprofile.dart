@@ -166,7 +166,7 @@ class _EditProfileState extends State<EditProfile> {
     } else {
       gender = '';
     }
-    
+
     if (userDetails['document'] != null) {
       String doc = userDetails['document'].toString();
       // Formatar CPF se tiver 11 dígitos
@@ -180,7 +180,7 @@ class _EditProfileState extends State<EditProfile> {
     } else {
       document = '';
     }
-    
+
     if (userDetails['birth_date'] != null) {
       String bDate = userDetails['birth_date'].toString();
       // Formatar data se tiver 8 dígitos
@@ -194,7 +194,7 @@ class _EditProfileState extends State<EditProfile> {
     } else {
       birthDate = '';
     }
-    
+
     if (userDetails['passenger_preference'] != null) {
       selectedPassengerPreference =
           userDetails['passenger_preference'].toString();
@@ -655,7 +655,7 @@ class _EditProfileState extends State<EditProfile> {
                                     : const Color(0xffF8F8F8)),
                             padding: const EdgeInsets.only(left: 5, right: 5),
                             child: DropdownButtonFormField<String>(
-                              value: selectedGender,
+                              initialValue: selectedGender,
                               focusNode: genderFocus,
                               decoration: InputDecoration(
                                 border: InputBorder.none,
@@ -885,7 +885,7 @@ class _EditProfileState extends State<EditProfile> {
                                     : const Color(0xffF8F8F8)),
                             padding: const EdgeInsets.only(left: 5, right: 5),
                             child: DropdownButtonFormField<String>(
-                              value: selectedPassengerPreference,
+                              initialValue: selectedPassengerPreference,
                               focusNode: passengerPreferenceFocus,
                               decoration: InputDecoration(
                                 border: InputBorder.none,
