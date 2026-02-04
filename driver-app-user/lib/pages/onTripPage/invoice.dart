@@ -965,36 +965,15 @@ class _InvoiceState extends State<Invoice> {
                               Expanded(
                                   child: Button(
                                       onTap: () async {
-                                        if (userRequestData['is_paid'] == 0 &&
-                                            userRequestData['payment_opt'] !=
-                                                '2') {
-                                          setState(() {
-                                            myPaymentMethod = userRequestData[
-                                                        'payment_opt'] ==
-                                                    '0'
-                                                ? 'card'
-                                                : userRequestData[
-                                                            'payment_opt'] ==
-                                                        '1'
-                                                    ? 'cash'
-                                                    : '';
-                                            _choosePaymentMethod = true;
-                                          });
-                                        } else {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const Review()));
-                                        }
+                                        // Método de pagamento já foi escolhido no início da corrida; não permite alterar no final.
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const Review()));
                                       },
-                                      text: (userRequestData['is_paid'] == 0 &&
-                                              userRequestData['payment_opt'] !=
-                                                  '2')
-                                          ? languages[choosenLanguage]
-                                              ['text_choose_payment']
-                                          : languages[choosenLanguage]
-                                              ['text_confirm'])),
+                                      text: languages[choosenLanguage]
+                                          ['text_confirm'])),
                             ],
                           ),
                           if (userRequestData['is_paid'] == 0 &&

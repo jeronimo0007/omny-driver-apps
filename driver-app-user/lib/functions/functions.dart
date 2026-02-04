@@ -401,11 +401,30 @@ dynamic credentials;
 bool _isProcessingVerification =
     false; // Flag para evitar processamento duplicado
 
-phoneAuth(String phone) async {
+/// Cooldown para não enviar SMS várias vezes (evita bloqueio "too-many-requests")
+DateTime? lastPhoneAuthRequestTime;
+const int phoneAuthCooldownSeconds = 60;
+
+int getPhoneAuthCooldownRemaining() {
+  if (lastPhoneAuthRequestTime == null) return 0;
+  final elapsed = DateTime.now().difference(lastPhoneAuthRequestTime!).inSeconds;
+  if (elapsed >= phoneAuthCooldownSeconds) return 0;
+  return phoneAuthCooldownSeconds - elapsed;
+}
+
+/// Retorna true se a requisição foi enviada, false se bloqueada por cooldown
+Future<bool> phoneAuth(String phone) async {
   try {
-    // Resetar flag e credentials
+    if (getPhoneAuthCooldownRemaining() > 0) {
+      debugPrint('⚠️ Cooldown ativo. Aguarde ${getPhoneAuthCooldownRemaining()}s para reenviar.');
+      phoneAuthCheck = false;
+      valueNotifierLogin.incrementNotifier();
+      return false;
+    }
+
     _isProcessingVerification = false;
     credentials = null;
+    lastPhoneAuthRequestTime = DateTime.now();
 
     debugPrint('═══════════════════════════════════════════════════════════');
     debugPrint('📱 INICIANDO VERIFICAÇÃO DE TELEFONE VIA FIREBASE');
@@ -452,6 +471,18 @@ phoneAuth(String phone) async {
               '⚠️ Phone Authentication não está habilitado no Firebase Console.');
           debugPrint(
               '💡 Ação necessária: Habilite Phone Authentication em Authentication > Sign-in method no Firebase Console');
+        } else if (e.code == 'missing-client-identifier' ||
+            (e.message != null && e.message!.toLowerCase().contains('app identifier'))) {
+          debugPrint(
+              '⚠️ Firebase não reconhece o app (Play Integrity). Para enviar SMS de verdade:');
+          debugPrint(
+              '💡 1) No Firebase Console: Configurações do projeto > Seus apps > Android (br.app.omny.user)');
+          debugPrint(
+              '💡 2) Adicione as impressões digitais SHA-1 e SHA-256 do keystore (debug ou release)');
+          debugPrint(
+              '💡 3) Obter SHA: keytool -list -v -keystore C:\\Users\\SEU_USUARIO\\.android\\debug.keystore -alias androiddebugkey -storepass android');
+          debugPrint(
+              '💡 4) Se o número estava em "Números de teste" (Phone testing), remova para receber SMS real');
         }
         phoneAuthCheck = false;
         valueNotifierLogin.incrementNotifier();
@@ -463,7 +494,6 @@ phoneAuth(String phone) async {
         resendTokenId = resendToken;
         phoneAuthCheck = true;
         _isProcessingVerification = false;
-        // Notificar apenas o listener de login, não o home
         valueNotifierLogin.incrementNotifier();
       },
       codeAutoRetrievalTimeout: (String verificationId) {
@@ -473,6 +503,7 @@ phoneAuth(String phone) async {
       },
       timeout: const Duration(seconds: 60),
     );
+    return true;
   } catch (e) {
     _isProcessingVerification = false;
     debugPrint('❌ Erro ao verificar telefone: $e');
@@ -481,6 +512,7 @@ phoneAuth(String phone) async {
     }
     phoneAuthCheck = false;
     valueNotifierLogin.incrementNotifier();
+    return false;
   }
 }
 

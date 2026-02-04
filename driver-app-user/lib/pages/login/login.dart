@@ -1061,15 +1061,25 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                                     true) {
                                                               phoneAuthCheck =
                                                                   true;
-                                                              await phoneAuth(
+                                                              final sent = await phoneAuth(
                                                                   fullPhoneNumber);
-                                                              value = 0;
-                                                              // Aguardar um pouco para o SMS ser enviado antes de mudar a página
-                                                              await Future.delayed(
-                                                                  const Duration(
-                                                                      milliseconds:
-                                                                          500));
-                                                              currentPage = 1;
+                                                              if (sent) {
+                                                                value = 0;
+                                                                await Future.delayed(
+                                                                    const Duration(
+                                                                        milliseconds:
+                                                                            500));
+                                                                currentPage = 1;
+                                                              } else if (mounted) {
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  SnackBar(
+                                                                    content: Text(
+                                                                      'Aguarde ${getPhoneAuthCooldownRemaining()}s para reenviar o código.',
+                                                                    ),
+                                                                    behavior: SnackBarBehavior.floating,
+                                                                  ),
+                                                                );
+                                                              }
                                                               loginLoading =
                                                                   false;
                                                               setState(() {});
@@ -1448,19 +1458,37 @@ class PhoneDDDFormatter extends TextInputFormatter {
     String oldDigitsOnly = oldValue.text.replaceAll(RegExp(r'[^\d]'), '');
     String newDigitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
 
-    // Detecta se está deletando
+    // Detecta se está deletando (menos dígitos) ou se apagou um caractere não-dígito (ex: ")" ou " ")
     bool isDeleting = newDigitsOnly.length < oldDigitsOnly.length;
+    bool deletedNonDigit = oldValue.text.length > newValue.text.length &&
+        newDigitsOnly.length == oldDigitsOnly.length &&
+        oldDigitsOnly.length >= 2;
+
+    // Ao apagar ")" ou " " do "(11)" ou "(11) 9...": trata como se tivesse apagado o último dígito
+    if (deletedNonDigit) {
+      newDigitsOnly = newDigitsOnly.substring(0, newDigitsOnly.length - 1);
+      isDeleting = true;
+    }
 
     // Limita ao tamanho máximo
     if (newDigitsOnly.length > maxLength) {
       newDigitsOnly = newDigitsOnly.substring(0, maxLength);
     }
 
-    // Se não há dígitos, retorna vazio
+    // Se não há dígitos, retorna vazio (limpa a máscara)
     if (newDigitsOnly.isEmpty) {
       return const TextEditingValue(
         text: '',
         selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    // Ao apagar: quando sobram 2 dígitos e o usuário quer continuar apagando,
+    // mostramos só o 1º dígito para o próximo backspace limpar
+    if (isDeleting && newDigitsOnly.length == 2 && oldDigitsOnly.length >= 2) {
+      return TextEditingValue(
+        text: newDigitsOnly.substring(0, 1),
+        selection: const TextSelection.collapsed(offset: 1),
       );
     }
 
