@@ -52,7 +52,7 @@ dependencies:
   permission_handler: ^12.0.1
   # contacts_service: ^0.6.3  # Removido - substituído por flutter_contacts
   flutter_contacts: ^1.1.7
-  share_plus: ^12.0.1
+  share_plus: ^7.0.2
   flutter_stripe: ^12.1.1
   connectivity_plus: ^7.0.0
   # flutter_paystack: ^1.0.5+1  # Removido - mantendo Stripe, Mercado Pago e Flutterwave
@@ -81,6 +81,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+
+# Fix: webview_flutter_wkwebview 3.23+ usa isInspectable (iOS 16.4+). Simulador 16.2 não tem.
+dependency_overrides:
+  webview_flutter_wkwebview: 3.20.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

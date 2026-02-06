@@ -78,6 +78,10 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
 
+# Fix: webview_flutter_wkwebview 3.23+ usa isInspectable (iOS 16.4+). Simulador 16.2 não tem.
+dependency_overrides:
+  webview_flutter_wkwebview: 3.20.0
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
