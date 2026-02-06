@@ -35,7 +35,7 @@ class _NamePageState extends State<NamePage> {
   TextEditingController complementController = TextEditingController();
   TextEditingController neighborhoodController = TextEditingController();
   TextEditingController cityController = TextEditingController();
-  TextEditingController _referralController = TextEditingController();
+  final TextEditingController _referralController = TextEditingController();
 
   final FocusNode _referralFocusNode = FocusNode();
   final FocusNode _firstnameFocusNode = FocusNode();
@@ -98,13 +98,15 @@ class _NamePageState extends State<NamePage> {
     if (userAddress.isNotEmpty) addressController.text = userAddress;
     if (userNumber.isNotEmpty) numberController.text = userNumber;
     if (userComplement.isNotEmpty) complementController.text = userComplement;
-    if (userNeighborhood.isNotEmpty)
+    if (userNeighborhood.isNotEmpty) {
       neighborhoodController.text = userNeighborhood;
+    }
     if (userCity.isNotEmpty) cityController.text = userCity;
     if (userState.isNotEmpty) _selectedState = userState;
     if (userGender.isNotEmpty) _selectedGender = userGender;
-    if (userPassengerPreference.isNotEmpty)
+    if (userPassengerPreference.isNotEmpty) {
       _selectedPassengerPreference = userPassengerPreference;
+    }
     if (userCpf.isNotEmpty) cpfController.text = userCpf;
     if (userBirthDate.isNotEmpty && userBirthDate.length >= 10) {
       // userBirthDate vem como yyyy-MM-dd; exibir dd/mm/yyyy
@@ -144,8 +146,8 @@ class _NamePageState extends State<NamePage> {
     _passengerPreferenceFocusNode.addListener(() => setState(() =>
         _isPassengerPreferenceFocused =
             _passengerPreferenceFocusNode.hasFocus));
-    _referralFocusNode.addListener(() =>
-        setState(() => _isReferralFocused = _referralFocusNode.hasFocus));
+    _referralFocusNode.addListener(
+        () => setState(() => _isReferralFocused = _referralFocusNode.hasFocus));
 
     _firstnameFocusNode.addListener(() {
       setState(() {
@@ -370,7 +372,8 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(height: media.height * 0.02),
                         // Código de indicação (Opcional) - primeira opção no cadastro
                         MyText(
-                          text: (languages[choosenLanguage]?['text_referral_optional'] ??
+                          text: (languages[choosenLanguage]
+                                  ?['text_referral_optional'] ??
                               'Código de indicação (Opcional)'),
                           size: media.width * fourteen,
                           color: hintColor,
@@ -395,7 +398,8 @@ class _NamePageState extends State<NamePage> {
                             focusNode: _referralFocusNode,
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText: languages[choosenLanguage]?['text_enter_referral'] ??
+                              hintText: languages[choosenLanguage]
+                                      ?['text_enter_referral'] ??
                                   'Digite o código de indicação',
                               hintStyle: GoogleFonts.poppins(
                                 fontSize: media.width * fourteen,
@@ -746,8 +750,12 @@ class _NamePageState extends State<NamePage> {
                                   Focus(
                                     focusNode: _stateFocusNode,
                                     child: DropdownSearch<String>(
-                                      selectedItem: _selectedState.isEmpty ? null : _selectedState,
-                                      items: brazilianStates.map((s) => s['uf']!).toList(),
+                                      selectedItem: _selectedState.isEmpty
+                                          ? null
+                                          : _selectedState,
+                                      items: brazilianStates
+                                          .map((s) => s['uf']!)
+                                          .toList(),
                                       itemAsString: (String s) {
                                         final e = brazilianStates.firstWhere(
                                           (e) => e['uf'] == s,
@@ -765,17 +773,31 @@ class _NamePageState extends State<NamePage> {
                                         showSearchBox: true,
                                         searchFieldProps: TextFieldProps(
                                           decoration: InputDecoration(
-                                            hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                            hintText: languages[choosenLanguage]
+                                                    ['text_search'] ??
+                                                'Buscar',
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
                                           ),
                                         ),
                                       ),
-                                      dropdownDecoratorProps: DropDownDecoratorProps(
-                                        dropdownSearchDecoration: InputDecoration(
-                                          hintText: languages[choosenLanguage]['text_state_hint'] ?? 'UF',
-                                          hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: media.width * 0.03),
+                                      dropdownDecoratorProps:
+                                          DropDownDecoratorProps(
+                                        dropdownSearchDecoration:
+                                            InputDecoration(
+                                          hintText: languages[choosenLanguage]
+                                                  ['text_state_hint'] ??
+                                              'UF',
+                                          hintStyle: GoogleFonts.poppins(
+                                              fontSize: media.width * fourteen,
+                                              color: hintColor),
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: media.width * 0.03),
                                         ),
                                       ),
                                     ),
@@ -800,11 +822,21 @@ class _NamePageState extends State<NamePage> {
                           child: SizedBox(
                             width: media.width * 0.9,
                             child: DropdownSearch<String>(
-                              selectedItem: _selectedGender.isEmpty ? null : _selectedGender,
-                              items: genderOptions.map((g) => g['value']!).toList(),
+                              selectedItem: _selectedGender.isEmpty
+                                  ? null
+                                  : _selectedGender,
+                              items: genderOptions
+                                  .map((g) => g['value']!)
+                                  .toList(),
                               itemAsString: (String v) =>
-                                  languages[choosenLanguage]['text_gender_$v'] ??
-                                  genderOptions.firstWhere((e) => e['value'] == v, orElse: () => {'value': v, 'label_pt': v})['label_pt']!,
+                                  languages[choosenLanguage]
+                                      ['text_gender_$v'] ??
+                                  genderOptions.firstWhere(
+                                      (e) => e['value'] == v,
+                                      orElse: () => {
+                                            'value': v,
+                                            'label_pt': v
+                                          })['label_pt']!,
                               onChanged: (v) {
                                 setState(() {
                                   _selectedGender = v ?? '';
@@ -815,17 +847,27 @@ class _NamePageState extends State<NamePage> {
                                 showSearchBox: true,
                                 searchFieldProps: TextFieldProps(
                                   decoration: InputDecoration(
-                                    hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    hintText: languages[choosenLanguage]
+                                            ['text_search'] ??
+                                        'Buscar',
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8)),
                                   ),
                                 ),
                               ),
                               dropdownDecoratorProps: DropDownDecoratorProps(
                                 dropdownSearchDecoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_gender_hint'] ?? 'Selecione o gênero',
-                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: media.width * 0.03),
+                                  hintText: languages[choosenLanguage]
+                                          ['text_gender_hint'] ??
+                                      'Selecione o gênero',
+                                  hintStyle: GoogleFonts.poppins(
+                                      fontSize: media.width * fourteen,
+                                      color: hintColor),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: media.width * 0.03),
                                 ),
                               ),
                             ),
@@ -847,32 +889,53 @@ class _NamePageState extends State<NamePage> {
                           child: SizedBox(
                             width: media.width * 0.9,
                             child: DropdownSearch<String>(
-                              selectedItem: _selectedPassengerPreference.isEmpty ? null : _selectedPassengerPreference,
-                              items: passengerPreferenceOptions.map((p) => p['value']!).toList(),
+                              selectedItem: _selectedPassengerPreference.isEmpty
+                                  ? null
+                                  : _selectedPassengerPreference,
+                              items: passengerPreferenceOptions
+                                  .map((p) => p['value']!)
+                                  .toList(),
                               itemAsString: (String v) =>
-                                  languages[choosenLanguage]['text_passenger_$v'] ??
-                                  passengerPreferenceOptions.firstWhere((e) => e['value'] == v, orElse: () => {'value': v, 'label_pt': v})['label_pt']!,
+                                  languages[choosenLanguage]
+                                      ['text_passenger_$v'] ??
+                                  passengerPreferenceOptions.firstWhere(
+                                      (e) => e['value'] == v,
+                                      orElse: () => {
+                                            'value': v,
+                                            'label_pt': v
+                                          })['label_pt']!,
                               onChanged: (v) {
                                 setState(() {
                                   _selectedPassengerPreference = v ?? 'both';
-                                  userPassengerPreference = _selectedPassengerPreference;
+                                  userPassengerPreference =
+                                      _selectedPassengerPreference;
                                 });
                               },
                               popupProps: PopupProps.menu(
                                 showSearchBox: true,
                                 searchFieldProps: TextFieldProps(
                                   decoration: InputDecoration(
-                                    hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    hintText: languages[choosenLanguage]
+                                            ['text_search'] ??
+                                        'Buscar',
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8)),
                                   ),
                                 ),
                               ),
                               dropdownDecoratorProps: DropDownDecoratorProps(
                                 dropdownSearchDecoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]['text_passenger_preference_hint'] ?? 'Preferência de passageiro',
-                                  hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: media.width * 0.03),
+                                  hintText: languages[choosenLanguage]
+                                          ['text_passenger_preference_hint'] ??
+                                      'Preferência de passageiro',
+                                  hintStyle: GoogleFonts.poppins(
+                                      fontSize: media.width * fourteen,
+                                      color: hintColor),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: media.width * 0.03),
                                 ),
                               ),
                             ),
@@ -1262,7 +1325,8 @@ class _NamePageState extends State<NamePage> {
                                   setState(() {
                                     _error = '';
                                   });
-                                  loginReferralCode = _referralController.text.trim();
+                                  loginReferralCode =
+                                      _referralController.text.trim();
                                   loginLoading = true;
                                   valueNotifierLogin.incrementNotifier();
                                   String pattern =
@@ -1357,7 +1421,8 @@ class _NamePageState extends State<NamePage> {
                               userPassengerPreference =
                                   _selectedPassengerPreference;
                               FocusManager.instance.primaryFocus?.unfocus();
-                              loginReferralCode = _referralController.text.trim();
+                              loginReferralCode =
+                                  _referralController.text.trim();
                               loginLoading = true;
                               valueNotifierLogin.incrementNotifier();
                               var val = await otpCall();

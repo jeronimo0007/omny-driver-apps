@@ -82,12 +82,18 @@ class _BankDetailsState extends State<BankDetails> {
     if (mounted) {
       setState(() {
         _isLoading = false;
-        if (bankData.isEmpty && _selectedPixType == null) _selectedPixType = 'email';
-        if (bankData.isNotEmpty && bankData['type'] != null) _selectedPixType = bankData['type'].toString();
+        if (bankData.isEmpty && _selectedPixType == null)
+          _selectedPixType = 'email';
+        if (bankData.isNotEmpty && bankData['type'] != null)
+          _selectedPixType = bankData['type'].toString();
         if (bankData.isNotEmpty && bankData['bank_name'] != null) {
           final bn = bankData['bank_name'].toString();
-          if (_bankNames.contains(bn)) _selectedBank = bn;
-          else { _selectedBank = _bankOutrosKey; bankOtherController.text = bn; }
+          if (_bankNames.contains(bn)) {
+            _selectedBank = bn;
+          } else {
+            _selectedBank = _bankOutrosKey;
+            bankOtherController.text = bn;
+          }
         }
       });
     }
@@ -159,26 +165,53 @@ class _BankDetailsState extends State<BankDetails> {
                               children: [
                                 // 1. Tipo de chave PIX (primeiro, com busca)
                                 DropdownSearch<String>(
-                                  selectedItem: _pixTypeOptions.any((e) => e['value'] == _selectedPixType) ? _selectedPixType : null,
-                                  items: _pixTypeOptions.map((e) => e['value']!).toList(),
-                                  itemAsString: (String v) => languages[choosenLanguage][_pixTypeOptions.firstWhere((e) => e['value'] == v, orElse: () => {'value': v, 'key': 'text_pix_email'})['key']] ?? v,
-                                  onChanged: (String? value) => setState(() => _selectedPixType = value),
+                                  selectedItem: _pixTypeOptions.any(
+                                          (e) => e['value'] == _selectedPixType)
+                                      ? _selectedPixType
+                                      : null,
+                                  items: _pixTypeOptions
+                                      .map((e) => e['value']!)
+                                      .toList(),
+                                  itemAsString: (String v) =>
+                                      languages[choosenLanguage][_pixTypeOptions
+                                          .firstWhere((e) => e['value'] == v,
+                                              orElse: () => {
+                                                    'value': v,
+                                                    'key': 'text_pix_email'
+                                                  })['key']] ??
+                                      v,
+                                  onChanged: (String? value) =>
+                                      setState(() => _selectedPixType = value),
                                   popupProps: PopupProps.menu(
                                     showSearchBox: true,
                                     searchFieldProps: TextFieldProps(
                                       decoration: InputDecoration(
-                                        hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                        hintText: languages[choosenLanguage]
+                                                ['text_search'] ??
+                                            'Buscar',
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
                                       ),
                                     ),
                                   ),
-                                  dropdownDecoratorProps: DropDownDecoratorProps(
+                                  dropdownDecoratorProps:
+                                      DropDownDecoratorProps(
                                     dropdownSearchDecoration: InputDecoration(
-                                      labelText: languages[choosenLanguage]['text_pix_type'],
-                                      labelStyle: TextStyle(color: (isDarkTheme == true) ? textColor : null),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                      labelText: languages[choosenLanguage]
+                                          ['text_pix_type'],
+                                      labelStyle: TextStyle(
+                                          color: (isDarkTheme == true)
+                                              ? textColor
+                                              : null),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
                                       enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : hintColor),
+                                        borderSide: BorderSide(
+                                            color: (isDarkTheme == true)
+                                                ? textColor
+                                                : hintColor),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
@@ -188,13 +221,28 @@ class _BankDetailsState extends State<BankDetails> {
                                 TextField(
                                   controller: holderName,
                                   decoration: InputDecoration(
-                                      labelText: languages[choosenLanguage]['text_accoutHolderName'],
-                                      labelStyle: TextStyle(color: (isDarkTheme == true) ? textColor : null),
-                                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : Colors.blue)),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), gapPadding: 1),
+                                      labelText: languages[choosenLanguage]
+                                          ['text_accoutHolderName'],
+                                      labelStyle: TextStyle(
+                                          color: (isDarkTheme == true)
+                                              ? textColor
+                                              : null),
+                                      focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: (isDarkTheme == true)
+                                                  ? textColor
+                                                  : Colors.blue)),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          gapPadding: 1),
                                       enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : hintColor),
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: (isDarkTheme == true)
+                                                  ? textColor
+                                                  : hintColor),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                           gapPadding: 1),
                                       isDense: true),
                                   style: GoogleFonts.poppins(color: textColor),
@@ -203,39 +251,76 @@ class _BankDetailsState extends State<BankDetails> {
                                 TextField(
                                   controller: accountNumber,
                                   decoration: InputDecoration(
-                                      labelText: languages[choosenLanguage]['text_accountNumber'],
-                                      labelStyle: TextStyle(color: (isDarkTheme == true) ? textColor : null),
-                                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : Colors.blue)),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), gapPadding: 1),
+                                      labelText: languages[choosenLanguage]
+                                          ['text_accountNumber'],
+                                      labelStyle: TextStyle(
+                                          color: (isDarkTheme == true)
+                                              ? textColor
+                                              : null),
+                                      focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: (isDarkTheme == true)
+                                                  ? textColor
+                                                  : Colors.blue)),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          gapPadding: 1),
                                       enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : hintColor),
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: (isDarkTheme == true)
+                                                  ? textColor
+                                                  : hintColor),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                           gapPadding: 1),
                                       isDense: true),
                                   style: GoogleFonts.poppins(color: textColor),
                                 ),
                                 SizedBox(height: media.width * 0.05),
                                 DropdownSearch<String>(
-                                  selectedItem: _selectedBank == _bankOutrosKey ? null : _selectedBank,
+                                  selectedItem: _selectedBank == _bankOutrosKey
+                                      ? null
+                                      : _selectedBank,
                                   items: _bankNames + [_bankOutrosKey],
-                                  itemAsString: (String s) => s == _bankOutrosKey ? (languages[choosenLanguage]['text_others'] ?? 'Outros') : s,
-                                  onChanged: (String? v) => setState(() => _selectedBank = v),
+                                  itemAsString: (String s) =>
+                                      s == _bankOutrosKey
+                                          ? (languages[choosenLanguage]
+                                                  ['text_others'] ??
+                                              'Outros')
+                                          : s,
+                                  onChanged: (String? v) =>
+                                      setState(() => _selectedBank = v),
                                   popupProps: PopupProps.menu(
                                     showSearchBox: true,
                                     searchFieldProps: TextFieldProps(
                                       decoration: InputDecoration(
-                                        hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                        hintText: languages[choosenLanguage]
+                                                ['text_search'] ??
+                                            'Buscar',
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
                                       ),
                                     ),
                                   ),
-                                  dropdownDecoratorProps: DropDownDecoratorProps(
+                                  dropdownDecoratorProps:
+                                      DropDownDecoratorProps(
                                     dropdownSearchDecoration: InputDecoration(
-                                      labelText: languages[choosenLanguage]['text_bankName'],
-                                      labelStyle: TextStyle(color: (isDarkTheme == true) ? textColor : null),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                      labelText: languages[choosenLanguage]
+                                          ['text_bankName'],
+                                      labelStyle: TextStyle(
+                                          color: (isDarkTheme == true)
+                                              ? textColor
+                                              : null),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
                                       enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : hintColor),
+                                        borderSide: BorderSide(
+                                            color: (isDarkTheme == true)
+                                                ? textColor
+                                                : hintColor),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
@@ -246,15 +331,27 @@ class _BankDetailsState extends State<BankDetails> {
                                   TextField(
                                     controller: bankOtherController,
                                     decoration: InputDecoration(
-                                        labelText: '${languages[choosenLanguage]['text_bankName']} (${languages[choosenLanguage]['text_others'] ?? 'Outros'})',
-                                        labelStyle: TextStyle(color: (isDarkTheme == true) ? textColor : null),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), gapPadding: 1),
+                                        labelText:
+                                            '${languages[choosenLanguage]['text_bankName']} (${languages[choosenLanguage]['text_others'] ?? 'Outros'})',
+                                        labelStyle: TextStyle(
+                                            color: (isDarkTheme == true)
+                                                ? textColor
+                                                : null),
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            gapPadding: 1),
                                         enabledBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : hintColor),
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: BorderSide(
+                                                color: (isDarkTheme == true)
+                                                    ? textColor
+                                                    : hintColor),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                             gapPadding: 1),
                                         isDense: true),
-                                    style: GoogleFonts.poppins(color: textColor),
+                                    style:
+                                        GoogleFonts.poppins(color: textColor),
                                     onChanged: (_) => setState(() {}),
                                   ),
                                 ],
@@ -262,13 +359,28 @@ class _BankDetailsState extends State<BankDetails> {
                                 TextField(
                                   controller: bankCode,
                                   decoration: InputDecoration(
-                                      labelText: languages[choosenLanguage]['text_bankCode'],
-                                      labelStyle: TextStyle(color: (isDarkTheme == true) ? textColor : null),
-                                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : Colors.blue)),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), gapPadding: 1),
+                                      labelText: languages[choosenLanguage]
+                                          ['text_bankCode'],
+                                      labelStyle: TextStyle(
+                                          color: (isDarkTheme == true)
+                                              ? textColor
+                                              : null),
+                                      focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: (isDarkTheme == true)
+                                                  ? textColor
+                                                  : Colors.blue)),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          gapPadding: 1),
                                       enabledBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(color: (isDarkTheme == true) ? textColor : hintColor),
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: (isDarkTheme == true)
+                                                  ? textColor
+                                                  : hintColor),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                           gapPadding: 1),
                                       isDense: true),
                                   style: GoogleFonts.poppins(color: textColor),
@@ -293,20 +405,29 @@ class _BankDetailsState extends State<BankDetails> {
                                       ]),
                                   child: Column(
                                     children: [
-                                      if (bankData['type'] != null && bankData['type'].toString().isNotEmpty) ...[
+                                      if (bankData['type'] != null &&
+                                          bankData['type']
+                                              .toString()
+                                              .isNotEmpty) ...[
                                         Text(
-                                          languages[choosenLanguage]['text_pix_type'],
+                                          languages[choosenLanguage]
+                                              ['text_pix_type'],
                                           style: GoogleFonts.poppins(
                                               fontSize: media.width * sixteen,
                                               color: hintColor),
                                         ),
                                         SizedBox(height: media.width * 0.025),
                                         Text(
-                                          languages[choosenLanguage][_pixTypeOptions
-                                                  .firstWhere(
-                                                    (e) => e['value'] == bankData['type'].toString(),
-                                                    orElse: () => {'value': '', 'key': 'text_pix_email'},
-                                                  )['key']] ??
+                                          languages[choosenLanguage]
+                                                  [_pixTypeOptions.firstWhere(
+                                                (e) =>
+                                                    e['value'] ==
+                                                    bankData['type'].toString(),
+                                                orElse: () => {
+                                                  'value': '',
+                                                  'key': 'text_pix_email'
+                                                },
+                                              )['key']] ??
                                               bankData['type'].toString(),
                                           style: GoogleFonts.poppins(
                                               fontSize: media.width * sixteen,
@@ -315,7 +436,8 @@ class _BankDetailsState extends State<BankDetails> {
                                         SizedBox(height: media.width * 0.05),
                                       ],
                                       Text(
-                                        languages[choosenLanguage]['text_accoutHolderName'],
+                                        languages[choosenLanguage]
+                                            ['text_accoutHolderName'],
                                         style: GoogleFonts.poppins(
                                             fontSize: media.width * sixteen,
                                             color: hintColor),
@@ -329,7 +451,8 @@ class _BankDetailsState extends State<BankDetails> {
                                       ),
                                       SizedBox(height: media.width * 0.05),
                                       Text(
-                                        languages[choosenLanguage]['text_bankName'],
+                                        languages[choosenLanguage]
+                                            ['text_bankName'],
                                         style: GoogleFonts.poppins(
                                             fontSize: media.width * sixteen,
                                             color: hintColor),
@@ -343,7 +466,8 @@ class _BankDetailsState extends State<BankDetails> {
                                       ),
                                       SizedBox(height: media.width * 0.05),
                                       Text(
-                                        languages[choosenLanguage]['text_accountNumber'],
+                                        languages[choosenLanguage]
+                                            ['text_accountNumber'],
                                         style: GoogleFonts.poppins(
                                             fontSize: media.width * sixteen,
                                             color: hintColor),
@@ -357,7 +481,8 @@ class _BankDetailsState extends State<BankDetails> {
                                       ),
                                       SizedBox(height: media.width * 0.05),
                                       Text(
-                                        languages[choosenLanguage]['text_bankCode'],
+                                        languages[choosenLanguage]
+                                            ['text_bankCode'],
                                         style: GoogleFonts.poppins(
                                             fontSize: media.width * sixteen,
                                             color: hintColor),
@@ -399,9 +524,10 @@ class _BankDetailsState extends State<BankDetails> {
                                   onTap: () async {
                                     FocusManager.instance.primaryFocus
                                         ?.unfocus();
-                                    final bankNameStr = (_selectedBank == _bankOutrosKey)
-                                        ? bankOtherController.text.trim()
-                                        : (_selectedBank ?? '');
+                                    final bankNameStr =
+                                        (_selectedBank == _bankOutrosKey)
+                                            ? bankOtherController.text.trim()
+                                            : (_selectedBank ?? '');
                                     if (holderName.text.isNotEmpty &&
                                         accountNumber.text.isNotEmpty &&
                                         bankCode.text.isNotEmpty &&
@@ -451,7 +577,8 @@ class _BankDetailsState extends State<BankDetails> {
                                     bankData['account_no'].toString();
                                 bankCode.text = bankData['bank_code'];
                                 holderName.text = bankData['account_name'];
-                                final bn = bankData['bank_name']?.toString() ?? '';
+                                final bn =
+                                    bankData['bank_name']?.toString() ?? '';
                                 if (_bankNames.contains(bn)) {
                                   _selectedBank = bn;
                                   bankOtherController.clear();
@@ -460,7 +587,9 @@ class _BankDetailsState extends State<BankDetails> {
                                   bankOtherController.text = bn;
                                 }
                                 _selectedPixType = bankData['type']?.toString();
-                                if (_selectedPixType != null && !_pixTypeOptions.any((e) => e['value'] == _selectedPixType)) {
+                                if (_selectedPixType != null &&
+                                    !_pixTypeOptions.any((e) =>
+                                        e['value'] == _selectedPixType)) {
                                   _selectedPixType = 'email';
                                 }
                                 _edit = true;

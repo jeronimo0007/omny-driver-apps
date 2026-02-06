@@ -49,9 +49,11 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final savedDate = prefs.getString('otp_resend_date');
     if (savedDate == today) {
-      if (mounted) setState(() {
-        _resendCountToday = prefs.getInt('otp_resend_count') ?? 0;
-      });
+      if (mounted) {
+        setState(() {
+          _resendCountToday = prefs.getInt('otp_resend_count') ?? 0;
+        });
+      }
     } else {
       await prefs.setString('otp_resend_date', today);
       await prefs.setInt('otp_resend_count', 0);
@@ -312,55 +314,76 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                                   height: 20,
                                 ),
                                 TextButton(
-                                    onPressed: (_resend && _resendCountToday < _maxResendPerDay)
+                                    onPressed: (_resend &&
+                                            _resendCountToday <
+                                                _maxResendPerDay)
                                         ? () async {
                                             loginLoading = true;
-                                            valueNotifierLogin.incrementNotifier();
-                                            var verify = await verifyUser(phnumber);
+                                            valueNotifierLogin
+                                                .incrementNotifier();
+                                            var verify =
+                                                await verifyUser(phnumber);
                                             if (verify == false) {
-                                              await phoneAuth(countries[phcode]['dial_code'] + phnumber);
+                                              await phoneAuth(countries[phcode]
+                                                      ['dial_code'] +
+                                                  phnumber);
                                               setState(() {
                                                 _error = '';
                                                 _pinPutController2.text = '';
                                                 _resend = false;
                                                 _resendCountToday++;
-                                                _resendDuration = _resendDuration * 2;
+                                                _resendDuration =
+                                                    _resendDuration * 2;
                                               });
                                               await _saveResendCount();
                                               aController.dispose();
                                               aController = AnimationController(
                                                   vsync: this,
-                                                  duration: Duration(seconds: _resendDuration));
-                                              aController.reverse(from: _resendDuration.toDouble());
+                                                  duration: Duration(
+                                                      seconds:
+                                                          _resendDuration));
+                                              aController.reverse(
+                                                  from: _resendDuration
+                                                      .toDouble());
                                               if (mounted) setState(() {});
                                             } else {
                                               setState(() {
                                                 _pinPutController2.text = '';
                                                 _error = verify is String
                                                     ? verify
-                                                    : (languages[choosenLanguage]?['text_mobile_already_taken'] ??
+                                                    : (languages[
+                                                                choosenLanguage]
+                                                            ?[
+                                                            'text_mobile_already_taken'] ??
                                                         'O número de celular já está em uso.');
                                               });
                                             }
                                             loginLoading = false;
-                                            valueNotifierLogin.incrementNotifier();
+                                            valueNotifierLogin
+                                                .incrementNotifier();
                                           }
                                         : null,
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         MyText(
-                                          text: languages[choosenLanguage]['text_resend_otp'],
+                                          text: languages[choosenLanguage]
+                                              ['text_resend_otp'],
                                           size: media.width * sixteen,
-                                          color: (_resend && _resendCountToday < _maxResendPerDay)
+                                          color: (_resend &&
+                                                  _resendCountToday <
+                                                      _maxResendPerDay)
                                               ? buttonColor
                                               : buttonColor.withOpacity(0.4),
                                         ),
-                                        if (_resendCountToday >= _maxResendPerDay)
+                                        if (_resendCountToday >=
+                                            _maxResendPerDay)
                                           Padding(
-                                            padding: EdgeInsets.only(top: media.width * 0.02),
+                                            padding: EdgeInsets.only(
+                                                top: media.width * 0.02),
                                             child: MyText(
-                                              text: languages[choosenLanguage]['text_max_resend_per_day'] ??
+                                              text: languages[choosenLanguage][
+                                                      'text_max_resend_per_day'] ??
                                                   'Máximo de 6 reenvios por dia.',
                                               size: media.width * twelve,
                                               color: Colors.red,
@@ -438,7 +461,8 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                               // Web: se Firebase não foi inicializado, orientar a usar e-mail
                               if (kIsWeb && Firebase.apps.isEmpty) {
                                 setState(() {
-                                  _error = 'Login por telefone não disponível na web. Use login por e-mail.';
+                                  _error =
+                                      'Login por telefone não disponível na web. Use login por e-mail.';
                                 });
                                 loginLoading = false;
                                 valueNotifierLogin.incrementNotifier();

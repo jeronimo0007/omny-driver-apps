@@ -684,7 +684,10 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                   ['requestBill']['data']
                                               ['requested_currency_symbol'] +
                                           ' ' +
-                                          '${formatDecimalBr(myHistory[selectedHistory]['requestBill']['data']['total_amount'])}',
+                                          formatDecimalBr(
+                                              myHistory[selectedHistory]
+                                                      ['requestBill']['data']
+                                                  ['total_amount']),
                                       size: media.width * twentysix,
                                       fontweight: FontWeight.w600,
                                     ),
@@ -750,9 +753,10 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                           ['data'][
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  formatDecimalBr(myHistory[selectedHistory]
-                                                              ['requestBill']
-                                                          ['data']['base_price']),
+                                                  formatDecimalBr(myHistory[
+                                                              selectedHistory]
+                                                          ['requestBill']
+                                                      ['data']['base_price']),
                                               size: media.width * twelve,
                                             ),
                                           ],
@@ -785,7 +789,8 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                       [
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  formatDecimalBr(myHistory[selectedHistory]
+                                                  formatDecimalBr(
+                                                      myHistory[selectedHistory]
                                                                   [
                                                                   'requestBill']
                                                               ['data']
@@ -821,9 +826,10 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                           ['data'][
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  formatDecimalBr(myHistory[selectedHistory]
-                                                              ['requestBill']
-                                                          ['data']['time_price']),
+                                                  formatDecimalBr(myHistory[
+                                                              selectedHistory]
+                                                          ['requestBill']
+                                                      ['data']['time_price']),
                                               size: media.width * twelve,
                                             ),
                                           ],
@@ -862,11 +868,12 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                                 ['data'][
                                                             'requested_currency_symbol'] +
                                                         ' ' +
-                                                        formatDecimalBr(myHistory[selectedHistory]
-                                                                        [
-                                                                        'requestBill']
-                                                                    ['data'][
-                                                                'cancellation_fee']),
+                                                        formatDecimalBr(myHistory[
+                                                                    selectedHistory]
+                                                                [
+                                                                'requestBill']['data']
+                                                            [
+                                                            'cancellation_fee']),
                                                     size: media.width * twelve,
                                                   ),
                                                 ],
@@ -906,11 +913,12 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                                 ['data'][
                                                             'requested_currency_symbol'] +
                                                         ' ' +
-                                                        formatDecimalBr(myHistory[selectedHistory]
-                                                                        [
-                                                                        'requestBill']
-                                                                    ['data'][
-                                                                'airport_surge_fee']),
+                                                        formatDecimalBr(myHistory[
+                                                                    selectedHistory]
+                                                                [
+                                                                'requestBill']['data']
+                                                            [
+                                                            'airport_surge_fee']),
                                                     size: media.width * twelve,
                                                   ),
                                                 ],
@@ -936,11 +944,11 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                       ['text_waiting_price'] +
                                                   ' (' +
                                                   myHistory[selectedHistory]
-                                                              ['requestBill']
-                                                          ['data'][
+                                                          ['requestBill']['data'][
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  formatDecimalBr(myHistory[selectedHistory]
+                                                  formatDecimalBr(
+                                                      myHistory[selectedHistory]
                                                                   ['requestBill']
                                                               ['data'][
                                                           'waiting_charge_per_min']) +
@@ -962,7 +970,8 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                       [
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  formatDecimalBr(myHistory[selectedHistory]
+                                                  formatDecimalBr(
+                                                      myHistory[selectedHistory]
                                                                   [
                                                                   'requestBill']
                                                               ['data']
@@ -999,7 +1008,8 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                       [
                                                       'requested_currency_symbol'] +
                                                   ' ' +
-                                                  formatDecimalBr(myHistory[selectedHistory]
+                                                  formatDecimalBr(
+                                                      myHistory[selectedHistory]
                                                                   [
                                                                   'requestBill']
                                                               ['data']
@@ -1043,11 +1053,11 @@ class _HistoryDetailsState extends State<HistoryDetails> {
                                                                 ['data'][
                                                             'requested_currency_symbol'] +
                                                         ' ' +
-                                                        formatDecimalBr(myHistory[selectedHistory]
-                                                                        [
-                                                                        'requestBill']
-                                                                    ['data'][
-                                                                'promo_discount']),
+                                                        formatDecimalBr(myHistory[
+                                                                    selectedHistory]
+                                                                [
+                                                                'requestBill']['data']
+                                                            ['promo_discount']),
                                                     size: media.width * twelve,
                                                     color: Colors.red,
                                                   ),

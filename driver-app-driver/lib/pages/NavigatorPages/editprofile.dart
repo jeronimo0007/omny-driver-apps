@@ -600,7 +600,36 @@ class _EditProfileState extends State<EditProfile> {
                                 ),
                               ],
                             ),
-                          )
+                          ),
+                          // Excluir Conta (última linha)
+                          (userDetails['owner_id'] == null)
+                              ? Container(
+                                  margin: EdgeInsets.only(top: media.width * 0.05),
+                                  padding: EdgeInsets.all(media.width * 0.02),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.withOpacity(0.1),
+                                  ),
+                                  child: InkWell(
+                                    onTap: () {
+                                      deleteAccount = true;
+                                      valueNotifierHome.incrementNotifier();
+                                      Navigator.pop(context, true);
+                                    },
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete_forever, color: Colors.red, size: media.width * 0.06),
+                                        SizedBox(width: media.width * 0.03),
+                                        MyText(
+                                          text: languages[choosenLanguage]['text_delete_account'],
+                                          size: media.width * sixteen,
+                                          color: Colors.red,
+                                          fontweight: FontWeight.w600,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
                         ],
                       ),
                     ),

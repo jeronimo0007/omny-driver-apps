@@ -35,8 +35,10 @@ import 'rides.dart';
 String _paymentMethodLabel(dynamic driverReq) {
   final opt = driverReq['payment_opt']?.toString() ?? '';
   if (opt == '0') return languages[choosenLanguage]['text_card'] ?? 'Card';
-  if (opt == '1') return languages[choosenLanguage]['text_cashpayment'] ?? 'Cash';
-  if (opt == '2') return languages[choosenLanguage]['text_walletpayment'] ?? 'Wallet';
+  if (opt == '1')
+    return languages[choosenLanguage]['text_cashpayment'] ?? 'Cash';
+  if (opt == '2')
+    return languages[choosenLanguage]['text_walletpayment'] ?? 'Wallet';
   return driverReq['payment_type_string']?.toString() ?? '';
 }
 
@@ -78,7 +80,6 @@ String cancelReasonText = '';
 bool notifyCompleted = false;
 DateTime? lastNotifyAdminTap;
 bool logout = false;
-bool deleteAccount = false;
 bool getStartOtp = false;
 dynamic shipLoadImage;
 dynamic shipUnloadImage;
@@ -199,8 +200,10 @@ class _MapsState extends State<Maps>
   /// Mostra opção de abrir direção no Google Maps ou no Waze.
   void _showDirectionAppChoice(dynamic lat, dynamic lng) {
     if (lat == null || lng == null) return;
-    final title = languages[choosenLanguage]['text_open_direction_with'] ?? 'Open direction with';
-    final googleLabel = languages[choosenLanguage]['text_google_maps'] ?? 'Google Maps';
+    final title = languages[choosenLanguage]['text_open_direction_with'] ??
+        'Open direction with';
+    final googleLabel =
+        languages[choosenLanguage]['text_google_maps'] ?? 'Google Maps';
     final wazeLabel = languages[choosenLanguage]['text_waze'] ?? 'Waze';
     showDialog<void>(
       context: context,
@@ -213,7 +216,8 @@ class _MapsState extends State<Maps>
             children: [
               ListTile(
                 leading: const Icon(Icons.map, color: Colors.green),
-                title: Text(googleLabel, style: GoogleFonts.roboto(color: textColor)),
+                title: Text(googleLabel,
+                    style: GoogleFonts.roboto(color: textColor)),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   openMap(lat, lng);
@@ -221,7 +225,8 @@ class _MapsState extends State<Maps>
               ),
               ListTile(
                 leading: Icon(Icons.navigation, color: Colors.blue[700]),
-                title: Text(wazeLabel, style: GoogleFonts.roboto(color: textColor)),
+                title: Text(wazeLabel,
+                    style: GoogleFonts.roboto(color: textColor)),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   openWaze(lat, lng);
@@ -2911,9 +2916,9 @@ class _MapsState extends State<Maps>
                                                                                                                   size: media.width * sixteen,
                                                                                                                 ),
                                                                                                                 SizedBox(width: media.width * 0.02),
-                                                (driverReq['show_request_eta_amount'] == true && driverReq['request_eta_amount'] != null)
-                                                    ? MyText(
-                                                                                                                        text: displayCurrencySymbol(userDetails['currency_symbol']) + ' ' + formatDecimalBr(driverReq['request_eta_amount']),
+                                                                                                                (driverReq['show_request_eta_amount'] == true && driverReq['request_eta_amount'] != null)
+                                                                                                                    ? MyText(
+                                                                                                                        text: '${displayCurrencySymbol(userDetails['currency_symbol'])} ${formatDecimalBr(driverReq['request_eta_amount'])}',
                                                                                                                         size: media.width * fourteen,
                                                                                                                         fontweight: FontWeight.w700,
                                                                                                                       )
@@ -3144,7 +3149,7 @@ class _MapsState extends State<Maps>
                                                                                             decoration: BoxDecoration(color: topBar, borderRadius: BorderRadius.circular(media.width * 0.02), border: Border.all(color: Colors.grey.withOpacity(0.5))),
                                                                                             child: (driverReq['accepted_at'] == null && driverReq['show_request_eta_amount'] == true && driverReq['request_eta_amount'] != null)
                                                                                                 ? MyText(
-                                                                                                    text: displayCurrencySymbol(userDetails['currency_symbol']) + ' ' + formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount']),
+                                                                                                    text: '${displayCurrencySymbol(userDetails['currency_symbol'])} ${formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount'])}',
                                                                                                     size: media.width * fourteen,
                                                                                                     color: isDarkTheme == true ? Colors.black : textColor,
                                                                                                   )
@@ -3395,7 +3400,7 @@ class _MapsState extends State<Maps>
                                                                                       children: [
                                                                                         Expanded(
                                                                                           child: MyText(
-                                                                                            text: displayCurrencySymbol(driverReq['requested_currency_symbol'] ?? userDetails['currency_symbol']) + ' ' + formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount']),
+                                                                                            text: '${displayCurrencySymbol(driverReq['requested_currency_symbol'] ?? userDetails['currency_symbol'])} ${formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount'])}',
                                                                                             size: media.width * sixteen,
                                                                                             color: textColor,
                                                                                             fontweight: FontWeight.w700,
@@ -3621,7 +3626,7 @@ class _MapsState extends State<Maps>
                                                                                             decoration: BoxDecoration(color: topBar, borderRadius: BorderRadius.circular(media.width * 0.02), border: Border.all(color: Colors.grey.withOpacity(0.5))),
                                                                                             child: (driverReq['accepted_at'] == null && driverReq['show_request_eta_amount'] == true && driverReq['request_eta_amount'] != null)
                                                                                                 ? MyText(
-                                                                                                    text: displayCurrencySymbol(userDetails['currency_symbol']) + ' ' + formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount']),
+                                                                                                    text: '${displayCurrencySymbol(userDetails['currency_symbol'])} ${formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount'])}',
                                                                                                     size: media.width * fourteen,
                                                                                                     color: isDarkTheme == true ? Colors.black : textColor,
                                                                                                   )
@@ -4086,7 +4091,7 @@ class _MapsState extends State<Maps>
                                                                                     children: [
                                                                                       Expanded(
                                                                                         child: MyText(
-                                                                                          text: displayCurrencySymbol(driverReq['requested_currency_symbol'] ?? userDetails['currency_symbol']) + ' ' + formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount']),
+                                                                                          text: '${displayCurrencySymbol(driverReq['requested_currency_symbol'] ?? userDetails['currency_symbol'])} ${formatDecimalBr((driverReq['is_bid_ride'] == 1) ? driverReq['accepted_ride_fare'] : driverReq['request_eta_amount'])}',
                                                                                           size: media.width * sixteen,
                                                                                           color: textColor,
                                                                                           fontweight: FontWeight.w700,
@@ -4436,7 +4441,9 @@ class _MapsState extends State<Maps>
                                               padding: EdgeInsets.all(
                                                   media.width * 0.05),
                                               width: media.width * 0.8,
-                                              constraints: BoxConstraints(maxHeight: media.height * 0.75),
+                                              constraints: BoxConstraints(
+                                                  maxHeight:
+                                                      media.height * 0.75),
                                               decoration: BoxDecoration(
                                                   borderRadius:
                                                       BorderRadius.circular(10),
@@ -4450,328 +4457,337 @@ class _MapsState extends State<Maps>
                                                   ]),
                                               child: SingleChildScrollView(
                                                 child: Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    languages[choosenLanguage]
-                                                        ['text_driver_otp'],
-                                                    style: GoogleFonts.poppins(
-                                                        fontSize: media.width *
-                                                            eighteen,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: textColor),
-                                                  ),
-                                                  SizedBox(
-                                                      height:
-                                                          media.width * 0.05),
-                                                  Text(
-                                                    languages[choosenLanguage]
-                                                        ['text_enterdriverotp'],
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize:
-                                                          media.width * twelve,
-                                                      color: textColor
-                                                          .withOpacity(0.7),
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      languages[choosenLanguage]
+                                                          ['text_driver_otp'],
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              fontSize:
+                                                                  media.width *
+                                                                      eighteen,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color: textColor),
                                                     ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                  SizedBox(
-                                                    height: media.width * 0.05,
-                                                  ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceAround,
-                                                    children: [
-                                                      Container(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        width:
-                                                            media.width * 0.12,
-                                                        color: page,
-                                                        child: TextFormField(
-                                                          onChanged: (val) {
-                                                            if (val.length ==
-                                                                1) {
-                                                              setState(() {
-                                                                _otp1 = val;
-                                                                driverOtp =
-                                                                    _otp1 +
-                                                                        _otp2 +
-                                                                        _otp3 +
-                                                                        _otp4;
-                                                                FocusScope.of(
-                                                                        context)
-                                                                    .nextFocus();
-                                                              });
-                                                            }
-                                                          },
-                                                          keyboardType:
-                                                              TextInputType
-                                                                  .number,
-                                                          maxLength: 1,
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: GoogleFonts
-                                                              .poppins(
-                                                                  fontSize: media
-                                                                          .width *
-                                                                      sixteen,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color:
-                                                                      textColor),
-                                                          decoration: const InputDecoration(
-                                                              counterText: '',
-                                                              border: UnderlineInputBorder(
-                                                                  borderSide: BorderSide(
-                                                                      color: Colors
-                                                                          .black,
-                                                                      width:
-                                                                          1.5,
-                                                                      style: BorderStyle
-                                                                          .solid))),
-                                                        ),
+                                                    SizedBox(
+                                                        height:
+                                                            media.width * 0.05),
+                                                    Text(
+                                                      languages[choosenLanguage]
+                                                          [
+                                                          'text_enterdriverotp'],
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        fontSize: media.width *
+                                                            twelve,
+                                                        color: textColor
+                                                            .withOpacity(0.7),
                                                       ),
-                                                      Container(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        width:
-                                                            media.width * 0.12,
-                                                        color: page,
-                                                        child: TextFormField(
-                                                          onChanged: (val) {
-                                                            if (val.length ==
-                                                                1) {
-                                                              setState(() {
-                                                                _otp2 = val;
-                                                                driverOtp =
-                                                                    _otp1 +
-                                                                        _otp2 +
-                                                                        _otp3 +
-                                                                        _otp4;
-                                                                FocusScope.of(
-                                                                        context)
-                                                                    .nextFocus();
-                                                              });
-                                                            } else {
-                                                              setState(() {
-                                                                FocusScope.of(
-                                                                        context)
-                                                                    .previousFocus();
-                                                              });
-                                                            }
-                                                          },
-                                                          style: GoogleFonts
-                                                              .poppins(
-                                                                  fontSize: media
-                                                                          .width *
-                                                                      sixteen,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color:
-                                                                      textColor),
-                                                          keyboardType:
-                                                              TextInputType
-                                                                  .number,
-                                                          maxLength: 1,
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          decoration: const InputDecoration(
-                                                              counterText: '',
-                                                              border: UnderlineInputBorder(
-                                                                  borderSide: BorderSide(
-                                                                      color: Colors
-                                                                          .black,
-                                                                      width:
-                                                                          1.5,
-                                                                      style: BorderStyle
-                                                                          .solid))),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        width:
-                                                            media.width * 0.12,
-                                                        color: page,
-                                                        child: TextFormField(
-                                                          onChanged: (val) {
-                                                            if (val.length ==
-                                                                1) {
-                                                              setState(() {
-                                                                _otp3 = val;
-                                                                driverOtp =
-                                                                    _otp1 +
-                                                                        _otp2 +
-                                                                        _otp3 +
-                                                                        _otp4;
-                                                                FocusScope.of(
-                                                                        context)
-                                                                    .nextFocus();
-                                                              });
-                                                            } else {
-                                                              setState(() {
-                                                                FocusScope.of(
-                                                                        context)
-                                                                    .previousFocus();
-                                                              });
-                                                            }
-                                                          },
-                                                          style: GoogleFonts
-                                                              .poppins(
-                                                                  fontSize: media
-                                                                          .width *
-                                                                      sixteen,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color:
-                                                                      textColor),
-                                                          keyboardType:
-                                                              TextInputType
-                                                                  .number,
-                                                          maxLength: 1,
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          decoration: const InputDecoration(
-                                                              counterText: '',
-                                                              border: UnderlineInputBorder(
-                                                                  borderSide: BorderSide(
-                                                                      color: Colors
-                                                                          .black,
-                                                                      width:
-                                                                          1.5,
-                                                                      style: BorderStyle
-                                                                          .solid))),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        width:
-                                                            media.width * 0.12,
-                                                        color: page,
-                                                        child: TextFormField(
-                                                          onChanged: (val) {
-                                                            if (val.length ==
-                                                                1) {
-                                                              setState(() {
-                                                                _otp4 = val;
-                                                                driverOtp =
-                                                                    _otp1 +
-                                                                        _otp2 +
-                                                                        _otp3 +
-                                                                        _otp4;
-                                                                FocusScope.of(
-                                                                        context)
-                                                                    .nextFocus();
-                                                              });
-                                                            } else {
-                                                              setState(() {
-                                                                FocusScope.of(
-                                                                        context)
-                                                                    .previousFocus();
-                                                              });
-                                                            }
-                                                          },
-                                                          style: GoogleFonts
-                                                              .poppins(
-                                                                  fontSize: media
-                                                                          .width *
-                                                                      sixteen,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color:
-                                                                      textColor),
-                                                          keyboardType:
-                                                              TextInputType
-                                                                  .number,
-                                                          maxLength: 1,
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          decoration: const InputDecoration(
-                                                              counterText: '',
-                                                              border: UnderlineInputBorder(
-                                                                  borderSide: BorderSide(
-                                                                      color: Colors
-                                                                          .black,
-                                                                      width:
-                                                                          1.5,
-                                                                      style: BorderStyle
-                                                                          .solid))),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(
-                                                    height: media.width * 0.04,
-                                                  ),
-                                                  (_errorOtp == true)
-                                                      ? Text(
-                                                          languages[
-                                                                  choosenLanguage]
-                                                              [
-                                                              'text_error_trip_otp'],
-                                                          style: GoogleFonts
-                                                              .poppins(
-                                                                  color: Colors
-                                                                      .red,
-                                                                  fontSize: media
-                                                                          .width *
-                                                                      twelve),
-                                                        )
-                                                      : Container(),
-                                                  SizedBox(
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                    SizedBox(
                                                       height:
-                                                          media.width * 0.02),
-                                                  Button(
-                                                    onTap: () async {
-                                                      if (driverOtp.length !=
-                                                          4) {
-                                                        setState(() {});
-                                                      } else {
-                                                        setState(() {
-                                                          _errorOtp = false;
-                                                          _isLoading = true;
-                                                        });
-                                                        var val =
-                                                            await tripStart();
-                                                        if (val == 'logout') {
-                                                          navigateLogout();
-                                                        } else if (val !=
-                                                            'success') {
-                                                          setState(() {
-                                                            _errorOtp = true;
-                                                            _isLoading = false;
-                                                          });
+                                                          media.width * 0.05,
+                                                    ),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceAround,
+                                                      children: [
+                                                        Container(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          width: media.width *
+                                                              0.12,
+                                                          color: page,
+                                                          child: TextFormField(
+                                                            onChanged: (val) {
+                                                              if (val.length ==
+                                                                  1) {
+                                                                setState(() {
+                                                                  _otp1 = val;
+                                                                  driverOtp =
+                                                                      _otp1 +
+                                                                          _otp2 +
+                                                                          _otp3 +
+                                                                          _otp4;
+                                                                  FocusScope.of(
+                                                                          context)
+                                                                      .nextFocus();
+                                                                });
+                                                              }
+                                                            },
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            maxLength: 1,
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            style: GoogleFonts.poppins(
+                                                                fontSize: media
+                                                                        .width *
+                                                                    sixteen,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color:
+                                                                    textColor),
+                                                            decoration: const InputDecoration(
+                                                                counterText: '',
+                                                                border: UnderlineInputBorder(
+                                                                    borderSide: BorderSide(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        width:
+                                                                            1.5,
+                                                                        style: BorderStyle
+                                                                            .solid))),
+                                                          ),
+                                                        ),
+                                                        Container(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          width: media.width *
+                                                              0.12,
+                                                          color: page,
+                                                          child: TextFormField(
+                                                            onChanged: (val) {
+                                                              if (val.length ==
+                                                                  1) {
+                                                                setState(() {
+                                                                  _otp2 = val;
+                                                                  driverOtp =
+                                                                      _otp1 +
+                                                                          _otp2 +
+                                                                          _otp3 +
+                                                                          _otp4;
+                                                                  FocusScope.of(
+                                                                          context)
+                                                                      .nextFocus();
+                                                                });
+                                                              } else {
+                                                                setState(() {
+                                                                  FocusScope.of(
+                                                                          context)
+                                                                      .previousFocus();
+                                                                });
+                                                              }
+                                                            },
+                                                            style: GoogleFonts.poppins(
+                                                                fontSize: media
+                                                                        .width *
+                                                                    sixteen,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color:
+                                                                    textColor),
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            maxLength: 1,
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            decoration: const InputDecoration(
+                                                                counterText: '',
+                                                                border: UnderlineInputBorder(
+                                                                    borderSide: BorderSide(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        width:
+                                                                            1.5,
+                                                                        style: BorderStyle
+                                                                            .solid))),
+                                                          ),
+                                                        ),
+                                                        Container(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          width: media.width *
+                                                              0.12,
+                                                          color: page,
+                                                          child: TextFormField(
+                                                            onChanged: (val) {
+                                                              if (val.length ==
+                                                                  1) {
+                                                                setState(() {
+                                                                  _otp3 = val;
+                                                                  driverOtp =
+                                                                      _otp1 +
+                                                                          _otp2 +
+                                                                          _otp3 +
+                                                                          _otp4;
+                                                                  FocusScope.of(
+                                                                          context)
+                                                                      .nextFocus();
+                                                                });
+                                                              } else {
+                                                                setState(() {
+                                                                  FocusScope.of(
+                                                                          context)
+                                                                      .previousFocus();
+                                                                });
+                                                              }
+                                                            },
+                                                            style: GoogleFonts.poppins(
+                                                                fontSize: media
+                                                                        .width *
+                                                                    sixteen,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color:
+                                                                    textColor),
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            maxLength: 1,
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            decoration: const InputDecoration(
+                                                                counterText: '',
+                                                                border: UnderlineInputBorder(
+                                                                    borderSide: BorderSide(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        width:
+                                                                            1.5,
+                                                                        style: BorderStyle
+                                                                            .solid))),
+                                                          ),
+                                                        ),
+                                                        Container(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          width: media.width *
+                                                              0.12,
+                                                          color: page,
+                                                          child: TextFormField(
+                                                            onChanged: (val) {
+                                                              if (val.length ==
+                                                                  1) {
+                                                                setState(() {
+                                                                  _otp4 = val;
+                                                                  driverOtp =
+                                                                      _otp1 +
+                                                                          _otp2 +
+                                                                          _otp3 +
+                                                                          _otp4;
+                                                                  FocusScope.of(
+                                                                          context)
+                                                                      .nextFocus();
+                                                                });
+                                                              } else {
+                                                                setState(() {
+                                                                  FocusScope.of(
+                                                                          context)
+                                                                      .previousFocus();
+                                                                });
+                                                              }
+                                                            },
+                                                            style: GoogleFonts.poppins(
+                                                                fontSize: media
+                                                                        .width *
+                                                                    sixteen,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color:
+                                                                    textColor),
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            maxLength: 1,
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            decoration: const InputDecoration(
+                                                                counterText: '',
+                                                                border: UnderlineInputBorder(
+                                                                    borderSide: BorderSide(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        width:
+                                                                            1.5,
+                                                                        style: BorderStyle
+                                                                            .solid))),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(
+                                                      height:
+                                                          media.width * 0.04,
+                                                    ),
+                                                    (_errorOtp == true)
+                                                        ? Text(
+                                                            languages[
+                                                                    choosenLanguage]
+                                                                [
+                                                                'text_error_trip_otp'],
+                                                            style: GoogleFonts.poppins(
+                                                                color:
+                                                                    Colors.red,
+                                                                fontSize: media
+                                                                        .width *
+                                                                    twelve),
+                                                          )
+                                                        : Container(),
+                                                    SizedBox(
+                                                        height:
+                                                            media.width * 0.02),
+                                                    Button(
+                                                      onTap: () async {
+                                                        if (driverOtp.length !=
+                                                            4) {
+                                                          setState(() {});
                                                         } else {
                                                           setState(() {
-                                                            _isLoading = false;
-                                                            getStartOtp = false;
+                                                            _errorOtp = false;
+                                                            _isLoading = true;
                                                           });
+                                                          var val =
+                                                              await tripStart();
+                                                          if (val == 'logout') {
+                                                            navigateLogout();
+                                                          } else if (val !=
+                                                              'success') {
+                                                            setState(() {
+                                                              _errorOtp = true;
+                                                              _isLoading =
+                                                                  false;
+                                                            });
+                                                          } else {
+                                                            setState(() {
+                                                              _isLoading =
+                                                                  false;
+                                                              getStartOtp =
+                                                                  false;
+                                                            });
+                                                          }
                                                         }
-                                                      }
-                                                    },
-                                                    text: languages[
-                                                            choosenLanguage]
-                                                        ['text_confirm'],
-                                                    color:
-                                                        (driverOtp.length != 4)
-                                                            ? Colors.grey
-                                                            : buttonColor,
-                                                    borcolor:
-                                                        (driverOtp.length != 4)
-                                                            ? Colors.grey
-                                                            : buttonColor,
-                                                  )
-                                                ],
+                                                      },
+                                                      text: languages[
+                                                              choosenLanguage]
+                                                          ['text_confirm'],
+                                                      color:
+                                                          (driverOtp.length !=
+                                                                  4)
+                                                              ? Colors.grey
+                                                              : buttonColor,
+                                                      borcolor:
+                                                          (driverOtp.length !=
+                                                                  4)
+                                                              ? Colors.grey
+                                                              : buttonColor,
+                                                    )
+                                                  ],
+                                                ),
                                               ),
-                                            ),
                                             ),
                                           ],
                                         ),
@@ -6219,12 +6235,18 @@ class _MapsState extends State<Maps>
                                                         } else if (result ==
                                                             'logout') {
                                                           navigateLogout();
-                                                          if (mounted) setState(() => _isLoading = false);
+                                                          if (mounted)
+                                                            setState(() =>
+                                                                _isLoading =
+                                                                    false);
                                                         } else {
-                                                          if (mounted) setState(() {
-                                                            _isLoading = false;
-                                                            logout = true;
-                                                          });
+                                                          if (mounted) {
+                                                            setState(() {
+                                                              _isLoading =
+                                                                  false;
+                                                              logout = true;
+                                                            });
+                                                          }
                                                         }
                                                       },
                                                       text: languages[
@@ -6449,17 +6471,42 @@ class _MapsState extends State<Maps>
                                                       children: [
                                                         InkWell(
                                                           onTap: () async {
-                                                            const cooldown = Duration(seconds: 10);
-                                                            final now = DateTime.now();
-                                                            if (lastNotifyAdminTap != null &&
-                                                                now.difference(lastNotifyAdminTap!) < cooldown) {
-                                                              final remaining = 10 - now.difference(lastNotifyAdminTap!).inSeconds;
-                                                              final msg = (languages[choosenLanguage]['text_wait_seconds_to_notify'] ?? 'Please wait %s seconds to notify again')
-                                                                  .replaceAll('%s', remaining.toString());
-                                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                                                            const cooldown =
+                                                                Duration(
+                                                                    seconds:
+                                                                        10);
+                                                            final now =
+                                                                DateTime.now();
+                                                            if (lastNotifyAdminTap !=
+                                                                    null &&
+                                                                now.difference(
+                                                                        lastNotifyAdminTap!) <
+                                                                    cooldown) {
+                                                              final remaining = 10 -
+                                                                  now
+                                                                      .difference(
+                                                                          lastNotifyAdminTap!)
+                                                                      .inSeconds;
+                                                              final msg = (languages[
+                                                                              choosenLanguage]
+                                                                          [
+                                                                          'text_wait_seconds_to_notify'] ??
+                                                                      'Please wait %s seconds to notify again')
+                                                                  .replaceAll(
+                                                                      '%s',
+                                                                      remaining
+                                                                          .toString());
+                                                              ScaffoldMessenger
+                                                                      .of(
+                                                                          context)
+                                                                  .showSnackBar(
+                                                                      SnackBar(
+                                                                          content:
+                                                                              Text(msg)));
                                                               return;
                                                             }
-                                                            lastNotifyAdminTap = now;
+                                                            lastNotifyAdminTap =
+                                                                now;
                                                             setState(() {
                                                               notifyCompleted =
                                                                   false;
@@ -6480,7 +6527,8 @@ class _MapsState extends State<Maps>
                                                                     0.05),
                                                             child: Column(
                                                               crossAxisAlignment:
-                                                                  CrossAxisAlignment.start,
+                                                                  CrossAxisAlignment
+                                                                      .start,
                                                               children: [
                                                                 Text(
                                                                   languages[
@@ -6488,41 +6536,68 @@ class _MapsState extends State<Maps>
                                                                       [
                                                                       'text_notifyadmin'],
                                                                   style: GoogleFonts.poppins(
-                                                                      fontSize: media.width *
-                                                                          sixteen,
+                                                                      fontSize:
+                                                                          media.width *
+                                                                              sixteen,
                                                                       color:
                                                                           textColor,
                                                                       fontWeight:
-                                                                          FontWeight.w600),
+                                                                          FontWeight
+                                                                              .w600),
                                                                 ),
-                                                                SizedBox(height: media.width * 0.03),
+                                                                SizedBox(
+                                                                    height: media
+                                                                            .width *
+                                                                        0.03),
                                                                 Row(
                                                                   children: [
-                                                                    Icon(Icons.notification_add, color: textColor, size: media.width * 0.1),
-                                                                    SizedBox(width: media.width * 0.03),
+                                                                    Icon(
+                                                                        Icons
+                                                                            .notification_add,
+                                                                        color:
+                                                                            textColor,
+                                                                        size: media.width *
+                                                                            0.1),
+                                                                    SizedBox(
+                                                                        width: media.width *
+                                                                            0.03),
                                                                     Expanded(
-                                                                      child: Text(
-                                                                        languages[choosenLanguage]['text_click_bell_to_notify'] ?? 'Click on the bell to notify',
-                                                                        style: GoogleFonts.poppins(
-                                                                          fontSize: media.width * twelve,
-                                                                          color: textColor.withOpacity(0.8),
+                                                                      child:
+                                                                          Text(
+                                                                        languages[choosenLanguage]['text_click_bell_to_notify'] ??
+                                                                            'Click on the bell to notify',
+                                                                        style: GoogleFonts
+                                                                            .poppins(
+                                                                          fontSize:
+                                                                              media.width * twelve,
+                                                                          color:
+                                                                              textColor.withOpacity(0.8),
                                                                         ),
                                                                       ),
                                                                     ),
                                                                   ],
                                                                 ),
-                                                                (notifyCompleted == true)
+                                                                (notifyCompleted ==
+                                                                        true)
                                                                     ? Padding(
-                                                                        padding: EdgeInsets.only(top: media.width * 0.02),
-                                                                        child: Text(
-                                                                          languages[choosenLanguage]['text_notifysuccess'],
-                                                                          style: GoogleFonts.poppins(
-                                                                            fontSize: media.width * twelve,
-                                                                            color: const Color(0xff319900),
+                                                                        padding:
+                                                                            EdgeInsets.only(top: media.width * 0.02),
+                                                                        child:
+                                                                            Text(
+                                                                          languages[choosenLanguage]
+                                                                              [
+                                                                              'text_notifysuccess'],
+                                                                          style:
+                                                                              GoogleFonts.poppins(
+                                                                            fontSize:
+                                                                                media.width * twelve,
+                                                                            color:
+                                                                                const Color(0xff319900),
                                                                           ),
                                                                         ),
                                                                       )
-                                                                    : const SizedBox.shrink(),
+                                                                    : const SizedBox
+                                                                        .shrink(),
                                                               ],
                                                             ),
                                                           ),

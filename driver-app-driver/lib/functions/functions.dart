@@ -194,6 +194,7 @@ AudioCache audioPlayer = AudioCache();
 AudioPlayer audioPlayers = AudioPlayer();
 String audio = 'audio/notification_sound.mp3';
 bool internet = true;
+bool deleteAccount = false;
 dynamic centerCheck;
 
 String ischeckownerordriver = '';
@@ -680,12 +681,33 @@ int? resendTokenId;
 bool phoneAuthCheck = false;
 dynamic credentials;
 
-phoneAuth(String phone) async {
+/// Cooldown para não enviar SMS várias vezes (evita bloqueio "too-many-requests")
+DateTime? lastPhoneAuthRequestTime;
+const int phoneAuthCooldownSeconds = 60;
+
+int getPhoneAuthCooldownRemaining() {
+  if (lastPhoneAuthRequestTime == null) return 0;
+  final elapsed = DateTime.now().difference(lastPhoneAuthRequestTime!).inSeconds;
+  if (elapsed >= phoneAuthCooldownSeconds) return 0;
+  return phoneAuthCooldownSeconds - elapsed;
+}
+
+/// Retorna true se a requisição foi enviada, false se bloqueada por cooldown
+Future<bool> phoneAuth(String phone) async {
   try {
+    if (getPhoneAuthCooldownRemaining() > 0) {
+      debugPrint('⚠️ Cooldown ativo. Aguarde ${getPhoneAuthCooldownRemaining()}s para reenviar.');
+      phoneAuthCheck = false;
+      valueNotifierLogin.incrementNotifier();
+      return false;
+    }
+
     debugPrint('🔥 [FIREBASE] phoneAuth - Iniciando autenticação por telefone');
     debugPrint('🔥 [FIREBASE] phoneAuth - Telefone: $phone');
     debugPrint('🔥 [FIREBASE] phoneAuth - resendTokenId: $resendTokenId');
     credentials = null;
+    lastPhoneAuthRequestTime = DateTime.now();
+
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: phone,
       verificationCompleted: (PhoneAuthCredential credential) async {
@@ -702,19 +724,35 @@ phoneAuth(String phone) async {
           debugPrint(
               '🔥 [FIREBASE] phoneAuth - The provided phone number is not valid.');
         }
+        if (e.code == 'too-many-requests') {
+          debugPrint('⚠️ Muitas tentativas. Tente novamente mais tarde.');
+        }
+        if (e.code == 'missing-client-identifier' ||
+            (e.message != null && e.message!.toLowerCase().contains('app identifier'))) {
+          debugPrint(
+              '⚠️ Firebase não reconhece o app. Adicione SHA-1 e SHA-256 no Firebase Console (Seus apps > Android > Impressão digital).');
+          debugPrint(
+              '💡 keytool -list -v -keystore C:\\Users\\SEU_USUARIO\\.android\\debug.keystore -alias androiddebugkey -storepass android');
+        }
+        phoneAuthCheck = false;
+        valueNotifierLogin.incrementNotifier();
       },
       codeSent: (String verificationId, int? resendToken) async {
         debugPrint('🔥 [FIREBASE] phoneAuth - codeSent: Código enviado');
         debugPrint('🔥 [FIREBASE] phoneAuth - verificationId: $verificationId');
         verId = verificationId;
         resendTokenId = resendToken;
+        phoneAuthCheck = true;
+        valueNotifierLogin.incrementNotifier();
       },
       codeAutoRetrievalTimeout: (String verificationId) {
         debugPrint(
             '🔥 [FIREBASE] phoneAuth - codeAutoRetrievalTimeout: $verificationId');
       },
+      timeout: const Duration(seconds: 60),
     );
     debugPrint('🔥 [FIREBASE] phoneAuth - Finalizado com sucesso');
+    return true;
   } catch (e) {
     debugPrint('🔥 [FIREBASE] phoneAuth - ERRO: $e');
     debugPrint('🔥 [FIREBASE] phoneAuth - Tipo do erro: ${e.runtimeType}');
@@ -722,6 +760,9 @@ phoneAuth(String phone) async {
       internet = false;
       debugPrint('🔥 [FIREBASE] phoneAuth - SocketException: Sem internet');
     }
+    phoneAuthCheck = false;
+    valueNotifierLogin.incrementNotifier();
+    return false;
   }
 }
 

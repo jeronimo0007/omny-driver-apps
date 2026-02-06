@@ -16,6 +16,7 @@ import '../NavigatorPages/notification.dart';
 import '../loadingPage/loading.dart';
 import '../login/landingpage.dart';
 import '../navDrawer/nav_drawer.dart';
+import '../NavigatorPages/myroutebookings.dart';
 import '../vehicleInformations/docs_onprocess.dart';
 import 'droplocation.dart';
 import 'map_page.dart';
@@ -467,28 +468,33 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                                     ),
                                                                   ),
                                                                   Expanded(
-                                                                    child: Padding(
-                                                                      padding: EdgeInsets.symmetric(horizontal: media.width * 0.02),
-                                                                      child: MyText(
-                                                                        text: languages[
-                                                                                choosenLanguage]
+                                                                    child:
+                                                                        Padding(
+                                                                      padding: EdgeInsets.symmetric(
+                                                                          horizontal:
+                                                                              media.width * 0.02),
+                                                                      child:
+                                                                          MyText(
+                                                                        text: languages[choosenLanguage]
                                                                             [
                                                                             'text_on_duty'],
-                                                                        size: media
-                                                                                .width *
+                                                                        size: media.width *
                                                                             twelve,
                                                                         color: (isDarkTheme ==
                                                                                 true)
-                                                                            ? textColor.withOpacity(
-                                                                                0.7)
-                                                                            : const Color(
-                                                                                0xff555555),
-                                                                        maxLines: 1,
-                                                                        overflow: TextOverflow.ellipsis,
+                                                                            ? textColor.withOpacity(0.7)
+                                                                            : const Color(0xff555555),
+                                                                        maxLines:
+                                                                            1,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
                                                                       ),
                                                                     ),
                                                                   ),
-                                                                  SizedBox(width: media.width * 0.01),
+                                                                  SizedBox(
+                                                                      width: media
+                                                                              .width *
+                                                                          0.01),
                                                                 ],
                                                               )
                                                             : Row(
@@ -497,7 +503,8 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                                         .spaceBetween,
                                                                 children: [
                                                                   Expanded(
-                                                                    child: MyText(
+                                                                    child:
+                                                                        MyText(
                                                                       text: languages[
                                                                               choosenLanguage]
                                                                           [
@@ -507,11 +514,17 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                                           twelve,
                                                                       color:
                                                                           textColor,
-                                                                      maxLines: 1,
-                                                                      overflow: TextOverflow.ellipsis,
+                                                                      maxLines:
+                                                                          1,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
                                                                     ),
                                                                   ),
-                                                                  SizedBox(width: media.width * 0.02),
+                                                                  SizedBox(
+                                                                      width: media
+                                                                              .width *
+                                                                          0.02),
                                                                   Container(
                                                                     padding: EdgeInsets.all(
                                                                         media.width *
@@ -625,7 +638,93 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                 textDirection:
                                                     TextDirection.ltr,
                                               ))
-                                          : Container()
+                                          : Container(),
+                                      // Sininho de notificações (canto superior direito)
+                                      (userDetails['role'] != 'owner')
+                                          ? ValueListenableBuilder(
+                                              valueListenable:
+                                                  valueNotifierNotification
+                                                      .value,
+                                              builder: (context, value, child) {
+                                                return InkWell(
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            const NotificationPage(),
+                                                      ),
+                                                    );
+                                                    setState(() {
+                                                      userDetails[
+                                                          'notifications_count'] = 0;
+                                                    });
+                                                  },
+                                                  child: Stack(
+                                                    clipBehavior: Clip.none,
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .notifications_outlined,
+                                                        size:
+                                                            media.width * 0.065,
+                                                        color: textColor,
+                                                      ),
+                                                      if (userDetails[
+                                                                  'notifications_count'] !=
+                                                              null &&
+                                                          userDetails[
+                                                                  'notifications_count'] !=
+                                                              0)
+                                                        Positioned(
+                                                          right: -4,
+                                                          top: -2,
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(4),
+                                                            decoration:
+                                                                const BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color: Colors.red,
+                                                            ),
+                                                            constraints:
+                                                                BoxConstraints(
+                                                              minWidth:
+                                                                  media.width *
+                                                                      0.04,
+                                                              minHeight:
+                                                                  media.width *
+                                                                      0.04,
+                                                            ),
+                                                            child: Text(
+                                                              userDetails[
+                                                                      'notifications_count']
+                                                                  .toString(),
+                                                              style: GoogleFonts
+                                                                  .poppins(
+                                                                fontSize: media
+                                                                        .width *
+                                                                    ten,
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            )
+                                          : const SizedBox.shrink(),
                                     ],
                                   ),
                                   SizedBox(
@@ -682,7 +781,8 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                                     0.04),
                                                             width: media.width *
                                                                 0.9,
-                                                            clipBehavior: Clip.hardEdge,
+                                                            clipBehavior:
+                                                                Clip.hardEdge,
                                                             decoration: BoxDecoration(
                                                                 color: Colors
                                                                     .white,
@@ -750,7 +850,8 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                                               .start,
                                                                       children: [
                                                                         ClipRect(
-                                                                          child: Row(
+                                                                          child:
+                                                                              Row(
                                                                             mainAxisAlignment:
                                                                                 MainAxisAlignment.spaceBetween,
                                                                             children: [
@@ -991,8 +1092,11 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                             media.width * 0.05,
                                                       ),
                                                       Padding(
-                                                        padding: EdgeInsets.symmetric(
-                                                            horizontal: media.width * 0.02),
+                                                        padding: EdgeInsets
+                                                            .symmetric(
+                                                                horizontal:
+                                                                    media.width *
+                                                                        0.02),
                                                         child: Text(
                                                           languages[
                                                                   choosenLanguage]
@@ -1011,7 +1115,78 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                           textAlign:
                                                               TextAlign.center,
                                                         ),
-                                                      )
+                                                      ),
+                                                      // Rota de casa (abaixo de Aguardando solicitação de corrida)
+                                                      if (userDetails[
+                                                                  'enable_my_route_booking_feature'] ==
+                                                              '1' &&
+                                                          userDetails[
+                                                                  'transport_type'] !=
+                                                              'delivery')
+                                                        Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  top: media
+                                                                          .width *
+                                                                      0.06),
+                                                          child: InkWell(
+                                                            onTap: () async {
+                                                              var nav =
+                                                                  await Navigator
+                                                                      .push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          const MyRouteBooking(),
+                                                                ),
+                                                              );
+                                                              if (nav != null &&
+                                                                  nav)
+                                                                setState(() {});
+                                                            },
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .center,
+                                                              children: [
+                                                                Image.asset(
+                                                                  'assets/images/myroute.png',
+                                                                  fit: BoxFit
+                                                                      .contain,
+                                                                  width: media
+                                                                          .width *
+                                                                      0.06,
+                                                                  color: textColor
+                                                                      .withOpacity(
+                                                                          0.8),
+                                                                ),
+                                                                SizedBox(
+                                                                    width: media
+                                                                            .width *
+                                                                        0.03),
+                                                                Text(
+                                                                  languages[
+                                                                          choosenLanguage]
+                                                                      [
+                                                                      'text_my_route'],
+                                                                  style: GoogleFonts
+                                                                      .poppins(
+                                                                    fontSize: media
+                                                                            .width *
+                                                                        sixteen,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
+                                                                    color: textColor
+                                                                        .withOpacity(
+                                                                            0.9),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
                                                     ],
                                                   ),
                                                 )
@@ -1031,47 +1206,49 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                     child: Row(
                                       children: [
                                         Expanded(
-                                          child: Button(
-                                              color: theme,
-                                              onTap: () async {
-                                                addressList.clear();
-                                                var val = await geoCoding(
-                                                    center.latitude,
-                                                    center.longitude);
-                                                setState(() {
-                                                  if (addressList
-                                                      .where((element) =>
-                                                          element.id == 'pickup')
-                                                      .isNotEmpty) {
-                                                    var add = addressList
-                                                        .firstWhere((element) =>
+                                            child: Button(
+                                                color: theme,
+                                                onTap: () async {
+                                                  addressList.clear();
+                                                  var val = await geoCoding(
+                                                      center.latitude,
+                                                      center.longitude);
+                                                  setState(() {
+                                                    if (addressList
+                                                        .where((element) =>
                                                             element.id ==
-                                                            'pickup');
-                                                    add.address = val;
-                                                    add.latlng = LatLng(
-                                                        center.latitude,
-                                                        center.longitude);
-                                                  } else {
-                                                    addressList.add(AddressList(
-                                                        id: 'pickup',
-                                                        address: val,
-                                                        latlng: LatLng(
-                                                            center.latitude,
-                                                            center.longitude)));
+                                                            'pickup')
+                                                        .isNotEmpty) {
+                                                      var add = addressList
+                                                          .firstWhere(
+                                                              (element) =>
+                                                                  element.id ==
+                                                                  'pickup');
+                                                      add.address = val;
+                                                      add.latlng = LatLng(
+                                                          center.latitude,
+                                                          center.longitude);
+                                                    } else {
+                                                      addressList.add(AddressList(
+                                                          id: 'pickup',
+                                                          address: val,
+                                                          latlng: LatLng(
+                                                              center.latitude,
+                                                              center
+                                                                  .longitude)));
+                                                    }
+                                                  });
+                                                  if (addressList.isNotEmpty) {
+                                                    // ignore: use_build_context_synchronously
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                const DropLocation()));
                                                   }
-                                                });
-                                                if (addressList.isNotEmpty) {
-                                                  // ignore: use_build_context_synchronously
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const DropLocation()));
-                                                }
-                                              },
-                                              text: languages[choosenLanguage]
-                                                  ['text_instant_ride'])
-                                        )
+                                                },
+                                                text: languages[choosenLanguage]
+                                                    ['text_instant_ride']))
                                       ],
                                     ))
                                 : Container(),
@@ -1265,13 +1442,16 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
                                                           userDetails.clear();
                                                         });
                                                       } else {
-                                                        if (result == 'logout') {
+                                                        if (result ==
+                                                            'logout') {
                                                           navigateLogout();
                                                         }
-                                                        if (mounted) setState(() {
-                                                          _isLoading = false;
-                                                          logout = true;
-                                                        });
+                                                        if (mounted) {
+                                                          setState(() {
+                                                            _isLoading = false;
+                                                            logout = true;
+                                                          });
+                                                        }
                                                       }
                                                     },
                                                     text: languages[

@@ -2190,7 +2190,7 @@ Map<String, dynamic> languages = {
     "text_accountNumber": "Número da Conta",
     "text_bankCode": "Chave PIX",
     "text_bankName": "Nome do Banco",
-    "text_updateBank": "Dados Bancárias",
+    "text_updateBank": "Dados Bancários",
     "text_pix_type": "Tipo de Chave PIX",
     "text_pix_email": "E-mail",
     "text_pix_aleatoria": "Chave Aleatória",
@@ -2571,7 +2571,7 @@ Map<String, dynamic> languages = {
     "text_contact_us": "Entre em Contato",
     "text_sign_up_email": "Entrar com E-mail",
     "text_email_verify": "Verificação de E-mail",
-    "text_select_theme": "Selecionar Tema",
+    "text_select_theme": "Tema",
     "text_update_available":
         "Nova versão deste aplicativo está disponível na loja, por favor atualize o aplicativo para continuar usando",
     "text_more_vehicles": "Você pode escolher mais de 1 tipo de veículo",

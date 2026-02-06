@@ -94,22 +94,30 @@ class _ReferralPageState extends State<ReferralPage> {
     return Container(
       width: media.width * 0.9,
       decoration: BoxDecoration(
-        border: Border.all(color: (isDarkTheme == true) ? theme.withOpacity(0.3) : borderLines, width: 1),
+        border: Border.all(
+            color: (isDarkTheme == true) ? theme.withOpacity(0.3) : borderLines,
+            width: 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Table(
         columnWidths: const {0: FlexColumnWidth(2), 1: FlexColumnWidth(1)},
         border: TableBorder.symmetric(
-          inside: BorderSide(color: (isDarkTheme == true) ? theme.withOpacity(0.2) : borderLines),
+          inside: BorderSide(
+              color:
+                  (isDarkTheme == true) ? theme.withOpacity(0.2) : borderLines),
         ),
         children: [
           TableRow(
-            decoration: BoxDecoration(color: (isDarkTheme == true) ? theme.withOpacity(0.15) : topBar),
+            decoration: BoxDecoration(
+                color:
+                    (isDarkTheme == true) ? theme.withOpacity(0.15) : topBar),
             children: [
               Padding(
                 padding: EdgeInsets.all(media.width * 0.03),
                 child: MyText(
-                  text: languages[choosenLanguage]['text_referral_table_name'] ?? 'Nome',
+                  text: languages[choosenLanguage]
+                          ['text_referral_table_name'] ??
+                      'Nome',
                   size: media.width * twelve,
                   fontweight: FontWeight.w700,
                 ),
@@ -117,7 +125,9 @@ class _ReferralPageState extends State<ReferralPage> {
               Padding(
                 padding: EdgeInsets.all(media.width * 0.03),
                 child: MyText(
-                  text: languages[choosenLanguage]['text_referral_table_active'] ?? 'Ativo',
+                  text: languages[choosenLanguage]
+                          ['text_referral_table_active'] ??
+                      'Ativo',
                   size: media.width * twelve,
                   fontweight: FontWeight.w700,
                 ),
@@ -130,18 +140,21 @@ class _ReferralPageState extends State<ReferralPage> {
                 Padding(
                   padding: EdgeInsets.all(media.width * 0.04),
                   child: MyText(
-                    text: languages[choosenLanguage]['text_referral_no_list'] ?? 'Nenhuma indicação ainda',
+                    text: languages[choosenLanguage]['text_referral_no_list'] ??
+                        'Nenhuma indicação ainda',
                     size: media.width * twelve,
                     color: hintColor,
                   ),
                 ),
-                const Padding(padding: EdgeInsets.all(8), child: SizedBox.shrink()),
+                const Padding(
+                    padding: EdgeInsets.all(8), child: SizedBox.shrink()),
               ],
             )
           else
             ...list.asMap().entries.map((e) {
               final item = e.value;
-              final name = item is Map ? (item['name']?.toString() ?? '—') : '—';
+              final name =
+                  item is Map ? (item['name']?.toString() ?? '—') : '—';
               final active = item is Map ? (item['active'] == true) : false;
               return TableRow(
                 children: [
@@ -154,7 +167,9 @@ class _ReferralPageState extends State<ReferralPage> {
                     child: Icon(
                       active ? Icons.check_circle : Icons.cancel,
                       size: media.width * 0.05,
-                      color: active ? Colors.green : (isDarkTheme ? Colors.red.shade300 : Colors.red),
+                      color: active
+                          ? Colors.green
+                          : (isDarkTheme ? Colors.red.shade300 : Colors.red),
                     ),
                   ),
                 ],
@@ -188,11 +203,13 @@ class _ReferralPageState extends State<ReferralPage> {
                         ? Column(
                             children: [
                               SizedBox(
-                                  height: MediaQuery.of(context).padding.top + media.width * 0.12),
+                                  height: MediaQuery.of(context).padding.top +
+                                      media.width * 0.12),
                               Stack(
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.only(bottom: media.width * 0.05),
+                                    padding: EdgeInsets.only(
+                                        bottom: media.width * 0.05),
                                     width: media.width * 1,
                                     alignment: Alignment.center,
                                     child: const SizedBox.shrink(),
@@ -200,7 +217,10 @@ class _ReferralPageState extends State<ReferralPage> {
                                   Positioned(
                                     child: InkWell(
                                       onTap: () => Navigator.pop(context),
-                                      child: Icon(Icons.arrow_back_ios, color: (isDarkTheme == true) ? theme : textColor),
+                                      child: Icon(Icons.arrow_back_ios,
+                                          color: (isDarkTheme == true)
+                                              ? theme
+                                              : textColor),
                                     ),
                                   ),
                                 ],
@@ -209,7 +229,11 @@ class _ReferralPageState extends State<ReferralPage> {
                               Align(
                                 alignment: Alignment.centerLeft,
                                 child: MyText(
-                                  text: (languages[choosenLanguage]['text_enable_referal'] ?? 'Indicação').toString().toUpperCase(),
+                                  text: (languages[choosenLanguage]
+                                              ['text_enable_referal'] ??
+                                          'Indicação')
+                                      .toString()
+                                      .toUpperCase(),
                                   size: media.width * sixteen,
                                   fontweight: FontWeight.w700,
                                 ),
@@ -218,7 +242,10 @@ class _ReferralPageState extends State<ReferralPage> {
                               Align(
                                 alignment: Alignment.centerLeft,
                                 child: MyText(
-                                  text: myReferralCode['referral_comission_string']?.toString() ?? '',
+                                  text: myReferralCode[
+                                              'referral_comission_string']
+                                          ?.toString() ??
+                                      '',
                                   size: media.width * fourteen,
                                   textAlign: TextAlign.left,
                                   fontweight: FontWeight.w500,
@@ -229,13 +256,21 @@ class _ReferralPageState extends State<ReferralPage> {
                                 children: [
                                   Expanded(
                                     child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: media.width * 0.04, vertical: media.width * 0.035),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: media.width * 0.04,
+                                          vertical: media.width * 0.035),
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: (isDarkTheme == true) ? theme.withOpacity(0.3) : borderLines, width: 1.2),
+                                        border: Border.all(
+                                            color: (isDarkTheme == true)
+                                                ? theme.withOpacity(0.3)
+                                                : borderLines,
+                                            width: 1.2),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: MyText(
-                                        text: myReferralCode['refferal_code']?.toString() ?? '—',
+                                        text: myReferralCode['refferal_code']
+                                                ?.toString() ??
+                                            '—',
                                         size: media.width * sixteen,
                                         fontweight: FontWeight.w600,
                                       ),
@@ -245,19 +280,32 @@ class _ReferralPageState extends State<ReferralPage> {
                                   InkWell(
                                     onTap: () async {
                                       await Share.share(
-                                        (languages[choosenLanguage]['text_invitation_1'] ?? '').toString().replaceAll('55', 'Omny') +
-                                            ' ' + (myReferralCode['refferal_code']?.toString() ?? '') +
-                                            ' ' + (languages[choosenLanguage]['text_invitation_2'] ?? '') +
-                                            ' \n \n ' + (android.toString()) + '\n \n ' + (ios.toString()),
+                                        '${(languages[choosenLanguage]['text_invitation_1'] ?? '').toString().replaceAll('55', 'Omny')} ${myReferralCode['refferal_code']?.toString() ?? ''} ' +
+                                            (languages[choosenLanguage]
+                                                    ['text_invitation_2'] ??
+                                                '') +
+                                            ' \n \n ' +
+                                            (android.toString()) +
+                                            '\n \n ' +
+                                            (ios.toString()),
                                       );
                                     },
                                     child: Container(
-                                      padding: EdgeInsets.all(media.width * 0.04),
+                                      padding:
+                                          EdgeInsets.all(media.width * 0.04),
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: (isDarkTheme == true) ? theme : borderLines, width: 1.2),
+                                        border: Border.all(
+                                            color: (isDarkTheme == true)
+                                                ? theme
+                                                : borderLines,
+                                            width: 1.2),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: Icon(Icons.share, color: (isDarkTheme == true) ? theme : textColor, size: media.width * 0.07),
+                                      child: Icon(Icons.share,
+                                          color: (isDarkTheme == true)
+                                              ? theme
+                                              : textColor,
+                                          size: media.width * 0.07),
                                     ),
                                   ),
                                 ],
