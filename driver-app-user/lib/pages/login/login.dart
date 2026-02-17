@@ -583,7 +583,9 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                     InkWell(
                                                       onTap: () async {
                                                         // País fixo Brasil: sem opção de trocar (useApiCountries = false)
-                                                        if (!useApiCountries) return;
+                                                        if (!useApiCountries) {
+                                                          return;
+                                                        }
                                                         if (countries
                                                             .isNotEmpty) {
                                                           //dialod box for select country for dial code
@@ -780,16 +782,24 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                           focusNode: phoneFocus,
                                                           inputFormatters: [
                                                             PhoneDDDFormatter(
-                                                              maxLength: countries[phcode]['dial_max_length'],
+                                                              maxLength: countries[
+                                                                      phcode][
+                                                                  'dial_max_length'],
                                                             ),
                                                           ],
                                                           onChanged: (val) {
                                                             // Remove formatação para armazenar apenas números
-                                                            String digitsOnly = val.replaceAll(RegExp(r'[^\d]'), '');
+                                                            String digitsOnly =
+                                                                val.replaceAll(
+                                                                    RegExp(
+                                                                        r'[^\d]'),
+                                                                    '');
                                                             setState(() {
-                                                              phnumber = digitsOnly;
+                                                              phnumber =
+                                                                  digitsOnly;
                                                             });
-                                                            if (digitsOnly.length ==
+                                                            if (digitsOnly
+                                                                    .length ==
                                                                 countries[
                                                                         phcode][
                                                                     'dial_max_length']) {
@@ -942,36 +952,61 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                   children: [
                                                     Container(
                                                       width: media.width * 0.9,
-                                                      padding: EdgeInsets.symmetric(
-                                                          horizontal: media.width * 0.04,
-                                                          vertical: media.width * 0.03),
+                                                      padding: EdgeInsets
+                                                          .symmetric(
+                                                              horizontal:
+                                                                  media.width *
+                                                                      0.04,
+                                                              vertical:
+                                                                  media.width *
+                                                                      0.03),
                                                       decoration: BoxDecoration(
-                                                        color: Colors.red.shade50,
-                                                        borderRadius: BorderRadius.circular(10),
+                                                        color:
+                                                            Colors.red.shade50,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
                                                         border: Border.all(
-                                                            color: Colors.red.shade300,
+                                                            color: Colors
+                                                                .red.shade300,
                                                             width: 1.5),
                                                       ),
                                                       child: Row(
                                                         children: [
-                                                          Icon(Icons.error_outline,
-                                                              color: Colors.red.shade700,
-                                                              size: media.width * 0.06),
-                                                          SizedBox(width: media.width * 0.02),
+                                                          Icon(
+                                                              Icons
+                                                                  .error_outline,
+                                                              color: Colors
+                                                                  .red.shade700,
+                                                              size:
+                                                                  media.width *
+                                                                      0.06),
+                                                          SizedBox(
+                                                              width:
+                                                                  media.width *
+                                                                      0.02),
                                                           Expanded(
                                                             child: MyText(
                                                               text: _error,
-                                                              color: Colors.red.shade800,
-                                                              size: media.width * fourteen,
-                                                              textAlign: TextAlign.start,
-                                                              fontweight: FontWeight.w600,
+                                                              color: Colors
+                                                                  .red.shade800,
+                                                              size:
+                                                                  media.width *
+                                                                      fourteen,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .start,
+                                                              fontweight:
+                                                                  FontWeight
+                                                                      .w600,
                                                             ),
                                                           ),
                                                         ],
                                                       ),
                                                     ),
                                                     SizedBox(
-                                                      height: media.width * 0.025,
+                                                      height:
+                                                          media.width * 0.025,
                                                     )
                                                   ],
                                                 ),
@@ -1026,26 +1061,43 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                                     true) {
                                                               phoneAuthCheck =
                                                                   true;
-                                                              await phoneAuth(
+                                                              final sent = await phoneAuth(
                                                                   fullPhoneNumber);
-                                                              value = 0;
-                                                              // Aguardar um pouco para o SMS ser enviado antes de mudar a página
-                                                              await Future.delayed(
-                                                                  const Duration(
-                                                                      milliseconds:
-                                                                          500));
-                                                              currentPage = 1;
+                                                              if (sent) {
+                                                                value = 0;
+                                                                await Future.delayed(
+                                                                    const Duration(
+                                                                        milliseconds:
+                                                                            500));
+                                                                currentPage = 1;
+                                                              } else if (mounted) {
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  SnackBar(
+                                                                    content: Text(
+                                                                      'Aguarde ${getPhoneAuthCooldownRemaining()}s para reenviar o código.',
+                                                                    ),
+                                                                    behavior: SnackBarBehavior.floating,
+                                                                  ),
+                                                                );
+                                                              }
                                                               loginLoading =
                                                                   false;
                                                               setState(() {});
                                                             }
-                                                            //otp is false
+                                                            // otp is false: mesmo assim enviar SMS e exigir código (igual motorista)
                                                             else if (otpVal !=
                                                                     null &&
                                                                 otpVal.value ==
                                                                     false) {
                                                               phoneAuthCheck =
-                                                                  false;
+                                                                  true;
+                                                              await phoneAuth(
+                                                                  fullPhoneNumber);
+                                                              value = 0;
+                                                              await Future.delayed(
+                                                                  const Duration(
+                                                                      milliseconds:
+                                                                          500));
                                                               currentPage = 1;
                                                               loginLoading =
                                                                   false;
@@ -1223,36 +1275,61 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                   children: [
                                                     Container(
                                                       width: media.width * 0.9,
-                                                      padding: EdgeInsets.symmetric(
-                                                          horizontal: media.width * 0.04,
-                                                          vertical: media.width * 0.03),
+                                                      padding: EdgeInsets
+                                                          .symmetric(
+                                                              horizontal:
+                                                                  media.width *
+                                                                      0.04,
+                                                              vertical:
+                                                                  media.width *
+                                                                      0.03),
                                                       decoration: BoxDecoration(
-                                                        color: Colors.red.shade50,
-                                                        borderRadius: BorderRadius.circular(10),
+                                                        color:
+                                                            Colors.red.shade50,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
                                                         border: Border.all(
-                                                            color: Colors.red.shade300,
+                                                            color: Colors
+                                                                .red.shade300,
                                                             width: 1.5),
                                                       ),
                                                       child: Row(
                                                         children: [
-                                                          Icon(Icons.error_outline,
-                                                              color: Colors.red.shade700,
-                                                              size: media.width * 0.06),
-                                                          SizedBox(width: media.width * 0.02),
+                                                          Icon(
+                                                              Icons
+                                                                  .error_outline,
+                                                              color: Colors
+                                                                  .red.shade700,
+                                                              size:
+                                                                  media.width *
+                                                                      0.06),
+                                                          SizedBox(
+                                                              width:
+                                                                  media.width *
+                                                                      0.02),
                                                           Expanded(
                                                             child: MyText(
                                                               text: _error,
-                                                              color: Colors.red.shade800,
-                                                              size: media.width * fourteen,
-                                                              textAlign: TextAlign.start,
-                                                              fontweight: FontWeight.w600,
+                                                              color: Colors
+                                                                  .red.shade800,
+                                                              size:
+                                                                  media.width *
+                                                                      fourteen,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .start,
+                                                              fontweight:
+                                                                  FontWeight
+                                                                      .w600,
                                                             ),
                                                           ),
                                                         ],
                                                       ),
                                                     ),
                                                     SizedBox(
-                                                      height: media.width * 0.025,
+                                                      height:
+                                                          media.width * 0.025,
                                                     )
                                                   ],
                                                 ),
@@ -1369,9 +1446,9 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
 
 class PhoneDDDFormatter extends TextInputFormatter {
   final int maxLength;
-  
+
   PhoneDDDFormatter({required this.maxLength});
-  
+
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
@@ -1380,53 +1457,73 @@ class PhoneDDDFormatter extends TextInputFormatter {
     // Remove todos os caracteres não numéricos do texto antigo e novo
     String oldDigitsOnly = oldValue.text.replaceAll(RegExp(r'[^\d]'), '');
     String newDigitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
-    
-    // Detecta se está deletando
+
+    // Detecta se está deletando (menos dígitos) ou se apagou um caractere não-dígito (ex: ")" ou " ")
     bool isDeleting = newDigitsOnly.length < oldDigitsOnly.length;
-    
+    bool deletedNonDigit = oldValue.text.length > newValue.text.length &&
+        newDigitsOnly.length == oldDigitsOnly.length &&
+        oldDigitsOnly.length >= 2;
+
+    // Ao apagar ")" ou " " do "(11)" ou "(11) 9...": trata como se tivesse apagado o último dígito
+    if (deletedNonDigit) {
+      newDigitsOnly = newDigitsOnly.substring(0, newDigitsOnly.length - 1);
+      isDeleting = true;
+    }
+
     // Limita ao tamanho máximo
     if (newDigitsOnly.length > maxLength) {
       newDigitsOnly = newDigitsOnly.substring(0, maxLength);
     }
-    
-    // Se não há dígitos, retorna vazio
+
+    // Se não há dígitos, retorna vazio (limpa a máscara)
     if (newDigitsOnly.isEmpty) {
-      return TextEditingValue(
+      return const TextEditingValue(
         text: '',
         selection: TextSelection.collapsed(offset: 0),
       );
     }
-    
+
+    // Ao apagar: quando sobram 2 dígitos e o usuário quer continuar apagando,
+    // mostramos só o 1º dígito para o próximo backspace limpar
+    if (isDeleting && newDigitsOnly.length == 2 && oldDigitsOnly.length >= 2) {
+      return TextEditingValue(
+        text: newDigitsOnly.substring(0, 1),
+        selection: const TextSelection.collapsed(offset: 1),
+      );
+    }
+
     // Se há apenas 1 dígito, retorna sem formatação
     if (newDigitsOnly.length == 1) {
       return TextEditingValue(
         text: newDigitsOnly,
-        selection: TextSelection.collapsed(offset: 1),
+        selection: const TextSelection.collapsed(offset: 1),
       );
     }
-    
+
     // Se há 2 ou mais dígitos, formata com DDD entre parênteses
     String ddd = newDigitsOnly.substring(0, 2);
     String rest = newDigitsOnly.substring(2);
-    
+
     String formatted = '($ddd)';
     if (rest.isNotEmpty) {
       formatted += ' $rest';
     }
-    
+
     // Calcula a posição do cursor baseado no texto formatado anterior
     int cursorPosition;
-    
+
     if (isDeleting) {
       // Quando deletando, usa a posição do cursor do texto antigo formatado
       // e ajusta baseado na quantidade de dígitos removidos
       int oldCursorOffset = oldValue.selection.baseOffset;
       String oldTextBeforeCursor = oldValue.text.substring(0, oldCursorOffset);
-      int oldDigitsBeforeCursor = oldTextBeforeCursor.replaceAll(RegExp(r'[^\d]'), '').length;
-      
+      int oldDigitsBeforeCursor =
+          oldTextBeforeCursor.replaceAll(RegExp(r'[^\d]'), '').length;
+
       // Se deletou um dígito, reduz a contagem
-      int newDigitsBeforeCursor = oldDigitsBeforeCursor > 0 ? oldDigitsBeforeCursor - 1 : 0;
-      
+      int newDigitsBeforeCursor =
+          oldDigitsBeforeCursor > 0 ? oldDigitsBeforeCursor - 1 : 0;
+
       // Ajusta a posição no texto formatado
       if (newDigitsBeforeCursor == 0) {
         cursorPosition = 0;
@@ -1441,8 +1538,9 @@ class PhoneDDDFormatter extends TextInputFormatter {
       // Quando digitando, calcula baseado nos dígitos antes do cursor no novo texto
       int cursorOffset = newValue.selection.baseOffset;
       String textBeforeCursor = newValue.text.substring(0, cursorOffset);
-      int digitsBeforeCursor = textBeforeCursor.replaceAll(RegExp(r'[^\d]'), '').length;
-      
+      int digitsBeforeCursor =
+          textBeforeCursor.replaceAll(RegExp(r'[^\d]'), '').length;
+
       // Ajusta a posição no texto formatado
       if (digitsBeforeCursor == 0) {
         cursorPosition = 0;
@@ -1454,7 +1552,7 @@ class PhoneDDDFormatter extends TextInputFormatter {
         cursorPosition = digitsBeforeCursor + 3; // +3 para '(DD) '
       }
     }
-    
+
     // Limita o cursor ao tamanho do texto formatado
     if (cursorPosition > formatted.length) {
       cursorPosition = formatted.length;
@@ -1462,7 +1560,7 @@ class PhoneDDDFormatter extends TextInputFormatter {
     if (cursorPosition < 0) {
       cursorPosition = 0;
     }
-    
+
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: cursorPosition),

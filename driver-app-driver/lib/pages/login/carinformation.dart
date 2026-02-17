@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translation/translation.dart';
@@ -1035,16 +1036,10 @@ class _CarInformationState extends State<CarInformation> {
                                   ),
                                   Container(
                                     width: media.width * 0.9,
-                                    height: media.width * 0.13,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: media.width * 0.05,
-                                      vertical: media.width * 0.036,
-                                    ),
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: _getBorderColor(
-                                          isActive:
-                                              false, // Dropdown não mostra estado ativo visualmente
+                                          isActive: false,
                                           isFilled: transportType.isNotEmpty,
                                           hasError: _hasTransportTypeError,
                                         ),
@@ -1052,79 +1047,14 @@ class _CarInformationState extends State<CarInformation> {
                                       ),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: DropdownButton<String>(
-                                      value: transportType.isEmpty
-                                          ? null
-                                          : transportType,
-                                      isExpanded: true,
-                                      underline: Container(),
-                                      icon: Icon(
-                                        Icons.arrow_left,
-                                        color: textColor,
-                                        size: media.width * 0.08,
-                                      ),
-                                      hint: Text(
-                                        languages[choosenLanguage]
-                                                    ?['text_register_for']
-                                                ?.toString() ??
-                                            (languages['en']
-                                                        ?['text_register_for']
-                                                    ?.toString() ??
-                                                'Register for'),
-                                        style: GoogleFonts.poppins(
-                                          fontSize: media.width * fourteen,
-                                          color: textColor.withOpacity(0.5),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      style: GoogleFonts.poppins(
-                                        fontSize: media.width * fourteen,
-                                        color: textColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      dropdownColor: topBar,
-                                      items: [
-                                        DropdownMenuItem<String>(
-                                          value: 'taxi',
-                                          child: MyText(
-                                            text: languages[choosenLanguage]
-                                                        ?['text_taxi_']
-                                                    ?.toString() ??
-                                                (languages['en']?['text_taxi_']
-                                                        ?.toString() ??
-                                                    'Taxi'),
-                                            size: media.width * fourteen,
-                                            fontweight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        DropdownMenuItem<String>(
-                                          value: 'delivery',
-                                          child: MyText(
-                                            text: languages[choosenLanguage]
-                                                        ?['text_delivery']
-                                                    ?.toString() ??
-                                                (languages['en']
-                                                            ?['text_delivery']
-                                                        ?.toString() ??
-                                                    'Delivery'),
-                                            size: media.width * fourteen,
-                                            fontweight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        DropdownMenuItem<String>(
-                                          value: 'both',
-                                          child: MyText(
-                                            text: languages[choosenLanguage]
-                                                        ?['text_both']
-                                                    ?.toString() ??
-                                                (languages['en']?['text_both']
-                                                        ?.toString() ??
-                                                    'Both'),
-                                            size: media.width * fourteen,
-                                            fontweight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
+                                    child: DropdownSearch<String>(
+                                      selectedItem: transportType.isEmpty ? null : transportType,
+                                      items: const ['taxi', 'delivery', 'both'],
+                                      itemAsString: (String v) {
+                                        if (v == 'taxi') return languages[choosenLanguage]?['text_taxi_']?.toString() ?? languages['en']?['text_taxi_']?.toString() ?? 'Taxi';
+                                        if (v == 'delivery') return languages[choosenLanguage]?['text_delivery']?.toString() ?? languages['en']?['text_delivery']?.toString() ?? 'Delivery';
+                                        return languages[choosenLanguage]?['text_both']?.toString() ?? languages['en']?['text_both']?.toString() ?? 'Both';
+                                      },
                                       onChanged: (String? newValue) {
                                         if (newValue != null) {
                                           setState(() {
@@ -1140,6 +1070,23 @@ class _CarInformationState extends State<CarInformation> {
                                               '🚗 [UI] Transport type selecionado: $transportType');
                                         }
                                       },
+                                      popupProps: PopupProps.menu(
+                                        showSearchBox: true,
+                                        searchFieldProps: TextFieldProps(
+                                          decoration: InputDecoration(
+                                            hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
+                                        ),
+                                      ),
+                                      dropdownDecoratorProps: DropDownDecoratorProps(
+                                        dropdownSearchDecoration: InputDecoration(
+                                          hintText: languages[choosenLanguage]?['text_register_for']?.toString() ?? 'Register for',
+                                          hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: textColor.withOpacity(0.5)),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(horizontal: media.width * 0.05, vertical: media.width * 0.036),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   SizedBox(
@@ -1238,7 +1185,7 @@ class _CarInformationState extends State<CarInformation> {
                                             child: Text(
                                               _getServiceLocationDisplayText(),
                                               key: ValueKey(
-                                                  'service_location_${myServiceId}_${myServiceLocation}'),
+                                                  'service_location_${myServiceId}_$myServiceLocation'),
                                               style: GoogleFonts.poppins(
                                                 fontSize:
                                                     media.width * fourteen,
@@ -1358,7 +1305,7 @@ class _CarInformationState extends State<CarInformation> {
                                                     // Forçar rebuild imediato para mostrar o nome ANTES de chamar getvehicleType
                                                     if (mounted) {
                                                       await Future.delayed(
-                                                          Duration(
+                                                          const Duration(
                                                               milliseconds:
                                                                   50));
                                                       setState(() {
@@ -2579,11 +2526,6 @@ class _CarInformationState extends State<CarInformation> {
                                 (!iscustommake && vehicleModelId != ''))
                               Container(
                                 width: media.width * 0.9,
-                                height: media.width * 0.13,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: media.width * 0.05,
-                                  vertical: media.width * 0.036,
-                                ),
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                     color: _getBorderColor(
@@ -2596,67 +2538,11 @@ class _CarInformationState extends State<CarInformation> {
                                   ),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: DropdownButton<String>(
-                                  value: modelYear != null &&
-                                          modelYear.toString().isNotEmpty
-                                      ? modelYear.toString()
-                                      : null,
-                                  isExpanded: true,
-                                  underline: Container(),
-                                  icon: Icon(
-                                    Icons.arrow_left,
-                                    color: textColor,
-                                    size: media.width * 0.08,
-                                  ),
-                                  style: GoogleFonts.poppins(
-                                    fontSize: media.width * fourteen,
-                                    color: textColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  hint: Text(
-                                    languages[choosenLanguage]
-                                        ['text_enter_vehicle_model_year'],
-                                    style: GoogleFonts.poppins(
-                                      fontSize: media.width * fourteen,
-                                      color: hintColor,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                  selectedItemBuilder: (BuildContext context) {
-                                    return vehicleYears
-                                        .map<Widget>((String year) {
-                                      return Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          year,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: media.width * fourteen,
-                                            color: textColor,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
-                                  items: vehicleYears.map((String year) {
-                                    return DropdownMenuItem<String>(
-                                      value: year,
-                                      child: Text(
-                                        year,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: media.width * fourteen,
-                                          color: textColor,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: ((iscustommake)
-                                          ? mycustommodel == ''
-                                          : vehicleModelId == '')
+                                child: DropdownSearch<String>(
+                                  selectedItem: modelYear != null && modelYear.toString().isNotEmpty ? modelYear.toString() : null,
+                                  items: vehicleYears,
+                                  itemAsString: (String year) => year,
+                                  onChanged: ((iscustommake) ? mycustommodel == '' : vehicleModelId == '')
                                       ? null
                                       : (String? newValue) {
                                           if (newValue != null) {
@@ -2668,6 +2554,23 @@ class _CarInformationState extends State<CarInformation> {
                                             });
                                           }
                                         },
+                                  popupProps: PopupProps.menu(
+                                    showSearchBox: true,
+                                    searchFieldProps: TextFieldProps(
+                                      decoration: InputDecoration(
+                                        hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                    ),
+                                  ),
+                                  dropdownDecoratorProps: DropDownDecoratorProps(
+                                    dropdownSearchDecoration: InputDecoration(
+                                      hintText: languages[choosenLanguage]['text_enter_vehicle_model_year'],
+                                      hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: media.width * 0.05, vertical: media.width * 0.036),
+                                    ),
+                                  ),
                                 ),
                               ),
 
@@ -2760,11 +2663,6 @@ class _CarInformationState extends State<CarInformation> {
                                 (!iscustommake && vehicleModelId != ''))
                               Container(
                                 width: media.width * 0.9,
-                                height: media.width * 0.13,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: media.width * 0.05,
-                                  vertical: media.width * 0.036,
-                                ),
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                     color: _getBorderColor(
@@ -2777,67 +2675,11 @@ class _CarInformationState extends State<CarInformation> {
                                   ),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: DropdownButton<String>(
-                                  value: vehicleColor != null &&
-                                          vehicleColor.toString().isNotEmpty
-                                      ? vehicleColor.toString()
-                                      : null,
-                                  isExpanded: true,
-                                  underline: Container(),
-                                  icon: Icon(
-                                    Icons.arrow_left,
-                                    color: textColor,
-                                    size: media.width * 0.08,
-                                  ),
-                                  style: GoogleFonts.poppins(
-                                    fontSize: media.width * fourteen,
-                                    color: textColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  hint: Text(
-                                    languages[choosenLanguage]
-                                        ['Text_enter_vehicle_color'],
-                                    style: GoogleFonts.poppins(
-                                      fontSize: media.width * fourteen,
-                                      color: hintColor,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                  selectedItemBuilder: (BuildContext context) {
-                                    return vehicleColors
-                                        .map<Widget>((String color) {
-                                      return Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          color,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: media.width * fourteen,
-                                            color: textColor,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
-                                  items: vehicleColors.map((String color) {
-                                    return DropdownMenuItem<String>(
-                                      value: color,
-                                      child: Text(
-                                        color,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: media.width * fourteen,
-                                          color: textColor,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: ((iscustommake)
-                                          ? mycustommodel == ''
-                                          : vehicleModelId == '')
+                                child: DropdownSearch<String>(
+                                  selectedItem: vehicleColor != null && vehicleColor.toString().isNotEmpty ? vehicleColor.toString() : null,
+                                  items: vehicleColors,
+                                  itemAsString: (String color) => color,
+                                  onChanged: ((iscustommake) ? mycustommodel == '' : vehicleModelId == '')
                                       ? null
                                       : (String? newValue) {
                                           if (newValue != null) {
@@ -2848,6 +2690,23 @@ class _CarInformationState extends State<CarInformation> {
                                             });
                                           }
                                         },
+                                  popupProps: PopupProps.menu(
+                                    showSearchBox: true,
+                                    searchFieldProps: TextFieldProps(
+                                      decoration: InputDecoration(
+                                        hintText: languages[choosenLanguage]['text_search'] ?? 'Buscar',
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                    ),
+                                  ),
+                                  dropdownDecoratorProps: DropDownDecoratorProps(
+                                    dropdownSearchDecoration: InputDecoration(
+                                      hintText: languages[choosenLanguage]['Text_enter_vehicle_color'],
+                                      hintStyle: GoogleFonts.poppins(fontSize: media.width * fourteen, color: hintColor),
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: media.width * 0.05, vertical: media.width * 0.036),
+                                    ),
+                                  ),
                                 ),
                               ),
                             // Código de referência - só aparece quando cor está selecionada

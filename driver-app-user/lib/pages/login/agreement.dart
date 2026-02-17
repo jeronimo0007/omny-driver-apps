@@ -73,9 +73,9 @@ class _AggreementPageState extends State<AggreementPage> {
                         text: TextSpan(
                           // text: 'Hello ',
                           style: getGoogleFontStyle(
-                              color: textColor,
-                              fontSize: media.width * fourteen,
-                            ),
+                            color: textColor,
+                            fontSize: media.width * fourteen,
+                          ),
                           children: [
                             TextSpan(
                                 text: languages[choosenLanguage]
@@ -84,13 +84,13 @@ class _AggreementPageState extends State<AggreementPage> {
                                 text: languages[choosenLanguage]
                                     ['text_terms_of_use'],
                                 style: getGoogleFontStyle(
-                                    color: buttonColor,
-                                    fontSize: media.width * fourteen,
-                                  ),
+                                  color: buttonColor,
+                                  fontSize: media.width * fourteen,
+                                ),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     openBrowser(
-                                        'https://driver.omny.app.br/privacy-policy');
+                                        'https://driver.omny.app.br/privacy');
                                   }),
                             TextSpan(
                                 text: languages[choosenLanguage]
@@ -99,13 +99,13 @@ class _AggreementPageState extends State<AggreementPage> {
                                 text: languages[choosenLanguage]
                                     ['text_privacy'],
                                 style: getGoogleFontStyle(
-                                    color: buttonColor,
-                                    fontSize: media.width * fourteen,
-                                  ),
+                                  color: buttonColor,
+                                  fontSize: media.width * fourteen,
+                                ),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     openBrowser(
-                                        'https://driver.omny.app.br/privacy-policy');
+                                        'https://driver.omny.app.br/privacy');
                                   }),
                           ],
                         ),
@@ -159,16 +159,16 @@ class _AggreementPageState extends State<AggreementPage> {
                           horizontal: media.width * 0.04,
                           vertical: media.width * 0.035),
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                                blurRadius: 2.0,
-                                spreadRadius: 2.0,
-                                color: Colors.black.withOpacity(0.2))
-                          ],
-                          color: verifyDeclined,
-                          border: Border.all(
-                              color: Colors.red.shade300, width: 1.5),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                              blurRadius: 2.0,
+                              spreadRadius: 2.0,
+                              color: Colors.black.withOpacity(0.2))
+                        ],
+                        color: verifyDeclined,
+                        border:
+                            Border.all(color: Colors.red.shade300, width: 1.5),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -198,20 +198,26 @@ class _AggreementPageState extends State<AggreementPage> {
                     child: Button(
                         onTap: () async {
                           // Validar campos antes de registrar
-                          debugPrint('═══════════════════════════════════════════════════════════');
-                          debugPrint('📋 agreement.dart: Valores antes de registrar:');
+                          debugPrint(
+                              '═══════════════════════════════════════════════════════════');
+                          debugPrint(
+                              '📋 agreement.dart: Valores antes de registrar:');
                           debugPrint('   name: "$name"');
                           debugPrint('   email: "$email"');
                           debugPrint('   phnumber: "$phnumber"');
-                          debugPrint('═══════════════════════════════════════════════════════════');
-                          
-                          if (name.isEmpty || email.isEmpty || phnumber.isEmpty) {
+                          debugPrint(
+                              '═══════════════════════════════════════════════════════════');
+
+                          if (name.isEmpty ||
+                              email.isEmpty ||
+                              phnumber.isEmpty) {
                             setState(() {
-                              _error = 'Por favor, preencha todos os campos obrigatórios';
+                              _error =
+                                  'Por favor, preencha todos os campos obrigatórios';
                             });
                             return;
                           }
-                          
+
                           loginLoading = true;
                           _error = '';
                           valueNotifierLogin.incrementNotifier();
@@ -219,23 +225,29 @@ class _AggreementPageState extends State<AggreementPage> {
                           serverErrorMessage = '';
                           try {
                             var register = await registerUser();
-                            debugPrint('📋 agreement.dart: Resultado do registro: $register');
-                            if (register != null && register.toString() == 'true') {
+                            debugPrint(
+                                '📋 agreement.dart: Resultado do registro: $register');
+                            if (register != null &&
+                                register.toString() == 'true') {
                               // Aguardar um pouco para garantir que getUserDetails terminou
-                              await Future.delayed(const Duration(milliseconds: 500));
+                              await Future.delayed(
+                                  const Duration(milliseconds: 500));
                               //referral page
-                              debugPrint('✅ agreement.dart: Navegando para Referral');
+                              debugPrint(
+                                  '✅ agreement.dart: Navegando para Referral');
                               navigate();
                             } else {
                               setState(() {
                                 // Usar serverErrorMessage se disponível, senão usar o retorno da função
-                                _error = serverErrorMessage.isNotEmpty 
-                                  ? serverErrorMessage 
-                                  : (register?.toString() ?? 'Erro ao registrar usuário');
+                                _error = serverErrorMessage.isNotEmpty
+                                    ? serverErrorMessage
+                                    : (register?.toString() ??
+                                        'Erro ao registrar usuário');
                               });
                             }
                           } catch (e) {
-                            debugPrint('❌ agreement.dart: Erro ao registrar: $e');
+                            debugPrint(
+                                '❌ agreement.dart: Erro ao registrar: $e');
                             setState(() {
                               _error = 'Erro ao registrar: ${e.toString()}';
                             });

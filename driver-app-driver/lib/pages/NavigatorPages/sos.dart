@@ -139,73 +139,59 @@ class _SosState extends State<Sos> {
                                                                           .width *
                                                                       0.02),
                                                               child: Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
+                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                 children: [
                                                                   Icon(
-                                                                    Icons
-                                                                        .account_box_sharp,
-                                                                    size: media
-                                                                            .width *
-                                                                        0.06,
-                                                                    color:
-                                                                        textColor,
+                                                                    Icons.account_box_sharp,
+                                                                    size: media.width * 0.06,
+                                                                    color: textColor,
                                                                   ),
-                                                                  Column(
-                                                                    children: [
-                                                                      Container(
-                                                                        padding:
-                                                                            EdgeInsets.only(bottom: media.width * 0.01),
-                                                                        decoration:
-                                                                            BoxDecoration(
-                                                                          border:
-                                                                              Border(
-                                                                            bottom: BorderSide(
-                                                                                // width:
-                                                                                //     16.0,
-                                                                                color: textColor.withOpacity(0.2)),
-                                                                          ),
+                                                                  Expanded(
+                                                                    child: Container(
+                                                                      padding: EdgeInsets.only(bottom: media.width * 0.01),
+                                                                      decoration: BoxDecoration(
+                                                                        border: Border(
+                                                                          bottom: BorderSide(color: textColor.withOpacity(0.2)),
                                                                         ),
-                                                                        child:
-                                                                            Row(
-                                                                          children: [
-                                                                            Column(
+                                                                      ),
+                                                                      child: Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child: Column(
                                                                               crossAxisAlignment: CrossAxisAlignment.start,
+                                                                              mainAxisSize: MainAxisSize.min,
                                                                               children: [
-                                                                                SizedBox(
-                                                                                  width: media.width * 0.65,
-                                                                                  child: MyText(
-                                                                                    text: sosData[i]['name'],
-                                                                                    size: media.width * sixteen,
-                                                                                    fontweight: FontWeight.w600,
-                                                                                  ),
+                                                                                MyText(
+                                                                                  text: sosData[i]['name'],
+                                                                                  size: media.width * sixteen,
+                                                                                  fontweight: FontWeight.w600,
+                                                                                  maxLines: 2,
+                                                                                  overflow: TextOverflow.ellipsis,
                                                                                 ),
-                                                                                SizedBox(
-                                                                                  height: media.width * 0.02,
-                                                                                ),
+                                                                                SizedBox(height: media.width * 0.02),
                                                                                 MyText(
                                                                                   text: sosData[i]['number'],
                                                                                   size: media.width * twelve,
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
                                                                                 ),
-                                                                                SizedBox(
-                                                                                  height: media.width * 0.01,
-                                                                                ),
+                                                                                SizedBox(height: media.width * 0.01),
                                                                               ],
                                                                             ),
-                                                                            InkWell(
-                                                                                onTap: () {
-                                                                                  setState(() {
-                                                                                    _deleteId = sosData[i]['id'];
-                                                                                    _isDeleting = true;
-                                                                                  });
-                                                                                },
-                                                                                child: Icon(Icons.delete, color: textColor))
-                                                                          ],
-                                                                        ),
+                                                                          ),
+                                                                          InkWell(
+                                                                            onTap: () {
+                                                                              setState(() {
+                                                                                _deleteId = sosData[i]['id'];
+                                                                                _isDeleting = true;
+                                                                              });
+                                                                            },
+                                                                            child: Icon(Icons.delete, color: textColor),
+                                                                          ),
+                                                                        ],
                                                                       ),
-                                                                    ],
-                                                                  )
+                                                                    ),
+                                                                  ),
                                                                 ],
                                                               ),
                                                             )

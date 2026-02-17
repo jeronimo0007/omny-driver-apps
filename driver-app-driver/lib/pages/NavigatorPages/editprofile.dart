@@ -1,6 +1,7 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_driver/pages/login/landingpage.dart';
+import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
@@ -111,12 +112,11 @@ class _EditProfileState extends State<EditProfile> {
   }
 
 //pick image from gallery
-  // Usa Photo Picker do Android (não requer permissões READ_MEDIA_IMAGES)
   pickImageFromGallery() async {
     try {
       final pickedFile =
-          await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
-      if (pickedFile != null) {
+          await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+      if (pickedFile != null && mounted) {
         setState(() {
           proImageFile = pickedFile.path;
           _pickImage = false;
@@ -134,11 +134,13 @@ class _EditProfileState extends State<EditProfile> {
     var permission = await getCameraPermission();
     if (permission == PermissionStatus.granted) {
       final pickedFile =
-          await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
-      setState(() {
-        proImageFile = pickedFile?.path;
-        _pickImage = false;
-      });
+          await picker.pickImage(source: ImageSource.camera, imageQuality: 90);
+      if (pickedFile != null && mounted) {
+        setState(() {
+          proImageFile = pickedFile.path;
+          _pickImage = false;
+        });
+      }
     } else {
       setState(() {
         _permission = 'noCamera';
@@ -598,7 +600,36 @@ class _EditProfileState extends State<EditProfile> {
                                 ),
                               ],
                             ),
-                          )
+                          ),
+                          // Excluir Conta (última linha)
+                          (userDetails['owner_id'] == null)
+                              ? Container(
+                                  margin: EdgeInsets.only(top: media.width * 0.05),
+                                  padding: EdgeInsets.all(media.width * 0.02),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.withOpacity(0.1),
+                                  ),
+                                  child: InkWell(
+                                    onTap: () {
+                                      deleteAccount = true;
+                                      valueNotifierHome.incrementNotifier();
+                                      Navigator.pop(context, true);
+                                    },
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete_forever, color: Colors.red, size: media.width * 0.06),
+                                        SizedBox(width: media.width * 0.03),
+                                        MyText(
+                                          text: languages[choosenLanguage]['text_delete_account'],
+                                          size: media.width * sixteen,
+                                          color: Colors.red,
+                                          fontweight: FontWeight.w600,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
                         ],
                       ),
                     ),
@@ -621,8 +652,14 @@ class _EditProfileState extends State<EditProfile> {
                               setState(() {
                                 _isLoading = true;
                               });
+                              // Normaliza orientação da foto só no envio (mantém como o usuário viu)
+                              if (proImageFile != null) {
+                                try {
+                                  final f = await FlutterExifRotation.rotateAndSaveImage(path: proImageFile);
+                                  proImageFile = f.path;
+                                } catch (_) {}
+                              }
                               dynamic val;
-
                               val = await updateProfile(
                                 userDetails['name'],
                                 userDetails['email'],

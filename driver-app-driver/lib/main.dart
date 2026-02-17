@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'functions/functions.dart';
 import 'functions/notifications.dart';
 import 'pages/loadingPage/loadingpage.dart';
@@ -11,7 +12,9 @@ import 'package:firebase_database/firebase_database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+  // Evita erro "Unable to load asset: AssetManifest.json" (google_fonts usa manifest; permitir fetch em runtime)
+  GoogleFonts.config.allowRuntimeFetching = true;
+
   // Apenas definir orientação em plataformas móveis (não funciona no web)
   if (!kIsWeb) {
   SystemChrome.setPreferredOrientations([
@@ -24,7 +27,23 @@ void main() async {
   try {
     debugPrint('🔥 [FIREBASE INIT] Iniciando Firebase...');
     debugPrint('🔥 [FIREBASE INIT] Plataforma: ${kIsWeb ? "WEB" : "MOBILE"}');
-  await Firebase.initializeApp();
+    if (kIsWeb) {
+      // Web exige FirebaseOptions (mesma config do index.html)
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'AIzaSyCceQTKfoIsPblC4vWMyxC8HfaVUKc0U5U',
+          authDomain: 'goin-7372e.firebaseapp.com',
+          databaseURL: 'https://goin-7372e-default-rtdb.firebaseio.com',
+          projectId: 'goin-7372e',
+          storageBucket: 'goin-7372e.firebasestorage.app',
+          messagingSenderId: '725859983456',
+          appId: '1:725859983456:web:7d738c80d0d3e3376c2305',
+          measurementId: 'G-RX7QR1W5W8',
+        ),
+      );
+    } else {
+      await Firebase.initializeApp();
+    }
     debugPrint('🔥 [FIREBASE INIT] Firebase inicializado com sucesso');
     
     // Verificar conexão com Firebase Database (apenas se não for web ou se Firebase Database suportar web)

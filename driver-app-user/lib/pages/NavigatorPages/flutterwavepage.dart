@@ -126,7 +126,7 @@ class _FlutterWavePageState extends State<FlutterWavePage> {
                           Text(
                             walletBalance['currency_symbol'] +
                                 ' ' +
-                                addMoney.toString(),
+                                formatDecimalBr(addMoney),
                             style: GoogleFonts.poppins(
                                 fontSize: media.width * twenty,
                                 fontWeight: FontWeight.w600),

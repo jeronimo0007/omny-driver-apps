@@ -19,9 +19,9 @@ class SignInwithEmail extends StatefulWidget {
 
 class _SignInwithEmailState extends State<SignInwithEmail> {
   TextEditingController controller = TextEditingController();
-  TextEditingController _referralController = TextEditingController();
-  FocusNode _emailFocusNode = FocusNode();
-  FocusNode _referralFocusNode = FocusNode();
+  final TextEditingController _referralController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _referralFocusNode = FocusNode();
   bool _isEmailFocused = false;
   bool _isReferralFocused = false;
 
@@ -117,7 +117,8 @@ class _SignInwithEmailState extends State<SignInwithEmail> {
                   ),
                   // Código de indicação (Opcional) - acima do email
                   MyText(
-                    text: languages[choosenLanguage]['text_referral_optional'] ??
+                    text: languages[choosenLanguage]
+                            ['text_referral_optional'] ??
                         'Código de indicação (Opcional)',
                     size: fourteen,
                     color: hintColor,
@@ -145,7 +146,8 @@ class _SignInwithEmailState extends State<SignInwithEmail> {
                       focusNode: _referralFocusNode,
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: languages[choosenLanguage]['text_enter_referral'] ??
+                        hintText: languages[choosenLanguage]
+                                ['text_enter_referral'] ??
                             'Digite o código de indicação',
                         hintStyle: TextStyle(
                           fontSize: media.width * fourteen,
@@ -252,7 +254,8 @@ class _SignInwithEmailState extends State<SignInwithEmail> {
                                 if (regex.hasMatch(controller.text)) {
                                   FocusManager.instance.primaryFocus?.unfocus();
 
-                                  loginReferralCode = _referralController.text.trim();
+                                  loginReferralCode =
+                                      _referralController.text.trim();
 
                                   setState(() {
                                     verifyEmailError = '';

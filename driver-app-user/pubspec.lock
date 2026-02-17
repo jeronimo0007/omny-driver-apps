@@ -193,6 +193,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.3"
+  dropdown_search:
+    dependency: "direct main"
+    description:
+      name: dropdown_search
+      sha256: "55106e8290acaa97ed15bea1fdad82c3cf0c248dd410e651f5a8ac6870f783ab"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.6"
   fake_async:
     dependency: transitive
     description:
@@ -366,6 +374,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.9+2"
+  flutter_exif_rotation:
+    dependency: "direct main"
+    description:
+      name: flutter_exif_rotation
+      sha256: f581601523bbb7fbec3a0498fe930bf6c48f627d4548d859b2772230edfbe658
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.2"
   flutter_inappwebview:
     dependency: "direct main"
     description:
@@ -470,6 +486,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.3"
+  flutter_localizations:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -596,10 +617,10 @@ packages:
     dependency: "direct main"
     description:
       name: google_fonts
-      sha256: "2776c66b3e97c6cdd58d1bd3281548b074b64f1fd5c8f82391f7456e38849567"
+      sha256: "6996212014b996eaa17074e02b1b925b212f5e053832d9048970dc27255a8fb3"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.5"
+    version: "7.1.0"
   google_maps:
     dependency: transitive
     description:
@@ -756,10 +777,10 @@ packages:
     dependency: "direct main"
     description:
       name: intl
-      sha256: "3bc132a9dbce73a7e4a21a17d06e1878839ffbf975568bc875c60537824b0c4d"
+      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
       url: "https://pub.dev"
     source: hosted
-    version: "0.18.1"
+    version: "0.20.2"
   js:
     dependency: transitive
     description:

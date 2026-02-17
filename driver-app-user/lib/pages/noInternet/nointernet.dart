@@ -18,6 +18,9 @@ class _NoInternetState extends State<NoInternet> {
   @override
   Widget build(BuildContext context) {
     var media = MediaQuery.of(context).size;
+    final lang = (languages.isNotEmpty && choosenLanguage != '' && languages[choosenLanguage] != null)
+        ? languages[choosenLanguage] as Map<String, dynamic>?
+        : null;
     return Container(
       height: media.height * 1,
       width: media.width * 1,
@@ -39,9 +42,7 @@ class _NoInternetState extends State<NoInternet> {
                 height: media.width * 0.05,
               ),
               MyText(
-                text: (languages.isNotEmpty && choosenLanguage != '')
-                    ? languages[choosenLanguage]['text_nointernet']
-                    : 'No Internet Connection',
+                text: lang?['text_nointernet'] ?? 'No Internet Connection',
                 size: media.width * twentyfour,
                 fontweight: FontWeight.w600,
                 color: textColor,
@@ -50,9 +51,7 @@ class _NoInternetState extends State<NoInternet> {
                 height: media.width * 0.05,
               ),
               MyText(
-                text: (languages.isNotEmpty && choosenLanguage != '')
-                    ? languages[choosenLanguage]['text_nointernetdesc']
-                    : 'Please check your Internet connection, try enabling wifi or tey again later',
+                text: lang?['text_nointernetdesc'] ?? 'Please check your Internet connection, try enabling wifi or try again later',
                 size: media.width * fourteen,
                 color: hintColor,
               ),
@@ -61,7 +60,7 @@ class _NoInternetState extends State<NoInternet> {
               ),
               Button(
                   onTap: widget.onTap,
-                  text: languages[choosenLanguage]['text_back_home'])
+                  text: lang?['text_back_home'] ?? 'Voltar ao início')
             ],
           )
         ],

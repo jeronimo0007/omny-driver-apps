@@ -358,8 +358,8 @@ class _PaymentSuccessState extends State<PaymentSuccess> {
                 ),
                 MyText(
                   text: widget.transfer == null
-                      ? '${languages[choosenLanguage]['text_amount_of']} $addMoney ${userDetails['currency_symbol']} ${languages[choosenLanguage]['text_tranferred_to']} ${userDetails['mobile']}'
-                      : '${languages[choosenLanguage]['text_amount_of']} ${amount.text} ${userDetails['currency_symbol']} ${languages[choosenLanguage]['text_tranferred_to']} ${phonenumber.text}',
+                      ? '${languages[choosenLanguage]['text_amount_of']} ${userDetails['currency_symbol']} ${formatDecimalBr(addMoney)} ${languages[choosenLanguage]['text_tranferred_to']} ${userDetails['mobile']}'
+                      : '${languages[choosenLanguage]['text_amount_of']} ${userDetails['currency_symbol']} ${formatDecimalBr(amount.text)} ${languages[choosenLanguage]['text_tranferred_to']} ${phonenumber.text}',
                   textAlign: TextAlign.center,
                   size: media.width * eighteen,
                   fontweight: FontWeight.w600,

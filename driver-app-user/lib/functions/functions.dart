@@ -27,6 +27,7 @@ import '../pages/onTripPage/booking_confirmation.dart';
 import '../pages/onTripPage/map_page.dart';
 import '../pages/onTripPage/review_page.dart';
 import '../pages/referralcode/referral_code.dart';
+import '../config/api_config.dart';
 import '../styles/styles.dart';
 
 //languages code
@@ -41,10 +42,21 @@ bool internet = true;
 // Variável global para armazenar mensagem de erro do servidor
 String serverErrorMessage = '';
 
-//base url
-String url =
-    'https://driver.omny.app.br/'; //add '/' at the end of the url as 'https://url.com/'
+// Código de indicação no cadastro (preenchido na NamePage)
+String loginReferralCode = '';
+
+//base url (local em debug, produção em release - ver lib/config/api_config.dart)
+String url = apiBaseUrl;
 String mapkey = 'AIzaSyDIFOaDalHwTa--63nbVUVVM13X3EWTI6Q';
+
+/// Formata número para exibição no padrão brasileiro (vírgula como decimal).
+/// Apenas para exibição; envio à API continua com ponto.
+String formatDecimalBr(dynamic value) {
+  if (value == null) return '0,00';
+  final s = value.toString().replaceFirst(',', '.');
+  final n = value is num ? value : (double.tryParse(s) ?? 0);
+  return n.toStringAsFixed(2).replaceAll('.', ',');
+}
 
 // Função helper para extrair mensagem de erro do servidor
 // Suporta diferentes formatos de resposta de erro (400, 422, etc.)
@@ -342,7 +354,8 @@ getCountryCode() async {
       ];
       phcode = 0;
       result = 'success';
-      debugPrint('🌎 getCountryCode: Usando país padrão Brasil (API desabilitada)');
+      debugPrint(
+          '🌎 getCountryCode: Usando país padrão Brasil (API desabilitada)');
       return result;
     }
 
@@ -388,11 +401,30 @@ dynamic credentials;
 bool _isProcessingVerification =
     false; // Flag para evitar processamento duplicado
 
-phoneAuth(String phone) async {
+/// Cooldown para não enviar SMS várias vezes (evita bloqueio "too-many-requests")
+DateTime? lastPhoneAuthRequestTime;
+const int phoneAuthCooldownSeconds = 60;
+
+int getPhoneAuthCooldownRemaining() {
+  if (lastPhoneAuthRequestTime == null) return 0;
+  final elapsed = DateTime.now().difference(lastPhoneAuthRequestTime!).inSeconds;
+  if (elapsed >= phoneAuthCooldownSeconds) return 0;
+  return phoneAuthCooldownSeconds - elapsed;
+}
+
+/// Retorna true se a requisição foi enviada, false se bloqueada por cooldown
+Future<bool> phoneAuth(String phone) async {
   try {
-    // Resetar flag e credentials
+    if (getPhoneAuthCooldownRemaining() > 0) {
+      debugPrint('⚠️ Cooldown ativo. Aguarde ${getPhoneAuthCooldownRemaining()}s para reenviar.');
+      phoneAuthCheck = false;
+      valueNotifierLogin.incrementNotifier();
+      return false;
+    }
+
     _isProcessingVerification = false;
     credentials = null;
+    lastPhoneAuthRequestTime = DateTime.now();
 
     debugPrint('═══════════════════════════════════════════════════════════');
     debugPrint('📱 INICIANDO VERIFICAÇÃO DE TELEFONE VIA FIREBASE');
@@ -406,25 +438,9 @@ phoneAuth(String phone) async {
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: phone,
       verificationCompleted: (PhoneAuthCredential credential) async {
-        // Evitar processamento duplicado
-        if (_isProcessingVerification) {
-          debugPrint(
-              '⚠️ Verificação já está sendo processada, ignorando chamada duplicada');
-          return;
-        }
-        _isProcessingVerification = true;
-        debugPrint('✅ Verificação automática concluída - fazendo login...');
-        try {
-          // Fazer login automaticamente quando o código for detectado
-          await FirebaseAuth.instance.signInWithCredential(credential);
-          credentials = credential;
-          debugPrint('✅ Login automático concluído com sucesso');
-          // Não chamar valueNotifierHome aqui para evitar loops
-          // O login será processado na página de OTP quando necessário
-        } catch (e) {
-          debugPrint('❌ Erro ao fazer login automático: $e');
-          _isProcessingVerification = false;
-        }
+        // Não usar auto-complete: exigir que o usuário digite o código e toque em Continuar (igual app do motorista)
+        debugPrint(
+            '🔥 [FIREBASE] verificationCompleted (ignorado: exigir código manual)');
       },
       forceResendingToken: resendTokenId,
       verificationFailed: (FirebaseAuthException e) {
@@ -455,6 +471,18 @@ phoneAuth(String phone) async {
               '⚠️ Phone Authentication não está habilitado no Firebase Console.');
           debugPrint(
               '💡 Ação necessária: Habilite Phone Authentication em Authentication > Sign-in method no Firebase Console');
+        } else if (e.code == 'missing-client-identifier' ||
+            (e.message != null && e.message!.toLowerCase().contains('app identifier'))) {
+          debugPrint(
+              '⚠️ Firebase não reconhece o app (Play Integrity). Para enviar SMS de verdade:');
+          debugPrint(
+              '💡 1) No Firebase Console: Configurações do projeto > Seus apps > Android (br.app.omny.user)');
+          debugPrint(
+              '💡 2) Adicione as impressões digitais SHA-1 e SHA-256 do keystore (debug ou release)');
+          debugPrint(
+              '💡 3) Obter SHA: keytool -list -v -keystore C:\\Users\\SEU_USUARIO\\.android\\debug.keystore -alias androiddebugkey -storepass android');
+          debugPrint(
+              '💡 4) Se o número estava em "Números de teste" (Phone testing), remova para receber SMS real');
         }
         phoneAuthCheck = false;
         valueNotifierLogin.incrementNotifier();
@@ -466,7 +494,6 @@ phoneAuth(String phone) async {
         resendTokenId = resendToken;
         phoneAuthCheck = true;
         _isProcessingVerification = false;
-        // Notificar apenas o listener de login, não o home
         valueNotifierLogin.incrementNotifier();
       },
       codeAutoRetrievalTimeout: (String verificationId) {
@@ -476,6 +503,7 @@ phoneAuth(String phone) async {
       },
       timeout: const Duration(seconds: 60),
     );
+    return true;
   } catch (e) {
     _isProcessingVerification = false;
     debugPrint('❌ Erro ao verificar telefone: $e');
@@ -484,6 +512,7 @@ phoneAuth(String phone) async {
     }
     phoneAuthCheck = false;
     valueNotifierLogin.incrementNotifier();
+    return false;
   }
 }
 
@@ -773,6 +802,9 @@ registerUser() async {
     if (passengerPreference.isNotEmpty) {
       fields['passenger_preference'] = passengerPreference;
     }
+    if (loginReferralCode.trim().isNotEmpty) {
+      fields['referral_code'] = loginReferralCode.trim();
+    }
 
     response.fields.addAll(fields);
 
@@ -796,7 +828,8 @@ registerUser() async {
       if (jsonVal['success'] == false && jsonVal['message'] != null) {
         serverErrorMessage = jsonVal['message'].toString();
         result = serverErrorMessage;
-        debugPrint('❌ registerUser: Servidor retornou sucesso=false: $serverErrorMessage');
+        debugPrint(
+            '❌ registerUser: Servidor retornou sucesso=false: $serverErrorMessage');
         return result;
       }
 
@@ -1103,6 +1136,8 @@ getUserDetails() async {
   dynamic result;
   debugPrint('═══════════════════════════════════════════════════════════');
   debugPrint('👤 getUserDetails: Buscando detalhes do usuário...');
+  debugPrint(
+      '   [GETUSER] userRequestDriverJustRejected ao ENTRAR = $userRequestDriverJustRejected');
   debugPrint('───────────────────────────────────────────────────────────');
 
   try {
@@ -1163,10 +1198,57 @@ getUserDetails() async {
             banners = userDetails['bannerImage']?['data'] ?? [];
           }
 
+          // Log do que o SERVIDOR retornou (debug: onTripRequest vs metaRequest)
+          debugPrint(
+              '📋 [GETUSER] Servidor: onTripRequest=${userDetails['onTripRequest'] != null}, metaRequest=${userDetails['metaRequest'] != null}');
+          if (userDetails['onTripRequest'] != null) {
+            final reqData =
+                userDetails['onTripRequest']['data'] as Map<String, dynamic>?;
+            debugPrint(
+                '📋 [GETUSER] onTripRequest.data: accepted_at=${reqData?['accepted_at']}, driverDetail!=null=${reqData?['driverDetail'] != null}');
+            if (reqData?['driverDetail'] != null) {
+              final dd = reqData!['driverDetail'];
+              final data = (dd is Map) ? (dd['data'] ?? dd) : null;
+              debugPrint(
+                  '📋 [GETUSER] driverDetail.data.id=${(data is Map) ? data['id'] : 'N/A'}');
+            }
+          }
+          if (userDetails['metaRequest'] != null) {
+            debugPrint('📋 [GETUSER] metaRequest presente (corrida pendente)');
+          }
+
           if (userDetails['onTripRequest'] != null) {
             debugPrint('🚗 getUserDetails: Requisição em andamento encontrada');
             addressList.clear();
             userRequestData = userDetails['onTripRequest']['data'];
+            final driverJustRejected = userRequestDriverJustRejected;
+            debugPrint(
+                '📋 [GETUSER] userRequestDriverJustRejected(flag)=$driverJustRejected');
+            if (driverJustRejected) {
+              userRequestDriverJustRejected = false;
+              userRequestData['accepted_at'] = null;
+              userRequestData['driverDetail'] = null;
+              debugPrint(
+                  '🟢 [GETUSER] Decisão: MOTORISTA RECUSOU → tela PROCURANDO');
+            } else {
+              final dd = userRequestData['driverDetail'];
+              final driverData =
+                  (dd != null && dd is Map) ? (dd['data'] ?? dd) : null;
+              final hasValidDriver = driverData is Map &&
+                  driverData.isNotEmpty &&
+                  driverData['id'] != null;
+              debugPrint(
+                  '📋 [GETUSER] hasValidDriver=$hasValidDriver, driverData.id=${(driverData is Map) ? driverData['id'] : 'N/A'}');
+              if (!hasValidDriver) {
+                userRequestData['accepted_at'] = null;
+                userRequestData['driverDetail'] = null;
+                debugPrint(
+                    '🟢 [GETUSER] Decisão: sem motorista válido → tela PROCURANDO');
+              } else {
+                debugPrint(
+                    '🟢 [GETUSER] Decisão: motorista válido → tela CÓDIGO/ACEITOU');
+              }
+            }
             debugPrint('   Request ID: ${userRequestData['id']}');
             debugPrint(
                 '   Driver: ${userRequestData['driverDetail']?['data']?['name'] ?? 'N/A'}');
@@ -1267,8 +1349,13 @@ getUserDetails() async {
             valueNotifierHome.incrementNotifier();
             valueNotifierBook.incrementNotifier();
           } else if (userDetails['metaRequest'] != null) {
+            debugPrint(
+                '🟢 [GETUSER] Entrando em metaRequest → tela PROCURANDO');
             addressList.clear();
             userRequestData = userDetails['metaRequest']['data'];
+            userRequestData['accepted_at'] = null;
+            userRequestData['driverDetail'] = null;
+            requestCancelledByDriver = false;
             tripStops =
                 userDetails['metaRequest']['data']['requestStops']['data'];
             addressList.add(
@@ -1345,6 +1432,8 @@ getUserDetails() async {
             valueNotifierHome.incrementNotifier();
             valueNotifierBook.incrementNotifier();
           } else {
+            debugPrint(
+                '🟢 [GETUSER] Sem onTripRequest e sem metaRequest → userRequestData limpo');
             chatList.clear();
             userRequestData = {};
             requestStreamStart?.cancel();
@@ -1477,6 +1566,7 @@ class ValueNotifyingLogin {
   }
 }
 
+bool deleteAccount = false;
 ValueNotifyingHome valueNotifierHome = ValueNotifyingHome();
 ValueNotifyingChat valueNotifierChat = ValueNotifyingChat();
 ValueNotifyingKey valueNotifierKey = ValueNotifyingKey();
@@ -1601,11 +1691,11 @@ getAutoAddress(input, sessionToken, lat, lng) async {
     if (userDetails['enable_country_restrict_on_map'] == '1' &&
         userDetails['country_code'] != null) {
       url =
-          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&library=places&location=$lat%2C$lng&radius=2000&components=country:$countryCode&key=$mapkey&sessiontoken=$sessionToken';
+          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&library=places&location=$lat%2C$lng&radius=2000&components=country:$countryCode&key=$mapkey&sessiontoken=$sessionToken&language=pt-BR';
       debugPrint('URL com restrição de país: $url');
     } else {
       url =
-          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&library=places&key=$mapkey&sessiontoken=$sessionToken';
+          'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&library=places&key=$mapkey&sessiontoken=$sessionToken&language=pt-BR';
       debugPrint('URL sem restrição: $url');
     }
 
@@ -1715,7 +1805,7 @@ geoCodingForLatLng(placeid) async {
   try {
     var response = await http.get(
       Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeid&key=$mapkey',
+        'https://maps.googleapis.com/maps/api/place/details/json?placeid=$placeid&key=$mapkey&language=pt-BR',
       ),
     );
 
@@ -2261,6 +2351,15 @@ calculateDistance(lat1, lon1, lat2, lon2) {
 
 Map<String, dynamic> userRequestData = {};
 
+/// Garante que a requisição recém-criada seja exibida como "procurando motorista"
+/// até o motorista aceitar (evita API retornar accepted_at/driverDetail e ir direto para tela de código).
+void _ensureRequestStateSearching() {
+  if (userRequestData.isNotEmpty) {
+    userRequestData['accepted_at'] = null;
+    userRequestData['driverDetail'] = null;
+  }
+}
+
 //create request
 
 createRequest(value, api) async {
@@ -2315,6 +2414,7 @@ createRequest(value, api) async {
         var responseData = jsonDecode(response.body);
         if (responseData['data'] != null) {
           userRequestData = responseData['data'];
+          _ensureRequestStateSearching();
           debugPrint('✅ createRequest: Requisição criada com sucesso');
           debugPrint('   Request ID: ${userRequestData['id']}');
           debugPrint(
@@ -2627,6 +2727,7 @@ createRentalRequest() async {
     );
     if (response.statusCode == 200) {
       userRequestData = jsonDecode(response.body)['data'];
+      _ensureRequestStateSearching();
       streamRequest();
       result = 'success';
 
@@ -2691,6 +2792,7 @@ createRentalRequestWithPromo() async {
     );
     if (response.statusCode == 200) {
       userRequestData = jsonDecode(response.body)['data'];
+      _ensureRequestStateSearching();
       streamRequest();
       result = 'success';
       valueNotifierBook.incrementNotifier();
@@ -2901,6 +3003,7 @@ cancelRequest() async {
     );
     if (response.statusCode == 200) {
       userCancelled = true;
+      cancelRequestByUser = true;
       if (userRequestData['is_bid_ride'] == 1) {
         FirebaseDatabase.instance
             .ref('bid-meta/${userRequestData["id"]}')
@@ -2918,8 +3021,17 @@ cancelRequest() async {
         requestStreamStart = null;
         requestStreamEnd = null;
       }
+      if (rideStreamUpdate?.isPaused == false ||
+          rideStreamStart?.isPaused == false) {
+        rideStreamUpdate?.cancel();
+        rideStreamStart?.cancel();
+        rideStreamUpdate = null;
+        rideStreamStart = null;
+      }
       result = 'success';
       valueNotifierBook.incrementNotifier();
+      valueNotifierHome.incrementNotifier();
+      await getUserDetails();
     } else if (response.statusCode == 401) {
       result = 'logout';
     } else {
@@ -2998,6 +3110,8 @@ cancelRequestWithReason(reason) async {
       }
       result = 'success';
       valueNotifierBook.incrementNotifier();
+      valueNotifierHome.incrementNotifier();
+      await getUserDetails();
     } else if (response.statusCode == 401) {
       result = 'logout';
     } else {
@@ -3015,13 +3129,14 @@ cancelRequestWithReason(reason) async {
 //making call to user
 
 makingPhoneCall(phnumber) async {
-  var mobileCall = 'tel:$phnumber';
-  // ignore: deprecated_member_use
-  if (await canLaunch(mobileCall)) {
-    // ignore: deprecated_member_use
-    await launch(mobileCall);
-  } else {
-    throw 'Could not launch $mobileCall';
+  try {
+    final String raw = phnumber?.toString() ?? '';
+    final String digits = raw.replaceAll(RegExp(r'[^\d+]'), '');
+    if (digits.isEmpty) return;
+    final Uri telUri = Uri.parse('tel:$digits');
+    await launchUrl(telUri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    debugPrint('makingPhoneCall error: $e');
   }
 }
 
@@ -4268,6 +4383,83 @@ updateProfileWithoutImage(name, email) async {
   return result;
 }
 
+//get bank info
+Map<String, dynamic> bankData = {};
+
+getBankInfo() async {
+  bankData.clear();
+  dynamic result;
+  try {
+    var response = await http.get(
+      Uri.parse('${url}api/v1/user/get-bank-info'),
+      headers: {
+        'Authorization': 'Bearer ${bearerToken[0].token}',
+        'Content-Type': 'application/json',
+      },
+    );
+    if (response.statusCode == 200) {
+      result = 'success';
+      bankData = jsonDecode(response.body)['data'] ?? {};
+    } else if (response.statusCode == 401) {
+      result = 'logout';
+    } else {
+      debugPrint(response.body);
+      result = 'failure';
+    }
+  } catch (e) {
+    if (e is SocketException) {
+      result = 'no internet';
+      internet = false;
+    }
+  }
+  return result;
+}
+
+addBankData(accName, accNo, bankCode, bankName, {String? type}) async {
+  dynamic result;
+  try {
+    var body = <String, dynamic>{
+      'account_name': accName,
+      'account_no': accNo,
+      'bank_code': bankCode,
+      'bank_name': bankName,
+    };
+    if (type != null && type.isNotEmpty) body['type'] = type;
+    var response = await http.post(
+      Uri.parse('${url}api/v1/user/update-bank-info'),
+      headers: {
+        'Authorization': 'Bearer ${bearerToken[0].token}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      await getBankInfo();
+      result = 'success';
+    } else if (response.statusCode == 401) {
+      result = 'logout';
+    } else if (response.statusCode == 422) {
+      debugPrint(response.body);
+      var error = jsonDecode(response.body)['errors'];
+      result = error[error.keys.toList()[0]]
+          .toString()
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .toString();
+    } else {
+      debugPrint(response.body);
+      result = jsonDecode(response.body)['message'];
+    }
+  } catch (e) {
+    if (e is SocketException) {
+      result = 'no internet';
+      internet = false;
+    }
+  }
+  return result;
+}
+
 //internet true
 internetTrue() {
   internet = true;
@@ -4277,26 +4469,65 @@ internetTrue() {
 //make complaint
 
 List generalComplaintList = [];
+
+/// Busca os títulos de reclamação do banco (API).
+/// [type] para usuário (passageiro): "user" = reclamação geral do menu, "request" = reclamação de uma viagem.
+/// O backend retorna tipos diferentes para user vs driver.
 getGeneralComplaint(type) async {
   dynamic result;
+  final uri = '${url}api/v1/common/complaint-titles';
+  debugPrint('📋 [RECLAMAÇÃO] getGeneralComplaint (user): GET $uri');
   try {
     var response = await http.get(
-      Uri.parse('${url}api/v1/common/complaint-titles?complaint_type=$type'),
+      Uri.parse(uri),
       headers: {'Authorization': 'Bearer ${bearerToken[0].token}'},
     );
+    debugPrint(
+        '📋 [RECLAMAÇÃO] getGeneralComplaint (user): status=${response.statusCode} body length=${response.body.length}');
     if (response.statusCode == 200) {
-      generalComplaintList = jsonDecode(response.body)['data'];
+      final decoded = jsonDecode(response.body);
+      final data = decoded['data'];
+      debugPrint(
+          '📋 [RECLAMAÇÃO] getGeneralComplaint (user): response.data type=${data.runtimeType}');
+      if (data == null) {
+        debugPrint(
+            '📋 [RECLAMAÇÃO] getGeneralComplaint (user): data é null - body=${response.body}');
+        generalComplaintList = [];
+      } else if (data is! List) {
+        debugPrint(
+            '📋 [RECLAMAÇÃO] getGeneralComplaint (user): data não é lista - body=${response.body}');
+        generalComplaintList = [];
+      } else {
+        generalComplaintList = data;
+        debugPrint(
+            '📋 [RECLAMAÇÃO] getGeneralComplaint (user): ${generalComplaintList.length} títulos');
+        for (var i = 0; i < generalComplaintList.length && i < 5; i++) {
+          final item = generalComplaintList[i];
+          debugPrint(
+              '📋 [RECLAMAÇÃO]   [$i] id=${item['id']} title=${item['title']}');
+        }
+        if (generalComplaintList.length > 5) {
+          debugPrint(
+              '📋 [RECLAMAÇÃO]   ... e mais ${generalComplaintList.length - 5}');
+        }
+      }
       result = 'success';
     } else if (response.statusCode == 401) {
       result = 'logout';
+      debugPrint('📋 [RECLAMAÇÃO] getGeneralComplaint: 401 logout');
     } else {
-      debugPrint(response.body);
+      debugPrint(
+          '📋 [RECLAMAÇÃO] getGeneralComplaint: failed body=${response.body}');
       result = 'failed';
     }
-  } catch (e) {
+  } catch (e, stack) {
+    debugPrint('📋 [RECLAMAÇÃO] getGeneralComplaint: exception=$e');
+    debugPrint('📋 [RECLAMAÇÃO] getGeneralComplaint: stack=$stack');
     if (e is SocketException) {
       internet = false;
       result = 'no internet';
+    } else {
+      result = 'failed';
     }
   }
   return result;
@@ -4304,6 +4535,8 @@ getGeneralComplaint(type) async {
 
 makeGeneralComplaint(complaintDesc, [String? complaintTitleId]) async {
   dynamic result;
+  const endpoint = 'api/v1/common/make-complaint';
+  final fullUrl = '$url$endpoint';
   try {
     // Se não tiver complaintTitleId, usar o da lista ou null
     String? titleId = complaintTitleId ??
@@ -4317,35 +4550,52 @@ makeGeneralComplaint(complaintDesc, [String? complaintTitleId]) async {
       titleId = null;
     }
 
-    Map<String, dynamic> body = {
-      'description': complaintDesc,
-    };
-
-    // Só adicionar complaint_title_id se não for null
-    if (titleId != null) {
-      body['complaint_title_id'] = titleId;
+    // Backend exige complaint_title_id obrigatório - não chamar API sem ele
+    if (titleId == null || titleId.isEmpty) {
+      debugPrint(
+          '📋 [RECLAMAÇÃO] makeGeneralComplaint: abortando - complaint_title_id obrigatório');
+      return 'failed';
     }
 
+    Map<String, dynamic> body = {
+      'description': complaintDesc,
+      'complaint_title_id': titleId,
+    };
+
+    debugPrint('📋 [RECLAMAÇÃO] makeGeneralComplaint: POST $fullUrl');
+    debugPrint('📋 [RECLAMAÇÃO] makeGeneralComplaint: body=$body');
+
     var response = await http.post(
-      Uri.parse('${url}api/v1/common/make-complaint'),
+      Uri.parse(fullUrl),
       headers: {
         'Authorization': 'Bearer ${bearerToken[0].token}',
         'Content-Type': 'application/json',
       },
       body: jsonEncode(body),
     );
+
+    debugPrint(
+        '📋 [RECLAMAÇÃO] makeGeneralComplaint: status=${response.statusCode} body=${response.body}');
+
     if (response.statusCode == 200) {
       result = 'success';
+      debugPrint('📋 [RECLAMAÇÃO] makeGeneralComplaint: sucesso');
     } else if (response.statusCode == 401) {
       result = 'logout';
+      debugPrint('📋 [RECLAMAÇÃO] makeGeneralComplaint: 401 logout');
     } else {
-      debugPrint(response.body);
       result = 'failed';
+      debugPrint(
+          '📋 [RECLAMAÇÃO] makeGeneralComplaint: falha backend status=${response.statusCode}');
     }
-  } catch (e) {
+  } catch (e, stack) {
+    debugPrint('📋 [RECLAMAÇÃO] makeGeneralComplaint: exception=$e');
+    debugPrint('📋 [RECLAMAÇÃO] makeGeneralComplaint: stack=$stack');
     if (e is SocketException) {
       internet = false;
       result = 'no internet';
+    } else {
+      result = 'failed';
     }
   }
   return result;
@@ -4388,6 +4638,9 @@ StreamSubscription<DatabaseEvent>? requestStreamStart;
 StreamSubscription<DatabaseEvent>? requestStreamEnd;
 bool userCancelled = false;
 
+/// True quando o evento request-meta (motorista recusou) disparou; força próxima resposta a mostrar "procurando".
+bool userRequestDriverJustRejected = false;
+
 streamRequest() {
   // Na web, não iniciar streams do Firebase Database (pode causar travamento)
   if (kIsWeb) {
@@ -4411,9 +4664,15 @@ streamRequest() {
       .handleError((onError) {
     requestStreamStart?.cancel();
   }).listen((event) async {
-    getUserDetails();
+    debugPrint(
+        '🔴 [MOTORISTA RECUSOU] request-meta onChildRemoved disparado (request_id=${userRequestData['id']})');
+    debugPrint(
+        '🔴 [MOTORISTA RECUSOU] Setando userRequestDriverJustRejected = true antes de getUserDetails()');
+    userRequestDriverJustRejected = true;
+    await getUserDetails();
     requestStreamEnd?.cancel();
     requestStreamStart?.cancel();
+    valueNotifierBook.incrementNotifier();
   });
 }
 
@@ -4649,7 +4908,8 @@ sendOTPtoEmail(String email) async {
         // Exibir mensagem original do backend (ex: email_exists)
         serverErrorMessage = jsonVal['message']?.toString() ?? response.body;
         result = serverErrorMessage.isNotEmpty ? serverErrorMessage : 'failed';
-        debugPrint('❌ sendOTPtoEmail: Servidor retornou sucesso=false: $result');
+        debugPrint(
+            '❌ sendOTPtoEmail: Servidor retornou sucesso=false: $result');
       }
     } else {
       serverErrorMessage = extractErrorMessage(response);

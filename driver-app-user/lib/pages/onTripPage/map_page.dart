@@ -47,7 +47,6 @@ String favNameText = '';
 bool requestCancelledByDriver = false;
 bool cancelRequestByUser = false;
 bool logout = false;
-bool deleteAccount = false;
 bool _deleteAccountModalOpened = false;
 int choosenTransportType =
     (userDetails['enable_modules_for_applications'] == 'both' ||
@@ -86,7 +85,8 @@ class _MapsState extends State<Maps>
   bool favAddressAdd = false;
   bool contactus = false;
   bool _isDarkTheme = false;
-  TextEditingController _deleteConfirmController = TextEditingController();
+  final TextEditingController _deleteConfirmController =
+      TextEditingController();
 
   final _mapMarkerSC = StreamController<List<Marker>>();
   StreamSink<List<Marker>> get _mapMarkerSink => _mapMarkerSC.sink;
@@ -106,9 +106,10 @@ class _MapsState extends State<Maps>
       debugPrint('🔄 Maps initState() iniciado');
       _isDarkTheme = isDarkTheme;
       WidgetsBinding.instance.addObserver(this);
-      
+
       // Verificar se userDetails está disponível antes de acessar
-      if (userDetails.isNotEmpty && userDetails.containsKey('enable_modules_for_applications')) {
+      if (userDetails.isNotEmpty &&
+          userDetails.containsKey('enable_modules_for_applications')) {
         choosenTransportType =
             (userDetails['enable_modules_for_applications'] == 'both' ||
                     userDetails['enable_modules_for_applications'] == 'taxi')
@@ -117,7 +118,8 @@ class _MapsState extends State<Maps>
       } else {
         // Valor padrão se userDetails não estiver disponível
         choosenTransportType = 0;
-        debugPrint('⚠️ userDetails não disponível, usando valor padrão para choosenTransportType');
+        debugPrint(
+            '⚠️ userDetails não disponível, usando valor padrão para choosenTransportType');
       }
 
       getLocs();
@@ -226,14 +228,16 @@ class _MapsState extends State<Maps>
           serviceEnabled == false) {
         gettingPerm++;
         debugPrint('⚠️ Permissão negada ou serviço desabilitado');
-        debugPrint('   permission: $permission, serviceEnabled: $serviceEnabled, gettingPerm: $gettingPerm');
+        debugPrint(
+            '   permission: $permission, serviceEnabled: $serviceEnabled, gettingPerm: $gettingPerm');
 
         // Sempre mostrar tela de permissão se não tiver permissão
         state = '2';
         locationAllowed = false;
         _loading = false;
         setState(() {});
-        debugPrint('✅ Estado atualizado para tela de permissão: state = $state');
+        debugPrint(
+            '✅ Estado atualizado para tela de permissão: state = $state');
       } else {
         debugPrint('✅ Permissão concedida, obtendo localização...');
         // Na web, getLastKnownPosition não é suportado, então usamos getCurrentPosition diretamente
@@ -241,7 +245,8 @@ class _MapsState extends State<Maps>
           debugPrint('🌐 Modo Web: usando getCurrentPosition');
           var loc = await geolocs.Geolocator.getCurrentPosition(
               desiredAccuracy: geolocs.LocationAccuracy.low);
-          debugPrint('📍 Localização obtida (Web): ${loc.latitude}, ${loc.longitude}');
+          debugPrint(
+              '📍 Localização obtida (Web): ${loc.latitude}, ${loc.longitude}');
           setState(() {
             center = LatLng(double.parse(loc.latitude.toString()),
                 double.parse(loc.longitude.toString()));
@@ -256,7 +261,8 @@ class _MapsState extends State<Maps>
           debugPrint('📱 Modo Mobile: tentando getLastKnownPosition primeiro');
           var locs = await geolocs.Geolocator.getLastKnownPosition();
           if (locs != null) {
-            debugPrint('📍 Localização obtida (LastKnown): ${locs.latitude}, ${locs.longitude}');
+            debugPrint(
+                '📍 Localização obtida (LastKnown): ${locs.latitude}, ${locs.longitude}');
             setState(() {
               center = LatLng(double.parse(locs.latitude.toString()),
                   double.parse(locs.longitude.toString()));
@@ -267,10 +273,11 @@ class _MapsState extends State<Maps>
               _lastCenter = _centerLocation;
             });
           } else {
-            debugPrint('⚠️ LastKnownPosition não disponível, usando getCurrentPosition');
+            debugPrint(
+                '⚠️ LastKnownPosition não disponível, usando getCurrentPosition');
             try {
               var loc = await geolocs.Geolocator.getCurrentPosition(
-                  desiredAccuracy: geolocs.LocationAccuracy.low)
+                      desiredAccuracy: geolocs.LocationAccuracy.low)
                   .timeout(
                 const Duration(seconds: 15),
                 onTimeout: () {
@@ -278,7 +285,8 @@ class _MapsState extends State<Maps>
                   throw Exception('Timeout ao obter localização');
                 },
               );
-              debugPrint('📍 Localização obtida (Current): ${loc.latitude}, ${loc.longitude}');
+              debugPrint(
+                  '📍 Localização obtida (Current): ${loc.latitude}, ${loc.longitude}');
               setState(() {
                 center = LatLng(double.parse(loc.latitude.toString()),
                     double.parse(loc.longitude.toString()));
@@ -306,12 +314,14 @@ class _MapsState extends State<Maps>
         // Aguardar o controller estar pronto antes de animar
         if (_controller != null) {
           try {
-            await _controller!.animateCamera(CameraUpdate.newLatLngZoom(center, 14.0));
+            await _controller!
+                .animateCamera(CameraUpdate.newLatLngZoom(center, 14.0));
           } catch (e) {
             debugPrint('Erro ao animar câmera: $e');
             // Tentar mover a câmera sem animação se a animação falhar
             try {
-              await _controller!.moveCamera(CameraUpdate.newLatLngZoom(center, 14.0));
+              await _controller!
+                  .moveCamera(CameraUpdate.newLatLngZoom(center, 14.0));
             } catch (e2) {
               debugPrint('Erro ao mover câmera: $e2');
             }
@@ -319,9 +329,10 @@ class _MapsState extends State<Maps>
         } else {
           debugPrint('⚠️ Controller do mapa ainda não está inicializado');
           // Aguardar um pouco e tentar novamente
-          Future.delayed(Duration(milliseconds: 500), () {
+          Future.delayed(const Duration(milliseconds: 500), () {
             if (_controller != null && mounted) {
-              _controller!.animateCamera(CameraUpdate.newLatLngZoom(center, 14.0));
+              _controller!
+                  .animateCamera(CameraUpdate.newLatLngZoom(center, 14.0));
             }
           });
         }
@@ -346,8 +357,8 @@ class _MapsState extends State<Maps>
                   type: 'pickup',
                   address: val,
                   pickup: true,
-                  latlng:
-                      LatLng(_centerLocation.latitude, _centerLocation.longitude),
+                  latlng: LatLng(
+                      _centerLocation.latitude, _centerLocation.longitude),
                   name: userDetails['name'] ?? '',
                   number: userDetails['mobile'] ?? ''));
             }
@@ -364,8 +375,8 @@ class _MapsState extends State<Maps>
                   type: 'pickup',
                   address: 'Localização atual',
                   pickup: true,
-                  latlng:
-                      LatLng(_centerLocation.latitude, _centerLocation.longitude),
+                  latlng: LatLng(
+                      _centerLocation.latitude, _centerLocation.longitude),
                   name: userDetails['name'] ?? '',
                   number: userDetails['mobile'] ?? ''));
             }
@@ -373,16 +384,18 @@ class _MapsState extends State<Maps>
         }
 
         debugPrint('✅ Localização obtida com sucesso');
-        debugPrint('   Latitude: ${_centerLocation.latitude}, Longitude: ${_centerLocation.longitude}');
-        
+        debugPrint(
+            '   Latitude: ${_centerLocation.latitude}, Longitude: ${_centerLocation.longitude}');
+
         setState(() {
           locationAllowed = true;
           state = '3';
           _loading = false;
         });
-        
-        debugPrint('✅ Estado atualizado: state = $state, _loading = $_loading, locationAllowed = $locationAllowed');
-        
+
+        debugPrint(
+            '✅ Estado atualizado: state = $state, _loading = $_loading, locationAllowed = $locationAllowed');
+
         if (locationAllowed == true) {
           try {
             if (positionStream == null || positionStream!.isPaused) {
@@ -411,18 +424,19 @@ class _MapsState extends State<Maps>
       // Verificar permissão atual antes de solicitar
       permission = await geolocs.GeolocatorPlatform.instance.checkPermission();
       serviceEnabled = await location.serviceEnabled();
-      
+
       if (permission == geolocs.LocationPermission.denied ||
           permission == geolocs.LocationPermission.deniedForever) {
         if (permission != geolocs.LocationPermission.deniedForever) {
           var status = await perm.Permission.location.request();
           // Aguardar um pouco para o sistema processar a permissão
-          await Future.delayed(Duration(milliseconds: 500));
+          await Future.delayed(const Duration(milliseconds: 500));
           // Verificar novamente após solicitar
-          permission = await geolocs.GeolocatorPlatform.instance.checkPermission();
+          permission =
+              await geolocs.GeolocatorPlatform.instance.checkPermission();
         }
       }
-      
+
       if (serviceEnabled == false) {
         try {
           await geolocs.Geolocator.getCurrentPosition(
@@ -432,11 +446,11 @@ class _MapsState extends State<Maps>
           debugPrint('Erro ao obter localização: $e');
         }
       }
-      
+
       setState(() {
         _loading = true;
       });
-      
+
       // Chamar getLocs após garantir que as permissões estão corretas
       await getLocs();
     } catch (e) {
@@ -1280,21 +1294,19 @@ class _MapsState extends State<Maps>
                                                                 .padding
                                                                 .top +
                                                             25,
-                                                        child: SizedBox(
-                                                          width:
-                                                              media.width * 0.9,
+                                                        left: 0,
+                                                        right: 0,
+                                                        child: Padding(
+                                                          padding: EdgeInsets.symmetric(horizontal: media.width * 0.05),
                                                           child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .start,
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                             children: [
                                                               Container(
                                                                 height: 35,
                                                                 width: 35,
                                                                 decoration: BoxDecoration(
                                                                     boxShadow: [
-                                                                      (_bottom ==
-                                                                              0)
+                                                                      (_bottom == 0)
                                                                           ? BoxShadow(
                                                                               blurRadius: (_bottom == 0) ? 2 : 0,
                                                                               color: (_bottom == 0) ? Colors.black.withOpacity(0.2) : Colors.transparent,
@@ -1302,43 +1314,79 @@ class _MapsState extends State<Maps>
                                                                           : const BoxShadow(),
                                                                     ],
                                                                     color: page,
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            4)),
-                                                                alignment:
-                                                                    Alignment
-                                                                        .center,
+                                                                    borderRadius: BorderRadius.circular(4)),
+                                                                alignment: Alignment.center,
                                                                 child: InkWell(
                                                                     onTap: () {
-                                                                      _scaffoldKey
-                                                                          .currentState
-                                                                          ?.openDrawer();
+                                                                      _scaffoldKey.currentState?.openDrawer();
                                                                     },
-                                                                    child: Icon(
-                                                                        Icons
-                                                                            .menu,
-                                                                        color:
-                                                                            textColor)),
-                                                              ),
-                                                              SizedBox(
-                                                                width: media
-                                                                        .width *
-                                                                    0.02,
+                                                                    child: Icon(Icons.menu, color: textColor)),
                                                               ),
                                                               (banners.isNotEmpty)
                                                                   ? SizedBox(
-                                                                      width: media
-                                                                              .width *
-                                                                          0.77,
-                                                                      height: media
-                                                                              .width *
-                                                                          0.15,
-                                                                      child:
-                                                                          const BannerImage())
-                                                                  : Container(),
+                                                                      width: media.width * 0.5,
+                                                                      height: media.width * 0.15,
+                                                                      child: const BannerImage())
+                                                                  : const SizedBox.shrink(),
+                                                              ValueListenableBuilder(
+                                                                valueListenable: valueNotifierNotification.value,
+                                                                builder: (context, value, child) {
+                                                                  return Container(
+                                                                    height: 35,
+                                                                    width: 35,
+                                                                    decoration: BoxDecoration(
+                                                                      boxShadow: [
+                                                                        BoxShadow(
+                                                                          blurRadius: 2,
+                                                                          color: Colors.black.withOpacity(0.2),
+                                                                          spreadRadius: 2,
+                                                                        ),
+                                                                      ],
+                                                                      color: page,
+                                                                      borderRadius: BorderRadius.circular(4),
+                                                                    ),
+                                                                    alignment: Alignment.center,
+                                                                    child: Stack(
+                                                                      clipBehavior: Clip.none,
+                                                                      children: [
+                                                                        InkWell(
+                                                                          onTap: () {
+                                                                            userDetails['notifications_count'] = 0;
+                                                                            Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(
+                                                                                builder: (context) => const NotificationPage(),
+                                                                              ),
+                                                                            );
+                                                                          },
+                                                                          child: Icon(Icons.notifications_outlined, color: textColor, size: 22),
+                                                                        ),
+                                                                        if ((userDetails['notifications_count'] ?? 0) > 0)
+                                                                          Positioned(
+                                                                            right: -2,
+                                                                            top: -2,
+                                                                            child: Container(
+                                                                              padding: const EdgeInsets.all(4),
+                                                                              decoration: const BoxDecoration(
+                                                                                shape: BoxShape.circle,
+                                                                                color: Colors.red,
+                                                                              ),
+                                                                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                                                              child: Text(
+                                                                                (userDetails['notifications_count'] ?? 0).toString(),
+                                                                                style: const TextStyle(fontSize: 10, color: Colors.white),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                      ],
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
                                                             ],
                                                           ),
-                                                        ))
+                                                        ),
+                                                    )
                                                     : Container(),
                                                 (_bottom == 0)
                                                     ? Positioned(
@@ -1548,7 +1596,7 @@ class _MapsState extends State<Maps>
                                                             (_bottom == 1)
                                                                 ? Column(
                                                                     children: [
-                                                                      SizedBox(
+                                                                      const SizedBox(
                                                                         height:
                                                                             50,
                                                                       ),
@@ -1576,7 +1624,7 @@ class _MapsState extends State<Maps>
                                                                                     BoxShadow(
                                                                                       color: Colors.black.withOpacity(0.1),
                                                                                       blurRadius: 4,
-                                                                                      offset: Offset(0, 2),
+                                                                                      offset: const Offset(0, 2),
                                                                                     ),
                                                                                   ],
                                                                                 ),
@@ -1610,10 +1658,10 @@ class _MapsState extends State<Maps>
                                                                 : Container(),
                                                             (_bottom == 1)
                                                                 ? Container(
-                                                                    margin: EdgeInsets
+                                                                    margin: const EdgeInsets
                                                                         .only(
-                                                                            top:
-                                                                                50),
+                                                                        top:
+                                                                            50),
                                                                     constraints:
                                                                         BoxConstraints(
                                                                       maxHeight: MediaQuery.of(context).viewInsets.bottom >
@@ -1665,7 +1713,7 @@ class _MapsState extends State<Maps>
                                                                           ),
                                                                           Container(
                                                                             margin:
-                                                                                EdgeInsets.only(bottom: 0, top: 0),
+                                                                                const EdgeInsets.only(bottom: 0, top: 0),
                                                                             width:
                                                                                 double.infinity,
                                                                             decoration:
@@ -1718,7 +1766,7 @@ class _MapsState extends State<Maps>
                                                                                             maxLines: 1,
                                                                                             onChanged: (val) {
                                                                                               _debouncer.run(() {
-                                                                                                if (val.length >= 4) {
+                                                                                                if (val.length >= 3) {
                                                                                                   if (storedAutoAddress.where((element) => element['description'].toString().toLowerCase().contains(val.toLowerCase())).isNotEmpty) {
                                                                                                     addAutoFill.removeWhere((element) => element['description'].toString().toLowerCase().contains(val.toLowerCase()) == false);
                                                                                                     storedAutoAddress.where((element) => element['description'].toString().toLowerCase().contains(val.toLowerCase())).forEach((element) {
@@ -1834,7 +1882,7 @@ class _MapsState extends State<Maps>
                                                                                             maxLines: 1,
                                                                                             onChanged: (val) {
                                                                                               _debouncer.run(() {
-                                                                                                if (val.length >= 4) {
+                                                                                                if (val.length >= 3) {
                                                                                                   getAutoAddress(val, _sessionToken, center.latitude, center.longitude);
                                                                                                 } else {
                                                                                                   setState(() {
@@ -2397,7 +2445,7 @@ class _MapsState extends State<Maps>
                                                                                             maxLines: 1,
                                                                                             onChanged: (val) {
                                                                                               _debouncer.run(() {
-                                                                                                if (val.length >= 4) {
+                                                                                                if (val.length >= 3) {
                                                                                                   if (storedAutoAddress.where((element) => element['description'].toString().toLowerCase().contains(val.toLowerCase())).isNotEmpty) {
                                                                                                     addAutoFill.removeWhere((element) => element['description'].toString().toLowerCase().contains(val.toLowerCase()) == false);
                                                                                                     storedAutoAddress.where((element) => element['description'].toString().toLowerCase().contains(val.toLowerCase())).forEach((element) {
@@ -2833,7 +2881,7 @@ class _MapsState extends State<Maps>
                                             ),
                                             Button(
                                                 onTap: () async {
-                                                  if (favAddress.length >= 4) {
+                                                  if (favAddress.length >= 3) {
                                                     ScaffoldMessenger.of(
                                                             context)
                                                         .showSnackBar(
@@ -2843,8 +2891,9 @@ class _MapsState extends State<Maps>
                                                                 [
                                                                 'text_max_fav_reached'] ??
                                                             'Limite de favoritos atingido (máximo 4)'),
-                                                        duration: Duration(
-                                                            seconds: 2),
+                                                        duration:
+                                                            const Duration(
+                                                                seconds: 2),
                                                       ),
                                                     );
                                                     return;

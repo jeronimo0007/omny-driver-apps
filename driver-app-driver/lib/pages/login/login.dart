@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import '../../config/api_config.dart';
 import '../../styles/styles.dart';
 import '../../functions/functions.dart';
 import '../../translation/translation.dart';
@@ -9,8 +10,12 @@ import 'dart:math' as math;
 import '../loadingPage/loading.dart';
 import '../noInternet/nointernet.dart';
 import 'agreement.dart';
+import 'forgot_password.dart';
 import 'namepage.dart';
 import 'otp_page.dart';
+import 'requiredinformation.dart';
+import '../onTripPage/map_page.dart';
+import '../onTripPage/rides.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -36,14 +41,16 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
   String _error = '';
   // bool _resend = false;
   MaskTextInputFormatter? _phoneMaskFormatter;
-  FocusNode _phoneFocusNode = FocusNode();
-  FocusNode _emailFocusNode = FocusNode();
-  FocusNode _referralFocusNode = FocusNode();
+  final FocusNode _phoneFocusNode = FocusNode();
+  final FocusNode _emailFocusNode = FocusNode();
   bool _isPhoneFocused = false;
   bool _isEmailFocused = false;
-  bool _isReferralFocused = false;
-  TextEditingController _referralController = TextEditingController();
-  
+  // Novo fluxo login e-mail/senha (loginEmailPswd == 1)
+  final TextEditingController _emailAuthController = TextEditingController();
+  final TextEditingController _passwordAuthController = TextEditingController();
+  String _errorAuth = '';
+  bool _loadingAuth = false;
+
   // Callback para atualizar o estado quando o texto mudar
   void _onTextChanged() {
     if (mounted) {
@@ -98,18 +105,12 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
       });
     });
 
-    _referralFocusNode.addListener(() {
-      setState(() {
-        _isReferralFocused = _referralFocusNode.hasFocus;
-      });
-    });
-    
     // Adicionar listener ao controller para atualizar o botão quando o texto mudar
     controller.addListener(_onTextChanged);
 
     countryCode();
     super.initState();
-    
+
     // Focar no campo apropriado após a tela carregar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && currentPage == 0) {
@@ -124,13 +125,175 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _emailAuthController.dispose();
+    _passwordAuthController.dispose();
     controller.removeListener(_onTextChanged);
     _phoneFocusNode.dispose();
     _emailFocusNode.dispose();
-    _referralFocusNode.dispose();
-    _referralController.dispose();
     controller.dispose();
     super.dispose();
+  }
+
+  /// Tela de login e-mail/senha (quando loginEmailPswd == 1)
+  Widget _buildEmailPasswordLogin(Size media) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: media.height * 0.02),
+          MyText(
+            text: languages[choosenLanguage]['text_login'] ?? 'Entrar',
+            size: media.width * 0.06,
+            fontweight: FontWeight.bold,
+          ),
+          SizedBox(height: media.height * 0.02),
+          MyText(
+            text: languages[choosenLanguage]['text_enter_email'] ?? 'E-mail',
+            size: media.width * 0.035,
+            color: textColor.withOpacity(0.8),
+          ),
+          SizedBox(height: media.height * 0.01),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: textColor.withOpacity(0.3)),
+            ),
+            child: TextField(
+              controller: _emailAuthController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: languages[choosenLanguage]['text_enter_email'] ?? 'Digite seu e-mail',
+                hintStyle: GoogleFonts.poppins(color: hintColor, fontSize: media.width * 0.035),
+                contentPadding: EdgeInsets.symmetric(horizontal: media.width * 0.04, vertical: media.height * 0.02),
+                border: InputBorder.none,
+              ),
+              style: GoogleFonts.poppins(color: textColor, fontSize: media.width * 0.04),
+            ),
+          ),
+          SizedBox(height: media.height * 0.02),
+          MyText(
+            text: languages[choosenLanguage]['text_password'] ?? 'Senha',
+            size: media.width * 0.035,
+            color: textColor.withOpacity(0.8),
+          ),
+          SizedBox(height: media.height * 0.01),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: textColor.withOpacity(0.3)),
+            ),
+            child: TextField(
+              controller: _passwordAuthController,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: languages[choosenLanguage]['text_password'] ?? 'Digite sua senha',
+                hintStyle: GoogleFonts.poppins(color: hintColor, fontSize: media.width * 0.035),
+                contentPadding: EdgeInsets.symmetric(horizontal: media.width * 0.04, vertical: media.height * 0.02),
+                border: InputBorder.none,
+              ),
+              style: GoogleFonts.poppins(color: textColor, fontSize: media.width * 0.04),
+            ),
+          ),
+          if (_errorAuth.isNotEmpty) ...[
+            SizedBox(height: media.height * 0.015),
+            Text(_errorAuth, style: GoogleFonts.poppins(color: Colors.red, fontSize: media.width * 0.032)),
+          ],
+          SizedBox(height: media.height * 0.03),
+          Button(
+            onTap: _loadingAuth
+                ? null
+                : () async {
+                    final email = _emailAuthController.text.trim();
+                    final password = _passwordAuthController.text;
+                    if (email.isEmpty || password.isEmpty) {
+                      setState(() => _errorAuth = languages[choosenLanguage]['text_fill_form'] ?? 'Preencha e-mail e senha');
+                      return;
+                    }
+                    setState(() {
+                      _errorAuth = '';
+                      _loadingAuth = true;
+                      loginLoading = true;
+                    });
+                    valueNotifierLogin.incrementNotifier();
+                    final result = await driverLoginEmailPassword(email, password);
+                    if (!mounted) return;
+                    setState(() {
+                      _loadingAuth = false;
+                      loginLoading = false;
+                    });
+                    valueNotifierLogin.incrementNotifier();
+                    if (result == 'token') {
+                      var val = await getUserDetails();
+                      if (val == 'logout') return;
+                      if (!mounted) return;
+                      final uploadedDoc = userDetails['uploaded_document'];
+                      final approve = userDetails['approve'];
+                      if (uploadedDoc == false || uploadedDoc == null) {
+                        Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RequiredInformation()),
+                            (route) => false);
+                      } else if (uploadedDoc == true && approve == false) {
+                        Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RequiredInformation()),
+                            (route) => false);
+                      } else {
+                        if (userDetails['role'] != 'owner') {
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => const RidePage()),
+                              (route) => false);
+                        } else {
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => const Maps()),
+                              (route) => false);
+                        }
+                      }
+                    } else if (result == 'otp_required') {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Otp(from: 'email')));
+                    } else {
+                      setState(() => _errorAuth = result?.toString() ?? 'Erro no login');
+                    }
+                  },
+            text: languages[choosenLanguage]['text_login'] ?? 'Entrar',
+          ),
+          SizedBox(height: media.height * 0.02),
+          InkWell(
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (context) => const ForgotPassword())),
+            child: Center(
+              child: Text(
+                languages[choosenLanguage]['text_forgot_password'] ?? 'Esqueci minha senha',
+                style: GoogleFonts.poppins(
+                  color: buttonColor,
+                  fontSize: media.width * 0.035,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: media.height * 0.015),
+          InkWell(
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (context) => const NamePage())),
+            child: Center(
+              child: Text(
+                languages[choosenLanguage]['text_sign_up'] ?? 'Cadastrar',
+                style: GoogleFonts.poppins(
+                  color: buttonColor,
+                  fontSize: media.width * 0.035,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Atualiza o formatter de máscara quando o país muda
@@ -257,7 +420,8 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                           // Header com logo centralizado
                           Container(
                             padding: EdgeInsets.only(
-                              top: MediaQuery.of(context).padding.top + media.width * 0.05,
+                              top: MediaQuery.of(context).padding.top +
+                                  media.width * 0.05,
                               bottom: media.width * 0.05,
                             ),
                             width: media.width * 1,
@@ -268,13 +432,26 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                               height: media.width * 0.14,
                               decoration: const BoxDecoration(
                                 image: DecorationImage(
-                                  image: AssetImage('assets/images/logo_mini.png'),
+                                  image:
+                                      AssetImage('assets/images/logo_mini.png'),
                                   fit: BoxFit.contain,
                                 ),
                               ),
                             ),
                           ),
                           SizedBox(height: media.width * 0.02),
+                          if (loginEmailPswd == 1) ...[
+                            InkWell(
+                              onTap: () => Navigator.pop(context),
+                              child: Icon(
+                                Icons.arrow_back_ios,
+                                color: textColor,
+                                size: media.height * eighteen,
+                              ),
+                            ),
+                            SizedBox(height: media.height * 0.03),
+                            Expanded(child: _buildEmailPasswordLogin(media)),
+                          ] else ...[
                           InkWell(
                               onTap: () {
                                 if (currentPage == 0) {
@@ -583,48 +760,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                               ? (isLoginemail == false)
                                   ? Column(
                                       children: [
-                                        // Código de indicação (Opcional) - acima do celular
-                                        MyText(
-                                          text: (languages[choosenLanguage]?[
-                                                  'text_referral_optional'] ??
-                                              'Código de indicação (Opcional)'),
-                                          size: media.width * fourteen,
-                                          color: hintColor,
-                                        ),
-                                        SizedBox(height: media.height * 0.01),
-                                        Container(
-                                          height: 48,
-                                          width: media.width * 0.9,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(
-                                              color: _isReferralFocused
-                                                  ? const Color(0xFF9A03E9)
-                                                  : textColor.withOpacity(0.5),
-                                              width: _isReferralFocused ? 2.0 : 1.0,
-                                            ),
-                                          ),
-                                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                                          alignment: Alignment.centerLeft,
-                                          child: TextFormField(
-                                            controller: _referralController,
-                                            focusNode: _referralFocusNode,
-                                            decoration: InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: languages[choosenLanguage]?['text_enter_referral'] ?? 'Digite o código de indicação',
-                                              hintStyle: GoogleFonts.poppins(
-                                                fontSize: media.width * fourteen,
-                                                color: hintColor,
-                                              ),
-                                            ),
-                                            style: GoogleFonts.poppins(
-                                              fontSize: media.width * fourteen,
-                                              color: textColor,
-                                            ),
-                                            onChanged: (_) => setState(() {}),
-                                          ),
-                                        ),
-                                        SizedBox(height: media.height * 0.02),
                                         MyText(
                                           text: (languages[choosenLanguage] ??
                                                       languages['en'])?[
@@ -670,15 +805,22 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                     Image.network(
                                                       (countries.isNotEmpty &&
                                                               phcode != null &&
-                                                              countries[phcode] != null &&
-                                                              countries[phcode]['flag'] != null
-                                                          ? countries[phcode]['flag']
+                                                              countries[
+                                                                      phcode] !=
+                                                                  null &&
+                                                              countries[phcode][
+                                                                      'flag'] !=
+                                                                  null
+                                                          ? countries[phcode]
+                                                              ['flag']
                                                           : 'https://flagcdn.com/w40/br.png'),
                                                       width: 24,
                                                       height: 24,
                                                       fit: BoxFit.contain,
                                                     ),
-                                                    SizedBox(width: media.width * 0.02),
+                                                    SizedBox(
+                                                        width:
+                                                            media.width * 0.02),
                                                   ],
                                                 ),
                                               ),
@@ -920,7 +1062,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                                 8
                                                             : 8)) {
                                                       _error = '';
-                                                      loginReferralCode = _referralController.text.trim();
                                                       FocusManager
                                                           .instance.primaryFocus
                                                           ?.unfocus();
@@ -929,12 +1070,11 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                       });
                                                       // Sempre usar Firebase OTP para celular: envia SMS e exige código
                                                       phoneAuthCheck = true;
-                                                      await phoneAuth(
-                                                          (countries[phcode]
-                                                                      ?[
-                                                                      'dial_code'] ??
-                                                                  '') +
-                                                              phnumber);
+                                                      await phoneAuth((countries[
+                                                                      phcode]?[
+                                                                  'dial_code'] ??
+                                                              '') +
+                                                          phnumber);
                                                       value = 0;
                                                       currentPage = 1;
                                                       loginLoading = false;
@@ -1234,6 +1374,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                           ? const Expanded(
                                               child: AggreementPage())
                                           : Container(),
+                        ],
                         ],
                       ),
                     ),

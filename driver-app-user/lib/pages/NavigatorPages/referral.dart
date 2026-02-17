@@ -56,6 +56,83 @@ class _ReferralPageState extends State<ReferralPage> {
     });
   }
 
+  Widget _buildReferralsTable(Size media) {
+    final referrals = myReferralCode['referrals'];
+    final list = referrals is List ? referrals : <dynamic>[];
+    return Container(
+      width: media.width * 0.9,
+      decoration: BoxDecoration(
+        border: Border.all(color: (isDarkTheme == true) ? theme.withOpacity(0.3) : borderLines, width: 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Table(
+        columnWidths: const {0: FlexColumnWidth(2), 1: FlexColumnWidth(1)},
+        border: TableBorder.symmetric(
+          inside: BorderSide(color: (isDarkTheme == true) ? theme.withOpacity(0.2) : borderLines),
+        ),
+        children: [
+          TableRow(
+            decoration: BoxDecoration(color: (isDarkTheme == true) ? theme.withOpacity(0.15) : topBar),
+            children: [
+              Padding(
+                padding: EdgeInsets.all(media.width * 0.03),
+                child: MyText(
+                  text: languages[choosenLanguage]['text_referral_table_name'] ?? 'Nome',
+                  size: media.width * twelve,
+                  fontweight: FontWeight.w700,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(media.width * 0.03),
+                child: MyText(
+                  text: languages[choosenLanguage]['text_referral_table_active'] ?? 'Ativo',
+                  size: media.width * twelve,
+                  fontweight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          if (list.isEmpty)
+            TableRow(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(media.width * 0.04),
+                  child: MyText(
+                    text: languages[choosenLanguage]['text_referral_no_list'] ?? 'Nenhuma indicação ainda',
+                    size: media.width * twelve,
+                    color: hintColor,
+                  ),
+                ),
+                const Padding(padding: EdgeInsets.all(8), child: SizedBox.shrink()),
+              ],
+            )
+          else
+            ...list.asMap().entries.map((e) {
+              final item = e.value;
+              final name = item is Map ? (item['name']?.toString() ?? '—') : '—';
+              final active = item is Map ? (item['active'] == true) : false;
+              return TableRow(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(media.width * 0.03),
+                    child: MyText(text: name, size: media.width * twelve),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(media.width * 0.03),
+                    child: Icon(
+                      active ? Icons.check_circle : Icons.cancel,
+                      size: media.width * 0.05,
+                      color: active ? Colors.green : (isDarkTheme ? Colors.red.shade300 : Colors.red),
+                    ),
+                  ),
+                ],
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var media = MediaQuery.of(context).size;
@@ -95,176 +172,89 @@ class _ReferralPageState extends State<ReferralPage> {
                     child: (myReferralCode.isNotEmpty)
                         ? Column(
                             children: [
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    SizedBox(
-                                        height:
-                                            MediaQuery.of(context).padding.top +
-                                                media.width * 0.15),
-                                    Stack(
-                                      children: [
-                                        Container(
-                                          padding: EdgeInsets.only(
-                                              bottom: media.width * 0.05),
-                                          width: media.width * 1,
-                                          alignment: Alignment.center,
-                                          child: MyText(
-                                            text: '',
-                                            size: media.width * twenty,
-                                          ),
-                                        ),
-                                        Positioned(
-                                            child: InkWell(
-                                                onTap: () {
-                                                  Navigator.pop(context);
-                                                },
-                                                child: Icon(
-                                                    Icons.arrow_back_ios,
-                                                    color: (isDarkTheme == true) ? theme : textColor)))
-                                      ],
+                              SizedBox(
+                                  height: MediaQuery.of(context).padding.top + media.width * 0.12),
+                              Stack(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.only(bottom: media.width * 0.05),
+                                    width: media.width * 1,
+                                    alignment: Alignment.center,
+                                    child: const SizedBox.shrink(),
+                                  ),
+                                  Positioned(
+                                    child: InkWell(
+                                      onTap: () => Navigator.pop(context),
+                                      child: Icon(Icons.arrow_back_ios, color: (isDarkTheme == true) ? theme : textColor),
                                     ),
-                                    SizedBox(
-                                      height: media.width * 0.05,
-                                    ),
-                                    Row(
-                                      children: [
-                                        MyText(
-                                          text: languages[choosenLanguage]
-                                                  ['text_enable_referal']
-                                              .toString()
-                                              .toUpperCase(),
-                                          size: media.width * sixteen,
-                                          fontweight: FontWeight.w700,
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: media.width * 0.03,
-                                    ),
-                                    SizedBox(
-                                      width: media.width * 0.9,
-                                      height: media.height * 0.16,
-                                      child: Image.asset(
-                                        'assets/images/referralpage.png',
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: media.width * 0.1,
-                                    ),
-                                    /*
-                                    Row(
-                                      children: [
-                                        MyText(
-                                          text: myReferralCode[
-                                              'referral_comission_string'],
-                                          size: media.width * sixteen,
-                                          textAlign: TextAlign.center,
-                                          fontweight: FontWeight.w600,
-                                        ),
-                                      ],
-                                    ),
-                                    */
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: MyText(
-                                            text: (languages[choosenLanguage][
-                                                        'text_referral_earn_code'] ??
-                                                    'Your Referral Code')
-                                                .toString(),
-                                            size: media.width * sixteen,
-                                            textAlign: TextAlign.center,
-                                            fontweight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: media.width * 0.05,
-                                    ),
-                                    Container(
-                                        width: media.width * 0.9,
-                                        padding:
-                                            EdgeInsets.all(media.width * 0.05),
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                                color: (isDarkTheme == true) ? theme.withOpacity(0.3) : borderLines, width: 1.2),
-                                            borderRadius:
-                                                BorderRadius.circular(12)),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            MyText(
-                                              text: myReferralCode[
-                                                  'refferal_code'],
-                                              size: media.width * sixteen,
-                                              fontweight: FontWeight.w600,
-                                              color: textColor.withOpacity(0.5),
-                                            ),
-                                            InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    Clipboard.setData(ClipboardData(
-                                                        text: myReferralCode[
-                                                            'refferal_code']));
-                                                  });
-                                                  showToast();
-                                                },
-                                                child: Icon(Icons.copy,
-                                                    color: (isDarkTheme == true) ? theme : textColor))
-                                          ],
-                                        )),
-                                    SizedBox(
-                                      height: media.width * 0.05,
-                                    ),
-                                    Container(
-                                      width: media.width * 0.9,
-                                      padding:
-                                          EdgeInsets.all(media.width * 0.04),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: media.width * 0.03),
+                              // Título
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: MyText(
+                                  text: (languages[choosenLanguage]['text_enable_referal'] ?? 'Indicações').toString().toUpperCase(),
+                                  size: media.width * sixteen,
+                                  fontweight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: media.width * 0.05),
+                              // Conteúdo (referral_comission_string)
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: MyText(
+                                  text: myReferralCode['referral_comission_string']?.toString() ?? '',
+                                  size: media.width * fourteen,
+                                  textAlign: TextAlign.left,
+                                  fontweight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: media.width * 0.06),
+                              // Linha: código + ícone compartilhar (mesma ação de convidar)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: media.width * 0.04, vertical: media.width * 0.035),
                                       decoration: BoxDecoration(
-                                        color: (isDarkTheme == true) ? theme : topBar,
+                                        border: Border.all(color: (isDarkTheme == true) ? theme.withOpacity(0.3) : borderLines, width: 1.2),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: MyText(
-                                        text: languages[choosenLanguage]
-                                            ['text_referral_earn_message'],
-                                        size: media.width * twelve,
-                                        textAlign: TextAlign.center,
-                                        color: (isDarkTheme == true) ? Colors.white : textColor.withOpacity(0.8),
+                                        text: myReferralCode['refferal_code']?.toString() ?? '—',
+                                        size: media.width * sixteen,
+                                        fontweight: FontWeight.w600,
                                       ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.only(
-                                    top: media.width * 0.05,
-                                    bottom: media.width * 0.05),
-                                child: Button(
+                                    ),
+                                  ),
+                                  SizedBox(width: media.width * 0.03),
+                                  InkWell(
                                     onTap: () async {
                                       await Share.share(
-                                          // ignore: prefer_interpolation_to_compose_strings
-                                          languages[choosenLanguage]
-                                                      ['text_invitation_1']
-                                                  .toString()
-                                                  .replaceAll(
-                                                      '55', _package.appName) +
-                                              ' ' +
-                                              myReferralCode['refferal_code'] +
-                                              ' ' +
-                                              languages[choosenLanguage]
-                                                  ['text_invitation_2'] +
-                                              ' \n \n ' +
-                                              androidUrl +
-                                              '\n \n  ' +
-                                              iosUrl);
+                                        '${(languages[choosenLanguage]['text_invitation_1'] ?? '').toString().replaceAll('55', _package?.appName ?? '')} ${myReferralCode['refferal_code']?.toString() ?? ''} ' + (languages[choosenLanguage]['text_invitation_2'] ?? '') +
+                                            ' \n \n ' + (androidUrl ?? '') + '\n \n ' + (iosUrl ?? ''),
+                                      );
                                     },
-                                    text: languages[choosenLanguage]
-                                        ['text_invite']),
-                              )
+                                    child: Container(
+                                      padding: EdgeInsets.all(media.width * 0.04),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: (isDarkTheme == true) ? theme : borderLines, width: 1.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(Icons.share, color: (isDarkTheme == true) ? theme : textColor, size: media.width * 0.07),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: media.width * 0.06),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.vertical,
+                                  child: _buildReferralsTable(media),
+                                ),
+                              ),
                             ],
                           )
                         : Container(),

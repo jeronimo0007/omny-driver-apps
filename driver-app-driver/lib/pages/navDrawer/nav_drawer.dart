@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translation/translation.dart';
@@ -13,10 +16,7 @@ import '../NavigatorPages/faq.dart';
 import '../NavigatorPages/history.dart';
 import '../NavigatorPages/makecomplaint.dart';
 import '../NavigatorPages/managevehicles.dart';
-import '../NavigatorPages/myroutebookings.dart';
-import '../NavigatorPages/notification.dart';
 import '../NavigatorPages/referral.dart';
-import '../NavigatorPages/selectlanguage.dart';
 import '../NavigatorPages/sos.dart';
 import '../NavigatorPages/walletpage.dart';
 import '../login/landingpage.dart';
@@ -30,10 +30,10 @@ class NavDrawer extends StatefulWidget {
 
 class _NavDrawerState extends State<NavDrawer> {
   // ignore: unused_field
-  bool _isLoading = false;
+  final bool _isLoading = false;
   // ignore: unused_field
-  String _error = '';
-  bool _isAccountExpanded = false;
+  final String _error = '';
+  final bool _isAccountExpanded = false;
 
   themefun() async {
     if (isDarkTheme) {
@@ -220,14 +220,56 @@ class _NavDrawerState extends State<NavDrawer> {
                                             SizedBox(
                                               height: media.width * 0.01,
                                             ),
-                                            SizedBox(
+SizedBox(
                                               width: media.width * 0.45,
                                               child: MyText(
                                                 text: userDetails['mobile'],
                                                 size: media.width * fourteen,
                                                 maxLines: 1,
                                               ),
-                                            )
+                                            ),
+                                            SizedBox(height: media.width * 0.02),
+                                            SizedBox(
+                                              width: media.width * 0.45,
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: MyText(
+                                                      text: '${languages[choosenLanguage]['text_referral_earn_code'] ?? 'Código de indicação'}: ${myReferralCode['refferal_code']?.toString() ?? '—'}',
+                                                      size: media.width * twelve,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: media.width * 0.1,
+                                                    height: media.width * 0.1,
+                                                    child: InkWell(
+                                                      onTap: () async {
+                                                        if ((myReferralCode['refferal_code']?.toString() ?? '').isEmpty) {
+                                                          await getReferral();
+                                                          if (mounted) setState(() {});
+                                                        }
+                                                        final code = myReferralCode['refferal_code']?.toString() ?? '';
+                                                        if (code.isNotEmpty) {
+                                                          String storeText = '';
+                                                          if (defaultTargetPlatform == TargetPlatform.android) {
+                                                            final package = await PackageInfo.fromPlatform();
+                                                            storeText = '\n\n${languages[choosenLanguage]['text_download_app'] ?? 'Baixe o app'}: https://play.google.com/store/apps/details?id=${package.packageName}';
+                                                          } else {
+                                                            storeText = '\n\n${languages[choosenLanguage]['text_available_app_store'] ?? 'Disponível na App Store.'}';
+                                                          }
+                                                          await Share.share(
+                                                            '${languages[choosenLanguage]['text_referral_earn_code'] ?? 'Meu código de indicação'}: $code$storeText',
+                                                          );
+                                                        }
+                                                      },
+                                                      child: Icon(Icons.share, size: media.width * 0.06, color: buttonColor),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ],
                                         )
                                       ],
@@ -235,7 +277,7 @@ class _NavDrawerState extends State<NavDrawer> {
                                   ),
                                   Container(
                                     padding: EdgeInsets.only(
-                                        top: media.width * 0.02),
+                                      top: media.width * 0.02),
                                     width: media.width * 0.7,
                                     child: Column(
                                       children: [
@@ -246,120 +288,129 @@ class _NavDrawerState extends State<NavDrawer> {
                                               _isAccountExpanded ? 0.3 : 1.0,
                                           child: Column(
                                             children: [
-                                              Container(
-                                                padding: EdgeInsets.only(
-                                                    top: media.width * 0.025),
-                                                child: Row(
-                                                  children: [
-                                                    MyText(
-                                                      text: languages[
-                                                                  choosenLanguage]
-                                                              ['text_general']
-                                                          .toString()
-                                                          .toUpperCase(),
-                                                      size: media.width *
-                                                          fourteen,
-                                                      fontweight:
-                                                          FontWeight.w700,
-                                                      color: _isAccountExpanded
-                                                          ? textColor
-                                                              .withOpacity(0.3)
-                                                          : textColor,
-                                                    ),
-                                                  ],
-                                                ),
+                                              // 1 - Carteira e Saldo
+                                              userDetails['owner_id'] == null &&
+                                                      userDetails['show_wallet_feature_on_mobile_app'] == '1'
+                                                  ? NavMenu(
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder: (context) => const WalletPage()));
+                                                      },
+                                                      text: languages[choosenLanguage]['text_enable_wallet'],
+                                                      image: 'assets/images/walletIcon.png',
+                                                    )
+                                                  : Container(),
+
+                                              // 2 - Minhas viagens
+                                              NavMenu(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) => const History()));
+                                                },
+                                                text: languages[choosenLanguage]['text_enable_history'],
+                                                image: 'assets/images/history.png',
                                               ),
 
-                                              //Notifications (mais usado)
-                                              (userDetails['role'] != 'owner')
+                                              // 3 - Relatório de viagens
+                                              NavMenu(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) => const DriverEarnings()));
+                                                },
+                                                text: languages[choosenLanguage]['text_earnings'],
+                                                image: 'assets/images/earing.png',
+                                              ),
+
+                                              // 4 - Indicações
+                                              userDetails['owner_id'] == null && userDetails['role'] == 'driver'
+                                                  ? NavMenu(
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder: (context) => const ReferralPage()));
+                                                      },
+                                                      text: languages[choosenLanguage]['text_enable_referal'],
+                                                      image: 'assets/images/referral.png',
+                                                    )
+                                                  : Container(),
+
+                                              // 5 - Dados bancários
+                                              NavMenu(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) => const BankDetails()));
+                                                },
+                                                text: languages[choosenLanguage]['text_updateBank'],
+                                                icon: Icons.account_balance_outlined,
+                                              ),
+
+                                              // 6 - SOS
+                                              userDetails['role'] != 'owner'
+                                                  ? NavMenu(
+                                                      onTap: () async {
+                                                        var nav = await Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder: (context) => const Sos()));
+                                                        if (nav) setState(() {});
+                                                      },
+                                                      text: languages[choosenLanguage]['text_sos'],
+                                                      image: 'assets/images/sos.png',
+                                                      textcolor: buttonColor,
+                                                    )
+                                                  : Container(),
+
+                                              // 7 - Conversar conosco
+                                              userDetails['role'] != 'owner'
                                                   ? ValueListenableBuilder(
-                                                      valueListenable:
-                                                          valueNotifierNotification
-                                                              .value,
-                                                      builder: (context, value,
-                                                          child) {
+                                                      valueListenable: valueNotifierChat.value,
+                                                      builder: (context, value, child) {
                                                         return InkWell(
                                                           onTap: () {
                                                             Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            const NotificationPage()));
-                                                            setState(() {
-                                                              userDetails[
-                                                                  'notifications_count'] = 0;
-                                                            });
+                                                                    builder: (context) => const AdminChatPage()));
                                                           },
                                                           child: Container(
-                                                            padding:
-                                                                EdgeInsets.only(
-                                                                    top: media
-                                                                            .width *
-                                                                        0.025),
+                                                            padding: EdgeInsets.only(top: media.width * 0.025),
                                                             child: Column(
                                                               children: [
                                                                 Row(
                                                                   children: [
-                                                                    Image.asset(
-                                                                      'assets/images/notification.png',
-                                                                      fit: BoxFit
-                                                                          .contain,
-                                                                      width: media
-                                                                              .width *
-                                                                          0.075,
-                                                                      color: textColor
-                                                                          .withOpacity(
-                                                                              0.8),
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width: media
-                                                                              .width *
-                                                                          0.025,
-                                                                    ),
+                                                                    Icon(Icons.chat, size: media.width * 0.075, color: textColor.withOpacity(0.8)),
+                                                                    SizedBox(width: media.width * 0.025),
                                                                     Row(
-                                                                      mainAxisAlignment:
-                                                                          MainAxisAlignment
-                                                                              .spaceBetween,
+                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                       children: [
                                                                         SizedBox(
-                                                                          width: (userDetails['notifications_count'] == 0)
-                                                                              ? media.width * 0.55
-                                                                              : media.width * 0.495,
-                                                                          child:
-                                                                              MyText(
-                                                                            text:
-                                                                                languages[choosenLanguage]['text_notification'].toString(),
-                                                                            overflow:
-                                                                                TextOverflow.ellipsis,
-                                                                            size:
-                                                                                media.width * sixteen,
-                                                                            color:
-                                                                                textColor.withOpacity(0.8),
+                                                                          width: (unSeenChatCount == '0') ? media.width * 0.55 : media.width * 0.495,
+                                                                          child: MyText(
+                                                                            text: languages[choosenLanguage]['text_chat_us'],
+                                                                            overflow: TextOverflow.ellipsis,
+                                                                            size: media.width * sixteen,
+                                                                            color: textColor.withOpacity(0.8),
                                                                           ),
                                                                         ),
                                                                         Row(
                                                                           children: [
-                                                                            (userDetails['notifications_count'] == 0)
-                                                                                ? Container()
-                                                                                : Container(
-                                                                                    height: 20,
-                                                                                    width: 20,
-                                                                                    alignment: Alignment.center,
-                                                                                    decoration: BoxDecoration(
-                                                                                      shape: BoxShape.circle,
-                                                                                      color: buttonColor,
-                                                                                    ),
-                                                                                    child: Text(
-                                                                                      userDetails['notifications_count'].toString(),
-                                                                                      style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: buttonText),
-                                                                                    ),
-                                                                                  ),
-                                                                            Icon(
-                                                                              Icons.arrow_forward_ios_outlined,
-                                                                              size: media.width * 0.05,
-                                                                              color: textColor.withOpacity(0.8),
+                                                                            (unSeenChatCount == '0') ? Container() : Container(
+                                                                              height: 20,
+                                                                              width: 20,
+                                                                              alignment: Alignment.center,
+                                                                              decoration: BoxDecoration(shape: BoxShape.circle, color: buttonColor),
+                                                                              child: Text(unSeenChatCount, style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: buttonText)),
                                                                             ),
+                                                                            Icon(Icons.arrow_forward_ios_outlined, size: media.width * 0.05, color: textColor.withOpacity(0.8)),
                                                                           ],
                                                                         ),
                                                                       ],
@@ -367,45 +418,16 @@ class _NavDrawerState extends State<NavDrawer> {
                                                                   ],
                                                                 ),
                                                                 Container(
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .centerRight,
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .only(
-                                                                    top: media
-                                                                            .width *
-                                                                        0.01,
-                                                                    left: media
-                                                                            .width *
-                                                                        0.09,
-                                                                  ),
-                                                                  child:
-                                                                      Container(
+                                                                  alignment: Alignment.centerRight,
+                                                                  padding: EdgeInsets.only(top: media.width * 0.01, left: media.width * 0.09),
+                                                                  child: Container(
                                                                     height: 1.5,
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      gradient:
-                                                                          LinearGradient(
-                                                                        colors: [
-                                                                          buttonColor,
-                                                                          buttonColor
-                                                                              .withOpacity(0.8),
-                                                                          buttonColor
-                                                                              .withOpacity(0.4),
-                                                                          buttonColor
-                                                                              .withOpacity(0.0),
-                                                                        ],
-                                                                        stops: [
-                                                                          0.0,
-                                                                          0.3,
-                                                                          0.6,
-                                                                          1.0
-                                                                        ],
-                                                                        begin: Alignment
-                                                                            .centerLeft,
-                                                                        end: Alignment
-                                                                            .centerRight,
+                                                                    decoration: BoxDecoration(
+                                                                      gradient: LinearGradient(
+                                                                        colors: [buttonColor, buttonColor.withOpacity(0.8), buttonColor.withOpacity(0.4), buttonColor.withOpacity(0.0)],
+                                                                        stops: const [0.0, 0.3, 0.6, 1.0],
+                                                                        begin: Alignment.centerLeft,
+                                                                        end: Alignment.centerRight,
                                                                       ),
                                                                     ),
                                                                   ),
@@ -417,773 +439,134 @@ class _NavDrawerState extends State<NavDrawer> {
                                                       })
                                                   : Container(),
 
-                                              //Histórico
+                                              // 8 - Perguntas Frequentes
                                               NavMenu(
                                                 onTap: () {
                                                   Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const History()));
+                                                          builder: (context) => const Faq()));
                                                 },
-                                                text: languages[choosenLanguage]
-                                                    ['text_enable_history'],
-                                                image:
-                                                    'assets/images/history.png',
+                                                text: languages[choosenLanguage]['text_faq'],
+                                                image: 'assets/images/faq.png',
                                               ),
 
-                                              //Earnings
+                                              // 9 - Fazer reclamação
                                               NavMenu(
                                                 onTap: () {
                                                   Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const DriverEarnings()));
+                                                          builder: (context) => MakeComplaint(fromPage: 2)));
                                                 },
-                                                text: languages[choosenLanguage]
-                                                    ['text_earnings'],
-                                                image:
-                                                    'assets/images/earing.png',
+                                                text: languages[choosenLanguage]['text_make_complaints'],
+                                                image: 'assets/images/makecomplaint.png',
                                               ),
 
-                                              //wallet page
-                                              userDetails['owner_id'] == null &&
-                                                      userDetails[
-                                                              'show_wallet_feature_on_mobile_app'] ==
-                                                          '1'
-                                                  ? NavMenu(
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const WalletPage()));
-                                                      },
-                                                      text: languages[
-                                                              choosenLanguage][
-                                                          'text_enable_wallet'],
-                                                      image:
-                                                          'assets/images/walletIcon.png',
-                                                    )
-                                                  : Container(),
+                                              // 10 - Política de privacidade
+                                              NavMenu(
+                                                onTap: () {
+                                                  openBrowser('https://driver.app.br/privacy');
+                                                },
+                                                text: languages[choosenLanguage]['text_privacy'],
+                                                image: 'assets/images/privacy_policy.png',
+                                              ),
 
-                                              //My Route Booking
-                                              userDetails['role'] != 'owner' &&
-                                                      userDetails[
-                                                              'enable_my_route_booking_feature'] ==
-                                                          '1' &&
-                                                      userDetails[
-                                                              'transport_type'] !=
-                                                          'delivery'
-                                                  ? InkWell(
-                                                      onTap: () async {
-                                                        var nav = await Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const MyRouteBooking()));
-                                                        if (nav != null) {
-                                                          if (nav) {
-                                                            setState(() {});
-                                                          }
-                                                        }
-                                                      },
-                                                      child: Row(
+                                              // Selecionar tema (ícone alinhado à esquerda como os outros)
+                                              InkWell(
+                                                onTap: () async {
+                                                  themefun();
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.only(top: media.width * 0.025),
+                                                  child: Column(
+                                                    children: [
+                                                      Row(
                                                         children: [
-                                                          Container(
-                                                            padding: EdgeInsets
-                                                                .fromLTRB(
-                                                                    media.width *
-                                                                        0.01,
-                                                                    media.width *
-                                                                        0.025,
-                                                                    media.width *
-                                                                        0.025,
-                                                                    media.width *
-                                                                        0.025),
+                                                          Icon(
+                                                            isDarkTheme ? Icons.brightness_4_outlined : Icons.brightness_3_rounded,
+                                                            size: media.width * 0.075,
+                                                            color: textColor.withOpacity(0.8),
+                                                          ),
+                                                          SizedBox(width: media.width * 0.025),
+                                                          Expanded(
                                                             child: Row(
+                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                               children: [
-                                                                Image.asset(
-                                                                  'assets/images/myroute.png',
-                                                                  fit: BoxFit
-                                                                      .contain,
-                                                                  width: media
-                                                                          .width *
-                                                                      0.06,
-                                                                  color: textColor
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                ),
-                                                                SizedBox(
-                                                                  width: media
-                                                                          .width *
-                                                                      0.025,
-                                                                ),
-                                                                SizedBox(
-                                                                  width: media
-                                                                          .width *
-                                                                      0.45,
+                                                                Expanded(
                                                                   child: Text(
-                                                                    languages[
-                                                                            choosenLanguage]
-                                                                        [
-                                                                        'text_my_route'],
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
+                                                                    languages[choosenLanguage]['text_select_theme'],
                                                                     style: GoogleFonts.poppins(
-                                                                        fontSize:
-                                                                            media.width *
-                                                                                sixteen,
-                                                                        color: textColor
-                                                                            .withOpacity(0.8)),
+                                                                        fontSize: media.width * sixteen,
+                                                                        color: textColor.withOpacity(0.8)),
+                                                                    overflow: TextOverflow.ellipsis,
                                                                   ),
-                                                                )
+                                                                ),
+                                                                Switch(
+                                                                  value: isDarkTheme,
+                                                                  onChanged: (toggle) async {
+                                                                    themefun();
+                                                                  },
+                                                                ),
                                                               ],
                                                             ),
                                                           ),
-
-                                                          // SizedBox(width: media.width*0.05,),
-                                                          if (userDetails[
-                                                                  'my_route_address'] !=
-                                                              null)
-                                                            InkWell(
-                                                              onTap: () async {
-                                                                setState(() {
-                                                                  _isLoading =
-                                                                      true;
-                                                                });
-                                                                var dist = calculateDistance(
-                                                                    center
-                                                                        .latitude,
-                                                                    center
-                                                                        .longitude,
-                                                                    double.parse(
-                                                                        userDetails['my_route_lat']
-                                                                            .toString()),
-                                                                    double.parse(
-                                                                        userDetails['my_route_lng']
-                                                                            .toString()));
-
-                                                                if (dist >
-                                                                        5000.0 ||
-                                                                    userDetails[
-                                                                            'enable_my_route_booking'] ==
-                                                                        "1") {
-                                                                  var val = await enableMyRouteBookings(
-                                                                      center
-                                                                          .latitude,
-                                                                      center
-                                                                          .longitude);
-                                                                  if (val ==
-                                                                      'logout') {
-                                                                    navigateLogout();
-                                                                  } else if (val !=
-                                                                      'success') {
-                                                                    setState(
-                                                                        () {
-                                                                      _error =
-                                                                          val;
-                                                                    });
-                                                                  }
-                                                                } else {
-                                                                  _error = languages[
-                                                                          choosenLanguage]
-                                                                      [
-                                                                      'text_myroute_warning'];
-                                                                }
-
-                                                                setState(() {
-                                                                  _isLoading =
-                                                                      false;
-                                                                });
-                                                              },
-                                                              child: Container(
-                                                                padding: EdgeInsets.only(
-                                                                    left: media
-                                                                            .width *
-                                                                        0.005,
-                                                                    right: media
-                                                                            .width *
-                                                                        0.005),
-                                                                height: media
-                                                                        .width *
-                                                                    0.05,
-                                                                width: media
-                                                                        .width *
-                                                                    0.1,
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(
-                                                                          media.width *
-                                                                              0.025),
-                                                                  color: (userDetails[
-                                                                              'enable_my_route_booking'] ==
-                                                                          1)
-                                                                      ? Colors
-                                                                          .green
-                                                                          .withOpacity(
-                                                                              0.4)
-                                                                      : Colors
-                                                                          .grey
-                                                                          .withOpacity(
-                                                                              0.6),
-                                                                ),
-                                                                child: Row(
-                                                                  mainAxisAlignment: (userDetails[
-                                                                              'enable_my_route_booking'] ==
-                                                                          1)
-                                                                      ? MainAxisAlignment
-                                                                          .end
-                                                                      : MainAxisAlignment
-                                                                          .start,
-                                                                  children: [
-                                                                    Container(
-                                                                      height: media
-                                                                              .width *
-                                                                          0.045,
-                                                                      width: media
-                                                                              .width *
-                                                                          0.045,
-                                                                      decoration:
-                                                                          BoxDecoration(
-                                                                        shape: BoxShape
-                                                                            .circle,
-                                                                        color: (userDetails['enable_my_route_booking'] ==
-                                                                                1)
-                                                                            ? Colors.green
-                                                                            : Colors.grey,
-                                                                      ),
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            )
                                                         ],
                                                       ),
-                                                    )
-                                                  : Container(),
-
-                                              //Linha de separação após My Route Booking
-                                              userDetails['role'] != 'owner' &&
-                                                      userDetails[
-                                                              'enable_my_route_booking_feature'] ==
-                                                          '1' &&
-                                                      userDetails[
-                                                              'transport_type'] !=
-                                                          'delivery'
-                                                  ? Container(
-                                                      alignment:
-                                                          Alignment.centerRight,
-                                                      padding: EdgeInsets.only(
-                                                        top: media.width * 0.01,
-                                                        left:
-                                                            media.width * 0.09,
-                                                      ),
-                                                      child: Container(
-                                                        height: 1.5,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          gradient:
-                                                              LinearGradient(
-                                                            colors: [
-                                                              buttonColor,
-                                                              buttonColor
-                                                                  .withOpacity(
-                                                                      0.8),
-                                                              buttonColor
-                                                                  .withOpacity(
-                                                                      0.4),
-                                                              buttonColor
-                                                                  .withOpacity(
-                                                                      0.0),
-                                                            ],
-                                                            stops: [
-                                                              0.0,
-                                                              0.3,
-                                                              0.6,
-                                                              1.0
-                                                            ],
-                                                            begin: Alignment
-                                                                .centerLeft,
-                                                            end: Alignment
-                                                                .centerRight,
+                                                      Container(
+                                                        alignment: Alignment.centerRight,
+                                                        padding: EdgeInsets.only(top: media.width * 0.01, left: media.width * 0.09),
+                                                        child: Container(
+                                                          height: 1.5,
+                                                          decoration: BoxDecoration(
+                                                            gradient: LinearGradient(
+                                                              colors: [
+                                                                buttonColor,
+                                                                buttonColor.withOpacity(0.8),
+                                                                buttonColor.withOpacity(0.4),
+                                                                buttonColor.withOpacity(0.0),
+                                                              ],
+                                                              stops: const [0.0, 0.3, 0.6, 1.0],
+                                                              begin: Alignment.centerLeft,
+                                                              end: Alignment.centerRight,
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
-                                                    )
-                                                  : Container(),
-
-                                              //sos
-                                              userDetails['role'] != 'owner'
-                                                  ? NavMenu(
-                                                      onTap: () async {
-                                                        var nav = await Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const Sos()));
-                                                        if (nav) {
-                                                          setState(() {});
-                                                        }
-                                                      },
-                                                      text: languages[
-                                                              choosenLanguage]
-                                                          ['text_sos'],
-                                                      image:
-                                                          'assets/images/sos.png',
-                                                      textcolor: buttonColor,
-                                                    )
-                                                  : Container(),
-
-                                              //referral page (menos usado)
-                                              userDetails['owner_id'] == null &&
-                                                      userDetails['role'] ==
-                                                          'driver'
-                                                  ? NavMenu(
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const ReferralPage()));
-                                                      },
-                                                      text: languages[
-                                                              choosenLanguage][
-                                                          'text_enable_referal'],
-                                                      image:
-                                                          'assets/images/referral.png',
-                                                    )
-                                                  : Container(),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
-
-                                        InkWell(
-                                          onTap: () {
-                                            setState(() {
-                                              _isAccountExpanded =
-                                                  !_isAccountExpanded;
-                                            });
-                                          },
-                                          child: Container(
-                                            padding: EdgeInsets.only(
-                                                top: media.width * 0.03),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                MyText(
-                                                  text:
-                                                      languages[choosenLanguage]
-                                                              ['text_account']
-                                                          .toString()
-                                                          .toUpperCase(),
-                                                  size: media.width * fourteen,
-                                                  fontweight: FontWeight.w700,
-                                                ),
-                                                Icon(
-                                                  _isAccountExpanded
-                                                      ? Icons.expand_less
-                                                      : Icons.expand_more,
-                                                  color: textColor,
-                                                  size: media.width * 0.06,
-                                                ),
-                                              ],
-                                            ),
+                                        // Owner: gestão de frota (fora da lista Geral)
+                                        if (userDetails['role'] == 'owner') ...[
+                                          NavMenu(
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) => const ManageVehicles()));
+                                            },
+                                            text: languages[choosenLanguage]['text_manage_vehicle'],
+                                            image: 'assets/images/updateVehicleInfo.png',
                                           ),
-                                        ),
-
-                                        AnimatedSize(
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                          child: _isAccountExpanded
-                                              ? Column(
-                                                  children: [
-                                                    //Admin chat (mais usado)
-                                                    ValueListenableBuilder(
-                                                        valueListenable:
-                                                            valueNotifierChat
-                                                                .value,
-                                                        builder: (context,
-                                                            value, child) {
-                                                          return InkWell(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              const AdminChatPage()));
-                                                            },
-                                                            child: Container(
-                                                              padding: EdgeInsets
-                                                                  .only(
-                                                                      top: media
-                                                                              .width *
-                                                                          0.025),
-                                                              child: Column(
-                                                                children: [
-                                                                  Row(
-                                                                    children: [
-                                                                      Icon(
-                                                                          Icons
-                                                                              .chat,
-                                                                          size: media.width *
-                                                                              0.075,
-                                                                          color:
-                                                                              textColor.withOpacity(0.8)),
-                                                                      SizedBox(
-                                                                        width: media.width *
-                                                                            0.025,
-                                                                      ),
-                                                                      Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          SizedBox(
-                                                                            width: (unSeenChatCount == '0')
-                                                                                ? media.width * 0.55
-                                                                                : media.width * 0.495,
-                                                                            child:
-                                                                                MyText(
-                                                                              text: languages[choosenLanguage]['text_chat_us'],
-                                                                              overflow: TextOverflow.ellipsis,
-                                                                              size: media.width * sixteen,
-                                                                              color: textColor.withOpacity(0.8),
-                                                                            ),
-                                                                          ),
-                                                                          Row(
-                                                                            children: [
-                                                                              (unSeenChatCount == '0')
-                                                                                  ? Container()
-                                                                                  : Container(
-                                                                                      height: 20,
-                                                                                      width: 20,
-                                                                                      alignment: Alignment.center,
-                                                                                      decoration: BoxDecoration(
-                                                                                        shape: BoxShape.circle,
-                                                                                        color: buttonColor,
-                                                                                      ),
-                                                                                      child: Text(
-                                                                                        unSeenChatCount,
-                                                                                        style: GoogleFonts.poppins(fontSize: media.width * fourteen, color: buttonText),
-                                                                                      ),
-                                                                                    ),
-                                                                              Icon(
-                                                                                Icons.arrow_forward_ios_outlined,
-                                                                                size: media.width * 0.05,
-                                                                                color: textColor.withOpacity(0.8),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      )
-                                                                    ],
-                                                                  ),
-                                                                  Container(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .centerRight,
-                                                                    padding:
-                                                                        EdgeInsets
-                                                                            .only(
-                                                                      top: media
-                                                                              .width *
-                                                                          0.01,
-                                                                      left: media
-                                                                              .width *
-                                                                          0.09,
-                                                                    ),
-                                                                    child:
-                                                                        Container(
-                                                                      height:
-                                                                          1.5,
-                                                                      decoration:
-                                                                          BoxDecoration(
-                                                                        gradient:
-                                                                            LinearGradient(
-                                                                          colors: [
-                                                                            buttonColor,
-                                                                            buttonColor.withOpacity(0.8),
-                                                                            buttonColor.withOpacity(0.4),
-                                                                            buttonColor.withOpacity(0.0),
-                                                                          ],
-                                                                          stops: [
-                                                                            0.0,
-                                                                            0.3,
-                                                                            0.6,
-                                                                            1.0
-                                                                          ],
-                                                                          begin:
-                                                                              Alignment.centerLeft,
-                                                                          end: Alignment
-                                                                              .centerRight,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  )
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }),
-
-                                                    //change language
-                                                    NavMenu(
-                                                      onTap: () async {
-                                                        var nav = await Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const SelectLanguage()));
-                                                        if (nav) {
-                                                          setState(() {});
-                                                        }
-                                                      },
-                                                      text: languages[
-                                                              choosenLanguage][
-                                                          'text_change_language'],
-                                                      image:
-                                                          'assets/images/changeLanguage.png',
-                                                    ),
-
-                                                    //FAQ
-                                                    NavMenu(
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const Faq()));
-                                                      },
-                                                      text: languages[
-                                                              choosenLanguage]
-                                                          ['text_faq'],
-                                                      image:
-                                                          'assets/images/faq.png',
-                                                    ),
-
-                                                    //bank details
-                                                    userDetails['owner_id'] ==
-                                                                null &&
-                                                            userDetails[
-                                                                    'show_bank_info_feature_on_mobile_app'] ==
-                                                                "1"
-                                                        ? NavMenu(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              const BankDetails()));
-                                                            },
-                                                            text: languages[
-                                                                    choosenLanguage]
-                                                                [
-                                                                'text_updateBank'],
-                                                            icon: Icons
-                                                                .account_balance_outlined,
-                                                          )
-                                                        : Container(),
-
-                                                    //manage vehicle
-                                                    userDetails['role'] ==
-                                                            'owner'
-                                                        ? NavMenu(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              const ManageVehicles()));
-                                                            },
-                                                            text: languages[
-                                                                    choosenLanguage]
-                                                                [
-                                                                'text_manage_vehicle'],
-                                                            image:
-                                                                'assets/images/updateVehicleInfo.png',
-                                                          )
-                                                        : Container(),
-
-                                                    //manage Driver
-                                                    userDetails['role'] ==
-                                                            'owner'
-                                                        ? NavMenu(
-                                                            onTap: () {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              const DriverList()));
-                                                            },
-                                                            text: languages[
-                                                                    choosenLanguage]
-                                                                [
-                                                                'text_manage_drivers'],
-                                                            image:
-                                                                'assets/images/managedriver.png',
-                                                          )
-                                                        : Container(),
-
-                                                    //Make Complaint
-                                                    NavMenu(
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    MakeComplaint(
-                                                                        fromPage:
-                                                                            2)));
-                                                      },
-                                                      text: languages[
-                                                              choosenLanguage][
-                                                          'text_make_complaints'],
-                                                      image:
-                                                          'assets/images/makecomplaint.png',
-                                                    ),
-
-                                                    //privacy policy
-                                                    NavMenu(
-                                                      onTap: () {
-                                                        openBrowser(
-                                                            'https://driver.app.br/privacy');
-                                                      },
-                                                      text: languages[
-                                                              choosenLanguage]
-                                                          ['text_privacy'],
-                                                      image:
-                                                          'assets/images/privacy_policy.png',
-                                                    ),
-
-                                                    // delete account (menos usado)
-                                                    userDetails['owner_id'] ==
-                                                            null
-                                                        ? NavMenu(
-                                                            onTap: () {
-                                                              setState(() {
-                                                                deleteAccount =
-                                                                    true;
-                                                              });
-                                                              valueNotifierHome
-                                                                  .incrementNotifier();
-                                                              Navigator.pop(
-                                                                  context);
-                                                            },
-                                                            text: languages[
-                                                                    choosenLanguage]
-                                                                [
-                                                                'text_delete_account'],
-                                                            icon: Icons
-                                                                .delete_forever,
-                                                          )
-                                                        : Container(),
-                                                  ],
-                                                )
-                                              : const SizedBox.shrink(),
-                                        ),
-
-                                        //logout
+                                          NavMenu(
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) => const DriverList()));
+                                            },
+                                            text: languages[choosenLanguage]['text_manage_drivers'],
+                                            image: 'assets/images/managedriver.png',
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   )
                                 ]),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () async {
-                            themefun();
-                          },
-                          child: Container(
-                            padding: EdgeInsets.only(
-                              left: media.width * 0.05,
-                              right: media.width * 0.05,
-                              top: media.width * 0.025,
-                              bottom: media.width * 0.025,
-                            ),
-                            width: media.width * 0.7,
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      isDarkTheme
-                                          ? Icons.brightness_4_outlined
-                                          : Icons.brightness_3_rounded,
-                                      size: media.width * 0.075,
-                                      color: textColor.withOpacity(0.8),
-                                    ),
-                                    SizedBox(
-                                      width: media.width * 0.025,
-                                    ),
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              languages[choosenLanguage]
-                                                  ['text_select_theme'],
-                                              style: GoogleFonts.poppins(
-                                                  fontSize:
-                                                      media.width * sixteen,
-                                                  color: textColor
-                                                      .withOpacity(0.8)),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          SizedBox(width: media.width * 0.02),
-                                          Switch(
-                                              value: isDarkTheme,
-                                              onChanged: (toggle) async {
-                                                themefun();
-                                              }),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: EdgeInsets.only(
-                                    top: media.width * 0.01,
-                                    left: media.width * 0.09,
-                                  ),
-                                  child: Container(
-                                    height: 1.5,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          buttonColor,
-                                          buttonColor.withOpacity(0.8),
-                                          buttonColor.withOpacity(0.4),
-                                          buttonColor.withOpacity(0.0),
-                                        ],
-                                        stops: [0.0, 0.3, 0.6, 1.0],
-                                        begin: Alignment.centerLeft,
-                                        end: Alignment.centerRight,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
                           ),
                         ),
                         InkWell(

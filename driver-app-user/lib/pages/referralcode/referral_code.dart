@@ -23,6 +23,10 @@ class _ReferralState extends State<Referral> {
   @override
   void initState() {
     referralCode = '';
+    if (loginReferralCode.trim().isNotEmpty) {
+      controller.text = loginReferralCode.trim();
+      referralCode = loginReferralCode.trim();
+    }
     super.initState();
   }
 

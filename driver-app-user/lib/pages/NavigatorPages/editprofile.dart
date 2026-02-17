@@ -1,9 +1,10 @@
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:pinput/pinput.dart';
+import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
@@ -23,6 +24,17 @@ class EditProfile extends StatefulWidget {
 }
 
 dynamic imageFile;
+
+const List<String> _genderOptions = [
+  'masculino',
+  'feminino',
+  'prefiro_nao_dizer',
+];
+const List<String> _passengerPreferenceOptions = [
+  'masculino',
+  'feminino',
+  'nao_tenho_preferencia',
+];
 
 class _EditProfileState extends State<EditProfile> {
   ImagePicker picker = ImagePicker();
@@ -90,11 +102,13 @@ class _EditProfileState extends State<EditProfile> {
         if (androidInfo.version.sdkInt >= 33) {
           // Android 13+: usar Photo Picker diretamente sem pedir permissão
           final pickedFile = await picker.pickImage(
-              source: ImageSource.gallery, imageQuality: 50);
-          setState(() {
-            imageFile = pickedFile?.path;
-            _pickImage = false;
-          });
+              source: ImageSource.gallery, imageQuality: 90);
+          if (pickedFile != null && mounted) {
+            setState(() {
+              imageFile = pickedFile.path;
+              _pickImage = false;
+            });
+          }
           return;
         }
       }
@@ -103,11 +117,13 @@ class _EditProfileState extends State<EditProfile> {
       var permission = await getGalleryPermission();
       if (permission == PermissionStatus.granted) {
         final pickedFile = await picker.pickImage(
-            source: ImageSource.gallery, imageQuality: 50);
-        setState(() {
-          imageFile = pickedFile?.path;
-          _pickImage = false;
-        });
+            source: ImageSource.gallery, imageQuality: 90);
+        if (pickedFile != null && mounted) {
+          setState(() {
+            imageFile = pickedFile.path;
+            _pickImage = false;
+          });
+        }
       } else {
         setState(() {
           _permission = 'noPhotos';
@@ -127,11 +143,13 @@ class _EditProfileState extends State<EditProfile> {
     var permission = await getCameraPermission();
     if (permission == PermissionStatus.granted) {
       final pickedFile =
-          await picker.pickImage(source: ImageSource.camera, imageQuality: 50);
-      setState(() {
-        imageFile = pickedFile?.path;
-        _pickImage = false;
-      });
+          await picker.pickImage(source: ImageSource.camera, imageQuality: 90);
+      if (pickedFile != null && mounted) {
+        setState(() {
+          imageFile = pickedFile.path;
+          _pickImage = false;
+        });
+      }
     } else {
       setState(() {
         _permission = 'noCamera';
@@ -166,7 +184,7 @@ class _EditProfileState extends State<EditProfile> {
     } else {
       gender = '';
     }
-    
+
     if (userDetails['document'] != null) {
       String doc = userDetails['document'].toString();
       // Formatar CPF se tiver 11 dígitos
@@ -180,7 +198,7 @@ class _EditProfileState extends State<EditProfile> {
     } else {
       document = '';
     }
-    
+
     if (userDetails['birth_date'] != null) {
       String bDate = userDetails['birth_date'].toString();
       // Formatar data se tiver 8 dígitos
@@ -194,7 +212,7 @@ class _EditProfileState extends State<EditProfile> {
     } else {
       birthDate = '';
     }
-    
+
     if (userDetails['passenger_preference'] != null) {
       selectedPassengerPreference =
           userDetails['passenger_preference'].toString();
@@ -645,7 +663,6 @@ class _EditProfileState extends State<EditProfile> {
                             height: media.height * 0.02,
                           ),
                           Container(
-                            height: media.width * 0.13,
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
                                 border:
@@ -654,72 +671,60 @@ class _EditProfileState extends State<EditProfile> {
                                     ? Colors.black
                                     : const Color(0xffF8F8F8)),
                             padding: const EdgeInsets.only(left: 5, right: 5),
-                            child: DropdownButtonFormField<String>(
-                              value: selectedGender,
-                              focusNode: genderFocus,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: languages[choosenLanguage]
-                                        ['text_select_gender'] ??
-                                    'Selecione o gênero',
-                                hintStyle: choosenLanguage == 'ar'
-                                    ? GoogleFonts.cairo(
-                                        fontSize: media.width * fourteen,
-                                        fontWeight: FontWeight.normal,
-                                        color: textColor.withOpacity(0.3),
-                                      )
-                                    : GoogleFonts.poppins(
-                                        fontSize: media.width * fourteen,
-                                        fontWeight: FontWeight.normal,
-                                        color: textColor.withOpacity(0.3),
-                                      ),
-                              ),
-                              style: choosenLanguage == 'ar'
-                                  ? GoogleFonts.cairo(
-                                      color: textColor,
-                                      fontSize: media.width * fourteen,
-                                      fontWeight: FontWeight.normal,
-                                    )
-                                  : GoogleFonts.poppins(
-                                      color: textColor,
-                                      fontSize: media.width * fourteen,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                              dropdownColor: (isDarkTheme == true)
-                                  ? Colors.black
-                                  : const Color(0xffF8F8F8),
-                              items: [
-                                DropdownMenuItem<String>(
-                                  value: 'masculino',
-                                  child: Text(
-                                    languages[choosenLanguage]
-                                            ['text_masculine'] ??
-                                        'Masculino',
-                                  ),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'feminino',
-                                  child: Text(
-                                    languages[choosenLanguage]
-                                            ['text_feminine'] ??
-                                        'Feminino',
-                                  ),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'prefiro_nao_dizer',
-                                  child: Text(
-                                    languages[choosenLanguage]
-                                            ['text_prefer_not_to_say'] ??
-                                        'Prefiro não dizer',
-                                  ),
-                                ),
-                              ],
+                            child: DropdownSearch<String>(
+                              selectedItem:
+                                  _genderOptions.contains(selectedGender)
+                                      ? selectedGender
+                                      : null,
+                              items: _genderOptions,
+                              itemAsString: (String v) {
+                                if (v == 'masculino')
+                                  return languages[choosenLanguage]
+                                          ['text_masculine'] ??
+                                      'Masculino';
+                                if (v == 'feminino')
+                                  return languages[choosenLanguage]
+                                          ['text_feminine'] ??
+                                      'Feminino';
+                                return languages[choosenLanguage]
+                                        ['text_prefer_not_to_say'] ??
+                                    'Prefiro não dizer';
+                              },
                               onChanged: (String? value) {
                                 setState(() {
                                   selectedGender = value;
                                   gender = value ?? '';
                                 });
                               },
+                              popupProps: PopupProps.menu(
+                                showSearchBox: true,
+                                searchFieldProps: TextFieldProps(
+                                  decoration: InputDecoration(
+                                    hintText: languages[choosenLanguage]
+                                            ['text_search'] ??
+                                        'Buscar',
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                ),
+                              ),
+                              dropdownDecoratorProps: DropDownDecoratorProps(
+                                dropdownSearchDecoration: InputDecoration(
+                                  hintText: languages[choosenLanguage]
+                                          ['text_select_gender'] ??
+                                      'Selecione o gênero',
+                                  hintStyle: choosenLanguage == 'ar'
+                                      ? GoogleFonts.cairo(
+                                          fontSize: media.width * fourteen,
+                                          fontWeight: FontWeight.normal,
+                                          color: textColor.withOpacity(0.3))
+                                      : GoogleFonts.poppins(
+                                          fontSize: media.width * fourteen,
+                                          fontWeight: FontWeight.normal,
+                                          color: textColor.withOpacity(0.3)),
+                                  border: InputBorder.none,
+                                ),
+                              ),
                             ),
                           ),
                           SizedBox(
@@ -875,7 +880,6 @@ class _EditProfileState extends State<EditProfile> {
                             height: media.height * 0.02,
                           ),
                           Container(
-                            height: media.width * 0.13,
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
                                 border:
@@ -884,66 +888,25 @@ class _EditProfileState extends State<EditProfile> {
                                     ? Colors.black
                                     : const Color(0xffF8F8F8)),
                             padding: const EdgeInsets.only(left: 5, right: 5),
-                            child: DropdownButtonFormField<String>(
-                              value: selectedPassengerPreference,
-                              focusNode: passengerPreferenceFocus,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: languages[choosenLanguage]
-                                        ['text_passenger_preference'] ??
-                                    'Preferência de Motorista',
-                                hintStyle: choosenLanguage == 'ar'
-                                    ? GoogleFonts.cairo(
-                                        fontSize: media.width * fourteen,
-                                        fontWeight: FontWeight.normal,
-                                        color: textColor.withOpacity(0.3),
-                                      )
-                                    : GoogleFonts.poppins(
-                                        fontSize: media.width * fourteen,
-                                        fontWeight: FontWeight.normal,
-                                        color: textColor.withOpacity(0.3),
-                                      ),
-                              ),
-                              style: choosenLanguage == 'ar'
-                                  ? GoogleFonts.cairo(
-                                      color: textColor,
-                                      fontSize: media.width * fourteen,
-                                      fontWeight: FontWeight.normal,
-                                    )
-                                  : GoogleFonts.poppins(
-                                      color: textColor,
-                                      fontSize: media.width * fourteen,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                              dropdownColor: (isDarkTheme == true)
-                                  ? Colors.black
-                                  : const Color(0xffF8F8F8),
-                              items: [
-                                DropdownMenuItem<String>(
-                                  value: 'masculino',
-                                  child: Text(
-                                    languages[choosenLanguage]
-                                            ['text_masculine'] ??
-                                        'Masculino',
-                                  ),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'feminino',
-                                  child: Text(
-                                    languages[choosenLanguage]
-                                            ['text_feminine'] ??
-                                        'Feminino',
-                                  ),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'nao_tenho_preferencia',
-                                  child: Text(
-                                    languages[choosenLanguage]
-                                            ['text_no_preference'] ??
-                                        'Não tenho preferência',
-                                  ),
-                                ),
-                              ],
+                            child: DropdownSearch<String>(
+                              selectedItem: _passengerPreferenceOptions
+                                      .contains(selectedPassengerPreference)
+                                  ? selectedPassengerPreference
+                                  : null,
+                              items: _passengerPreferenceOptions,
+                              itemAsString: (String v) {
+                                if (v == 'masculino')
+                                  return languages[choosenLanguage]
+                                          ['text_masculine'] ??
+                                      'Masculino';
+                                if (v == 'feminino')
+                                  return languages[choosenLanguage]
+                                          ['text_feminine'] ??
+                                      'Feminino';
+                                return languages[choosenLanguage]
+                                        ['text_no_preference'] ??
+                                    'Não tenho preferência';
+                              },
                               onChanged: (String? value) {
                                 setState(() {
                                   selectedPassengerPreference = value;
@@ -951,10 +914,66 @@ class _EditProfileState extends State<EditProfile> {
                                       value ?? 'nao_tenho_preferencia';
                                 });
                               },
+                              popupProps: PopupProps.menu(
+                                showSearchBox: true,
+                                searchFieldProps: TextFieldProps(
+                                  decoration: InputDecoration(
+                                    hintText: languages[choosenLanguage]
+                                            ['text_search'] ??
+                                        'Buscar',
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                ),
+                              ),
+                              dropdownDecoratorProps: DropDownDecoratorProps(
+                                dropdownSearchDecoration: InputDecoration(
+                                  hintText: languages[choosenLanguage]
+                                          ['text_passenger_preference'] ??
+                                      'Preferência de Motorista',
+                                  hintStyle: choosenLanguage == 'ar'
+                                      ? GoogleFonts.cairo(
+                                          fontSize: media.width * fourteen,
+                                          fontWeight: FontWeight.normal,
+                                          color: textColor.withOpacity(0.3))
+                                      : GoogleFonts.poppins(
+                                          fontSize: media.width * fourteen,
+                                          fontWeight: FontWeight.normal,
+                                          color: textColor.withOpacity(0.3)),
+                                  border: InputBorder.none,
+                                ),
+                              ),
                             ),
                           ),
                           SizedBox(
                             height: media.height * 0.02,
+                          ),
+                          // Excluir Conta (última linha)
+                          Container(
+                            margin: EdgeInsets.only(top: media.width * 0.05),
+                            padding: EdgeInsets.all(media.width * 0.02),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withOpacity(0.1),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                deleteAccount = true;
+                                valueNotifierHome.incrementNotifier();
+                                Navigator.pop(context, true);
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_forever, color: Colors.red, size: media.width * 0.06),
+                                  SizedBox(width: media.width * 0.03),
+                                  MyText(
+                                    text: languages[choosenLanguage]['text_delete_account'],
+                                    size: media.width * sixteen,
+                                    color: Colors.red,
+                                    fontweight: FontWeight.w600,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -1013,6 +1032,14 @@ class _EditProfileState extends State<EditProfile> {
                               debugPrint(
                                   '═══════════════════════════════════════════════════════════');
 
+                              // Normaliza orientação da foto só no envio (mantém como o usuário viu)
+                              if (imageFile != null) {
+                                try {
+                                  final f = await FlutterExifRotation
+                                      .rotateAndSaveImage(path: imageFile);
+                                  imageFile = f.path;
+                                } catch (_) {}
+                              }
                               nav = await updateProfile(
                                   '${firstname.text} ${lastname.text}',
                                   email.text);
@@ -1361,6 +1388,14 @@ class _EditProfileState extends State<EditProfile> {
                                     // Sign the user in (or link) with the credential
                                     await FirebaseAuth.instance
                                         .signInWithCredential(credential);
+                                    if (imageFile != null) {
+                                      try {
+                                        final f = await FlutterExifRotation
+                                            .rotateAndSaveImage(
+                                                path: imageFile);
+                                        imageFile = f.path;
+                                      } catch (_) {}
+                                    }
                                     await updateProfile(
                                       '${firstname.text} ${lastname.text}',
                                       email.text,

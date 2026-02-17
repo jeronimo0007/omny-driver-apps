@@ -4,6 +4,6 @@
     <item>
         <bitmap
             android:gravity="fill"
-            android:src="@drawable/landimage" />
+            android:src="@drawable/launch_image" />
     </item>
 </layer-list>

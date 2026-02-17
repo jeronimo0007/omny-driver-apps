@@ -1168,7 +1168,7 @@ class _DropLocationState extends State<DropLocation>
                                           maxLines: 1,
                                           onChanged: (val) {
                                             _debouncer.run(() {
-                                              if (val.length >= 4) {
+                                              if (val.length >= 3) {
                                                 if (storedAutoAddress
                                                     .where((element) =>
                                                         element['description']
