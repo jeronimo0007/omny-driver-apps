@@ -820,9 +820,71 @@ darktheme() async {
 
 String lastNotification = '';
 
+/// Log quando driver.omny.app.br retorna 401. Causa comum: driver usa outro JWT secret que o auth.
+void _logDriver401(String method, String path) {
+  debugPrint('🔴 [API] 401 em $method $path');
+  debugPrint('🔴 [API] driver.omny.app.br rejeitou o token. Backend: use o MESMO segredo JWT do auth.omny.app.br para validar o token.');
+}
+
+/// Garante que o token esteja em memória (bearerToken). Se estiver vazio, tenta carregar do SharedPreferences.
+/// Assim, após o login por e-mail/senha a referência do motorista não se perde ao abrir páginas do menu.
+Future<void> ensureBearerTokenFromPref() async {
+  if (bearerToken.isNotEmpty) return;
+  try {
+    if (pref.containsKey('Bearer')) {
+      final t = pref.getString('Bearer');
+      if (t != null && t.trim().isNotEmpty) {
+        bearerToken.add(BearerClass(type: 'Bearer', token: t));
+        debugPrint(
+            '🌐 [API] ensureBearerTokenFromPref - Token restaurado do SharedPreferences');
+      }
+    }
+  } catch (e) {
+    debugPrint('🌐 [API] ensureBearerTokenFromPref - Erro: $e');
+  }
+}
+
+/// Renova o access_token usando o refresh_token (auth.omny.app.br). O access_token expira em 180s.
+/// Retorna true se conseguiu renovar e atualizou bearerToken e pref.
+Future<bool> refreshAuthToken() async {
+  final refreshToken = pref.getString('RefreshToken');
+  if (refreshToken == null || refreshToken.trim().isEmpty) return false;
+  try {
+    final endpoint = '${authBaseUrl}$authRefreshPath';
+    final response = await http.post(
+      Uri.parse(endpoint),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refresh_token': refreshToken}),
+    );
+    if (response.statusCode != 200) {
+      debugPrint('🌐 [API] refreshAuthToken - Status ${response.statusCode}');
+      return false;
+    }
+    final jsonVal = jsonDecode(response.body);
+    if (jsonVal['success'] != true) return false;
+    final data = jsonVal['data'];
+    if (data == null || data['access_token'] == null) return false;
+    final newAccess = data['access_token'].toString();
+    if (newAccess.trim().isEmpty) return false;
+    bearerToken.clear();
+    bearerToken.add(BearerClass(
+        type: data['token_type']?.toString() ?? 'Bearer',
+        token: newAccess));
+    await pref.setString('Bearer', newAccess);
+    if (data['refresh_token'] != null && data['refresh_token'].toString().trim().isNotEmpty) {
+      await pref.setString('RefreshToken', data['refresh_token'].toString());
+    }
+    debugPrint('🌐 [API] refreshAuthToken - Token renovado com sucesso');
+    return true;
+  } catch (e) {
+    debugPrint('🌐 [API] refreshAuthToken - Erro: $e');
+    return false;
+  }
+}
+
 getLocalData() async {
   dynamic result;
-  bearerToken.clear;
+  bearerToken.clear();
   var connectivityResult = await (Connectivity().checkConnectivity());
   if (connectivityResult == ConnectivityResult.none) {
     internet = false;
@@ -1588,7 +1650,8 @@ registerDriver() async {
           '🌐 [API] registerDriver - Web detectado, usando token gerado: $fcm');
     }
 
-    final apiUrl = '${url}api/v1/driver/register';
+    final base = loginEmailPswd == 1 ? authBaseUrl : url;
+    final apiUrl = '${base}api/v1/driver/register';
     debugPrint(
         '🌐🌐🌐 [API] registerDriver - ========== INÍCIO DA CHAMADA ==========');
     debugPrint('🌐 [API] registerDriver - URL: $apiUrl');
@@ -1861,9 +1924,10 @@ registerOwner() async {
   try {
     var token = await FirebaseMessaging.instance.getToken();
     var fcm = token.toString();
+    final base = loginEmailPswd == 1 ? authBaseUrl : url;
     final response = http.MultipartRequest(
       'POST',
-      Uri.parse('${url}api/v1/owner/register'),
+      Uri.parse('${base}api/v1/owner/register'),
     );
     response.headers.addAll({'Content-Type': 'application/json'});
     if (proImageFile1 != null) {
@@ -2559,6 +2623,263 @@ verifyUser(String number) async {
   return val;
 }
 
+/// Token temporário quando o login auth retorna que precisa OTP (validate-otp usa este Bearer)
+String? authTempTokenForOtp;
+/// E-mail ou celular usado no login, quando vai para tela OTP (validate-otp envia em email_or_mobile)
+String? authEmailOrMobileForOtp;
+
+/// Login pelo novo endpoint (auth.omny.app.br) com e-mail/senha. type: driver ou owner. Só usado quando loginEmailPswd == 1.
+/// Retorna: 'token' = sucesso com tokens; 'otp_required' = ir para tela OTP (authTempTokenForOtp preenchido); ou string de erro.
+Future<dynamic> driverLoginEmailPassword(
+    String emailOrMobile, String password) async {
+  bearerToken.clear();
+  authTempTokenForOtp = null;
+  authEmailOrMobileForOtp = null;
+  try {
+    // device_token: na web FCM não está disponível (enviamos placeholder);
+    // no celular (Android/iOS) getToken() devolve o token FCM real para push.
+    String? fcm;
+    try {
+      if (kIsWeb) {
+        fcm = 'web_${DateTime.now().millisecondsSinceEpoch}';
+        debugPrint('🌐 Web: device_token não disponível (FCM), enviando identificador web');
+      } else {
+        var token = await FirebaseMessaging.instance.getToken();
+        fcm = token ?? '';
+        if (fcm.isEmpty) {
+          fcm = 'mobile_${DateTime.now().millisecondsSinceEpoch}';
+        }
+      }
+    } catch (_) {
+      fcm = '';
+    }
+    String endpoint = '${authBaseUrl}api/v1/login';
+    Map<String, String> headers = {'Content-Type': 'application/json'};
+    String type = ischeckownerordriver == 'owner' ? 'driver' : 'driver';
+    Map<String, dynamic> bodyData = {
+      'emailOrMobile': emailOrMobile.trim(),
+      'password': password,
+      'type': type,
+      'fcm_token': fcm,
+    };
+    debugPrint('🌐 [API] driverLoginEmailPassword - URL: $endpoint');
+    debugPrint('🌐 [API] driverLoginEmailPassword - body: $bodyData');
+    var response = await http.post(
+      Uri.parse(endpoint),
+      headers: headers,
+      body: jsonEncode(bodyData),
+    );
+    if (response.statusCode != 200) {
+      try {
+        final body = jsonDecode(response.body);
+        final msg = body['message']?.toString() ?? response.body;
+        return msg;
+      } catch (_) {
+        return response.body;
+      }
+    }
+    var jsonVal = jsonDecode(response.body);
+    bool success = jsonVal['success'] == true;
+    if (!success) return jsonVal['message']?.toString() ?? 'Erro no login';
+    var data = jsonVal['data'];
+    if (data == null) return 'Resposta inválida';
+    // Caso 1: já logou antes, tokens direto (não precisa OTP)
+    if (data['access_token'] != null && data['user'] == null) {
+      // Preferir driver_token se o auth enviar (token emitido pelo driver = mesma sessão do fluxo antigo)
+      final tokenToUse = data['driver_token']?.toString().trim().isNotEmpty == true
+          ? data['driver_token'].toString()
+          : data['access_token'].toString();
+      bearerToken.add(BearerClass(
+          type: data['token_type']?.toString() ?? 'Bearer',
+          token: tokenToUse));
+      if (bearerToken.isNotEmpty) {
+        await pref.setString('Bearer', bearerToken[0].token);
+      }
+      if (data['refresh_token'] != null && data['refresh_token'].toString().trim().isNotEmpty) {
+        await pref.setString('RefreshToken', data['refresh_token'].toString());
+      }
+      // Tentar obter token emitido pelo driver (para online-offline, etc.) se o auth não enviou driver_token
+      if (data['driver_token'] == null || data['driver_token'].toString().trim().isEmpty) {
+        final gotDriver = await tryGetDriverTokenAfterAuthLogin();
+        if (gotDriver) debugPrint('🌐 [API] driverLoginEmailPassword - Token do driver obtido (login-with-auth)');
+      }
+      if (ischeckownerordriver == 'driver' && !kIsWeb) {
+        try {
+          platforms.invokeMethod('login');
+        } catch (e) {
+          debugPrint('driverLoginEmailPassword - invokeMethod login: $e');
+        }
+      }
+      return 'token';
+    }
+    // Caso 2: trocou de celular, precisa validar OTP (data.user + fcm_token)
+    if (data['user'] != null && (data['fcm_token'] == true || data['device_token'] == true)) {
+      var user = data['user'];
+      if (user['access_token'] != null) {
+        authTempTokenForOtp = user['access_token'].toString();
+      }
+      authEmailOrMobileForOtp = emailOrMobile.trim();
+      return 'otp_required';
+    }
+    return 'Resposta inválida';
+  } catch (e) {
+    if (e is SocketException) internet = false;
+    return e.toString();
+  }
+}
+
+/// Valida OTP no auth. Body: otp, email_or_mobile, fcm_token. Retorna true se sucesso e tokens salvos.
+Future<bool> validateOtpAuth(String otp) async {
+  final emailOrMobile = authEmailOrMobileForOtp?.trim() ?? '';
+  if (emailOrMobile.isEmpty) return false;
+  try {
+    String? fcm;
+    try {
+      if (kIsWeb) {
+        fcm = 'web_${DateTime.now().millisecondsSinceEpoch}';
+      } else {
+        var token = await FirebaseMessaging.instance.getToken();
+        fcm = token ?? '';
+        if (fcm.isEmpty) fcm = 'mobile_${DateTime.now().millisecondsSinceEpoch}';
+      }
+    } catch (_) {
+      fcm = '';
+    }
+    String endpoint = '${authBaseUrl}api/v1/validate-otp';
+    final body = {'otp': otp, 'email_or_mobile': emailOrMobile, 'fcm_token': fcm};
+    debugPrint('🌐 [API] validateOtpAuth - URL: $endpoint');
+    debugPrint('🌐 [API] validateOtpAuth - body: $body');
+    var response = await http.post(
+      Uri.parse(endpoint),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (response.statusCode != 200) return false;
+    var jsonVal = jsonDecode(response.body);
+    if (jsonVal['success'] != true) return false;
+    var data = jsonVal['data'];
+    if (data == null || data['access_token'] == null) return false;
+    final tokenToUse = data['driver_token']?.toString().trim().isNotEmpty == true
+        ? data['driver_token'].toString()
+        : data['access_token'].toString();
+    bearerToken.clear();
+    bearerToken.add(BearerClass(
+        type: data['token_type']?.toString() ?? 'Bearer',
+        token: tokenToUse));
+    await pref.setString('Bearer', bearerToken[0].token);
+    if (data['refresh_token'] != null && data['refresh_token'].toString().trim().isNotEmpty) {
+      await pref.setString('RefreshToken', data['refresh_token'].toString());
+    }
+    if (data['driver_token'] == null || data['driver_token'].toString().trim().isEmpty) {
+      await tryGetDriverTokenAfterAuthLogin();
+    }
+    authTempTokenForOtp = null;
+    authEmailOrMobileForOtp = null;
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Chama a API do driver para obter um token emitido pelo driver (mesma lógica do fluxo antigo).
+/// Endpoint esperado: POST ${url}api/v1/driver/login-with-auth com Authorization: Bearer <token_auth>.
+/// Se o backend não tiver esse endpoint, a chamada falha e mantemos o token do auth.
+Future<bool> tryGetDriverTokenAfterAuthLogin() async {
+  if (bearerToken.isEmpty) return false;
+  try {
+    final response = await http.post(
+      Uri.parse('${url}api/v1/driver/login-with-auth'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${bearerToken[0].token}',
+      },
+      body: jsonEncode({}),
+    );
+    if (response.statusCode != 200) {
+      debugPrint('🌐 [API] tryGetDriverTokenAfterAuthLogin - Status ${response.statusCode} (endpoint pode não existir)');
+      return false;
+    }
+    final body = jsonDecode(response.body);
+    final data = body is Map ? (body['data'] ?? body) : null;
+    final accessToken = data is Map
+        ? (data['access_token']?.toString().trim())
+        : null;
+    if (accessToken == null || accessToken.isEmpty) return false;
+    bearerToken.clear();
+    bearerToken.add(BearerClass(type: 'Bearer', token: accessToken));
+    await pref.setString('Bearer', bearerToken[0].token);
+    debugPrint('🌐 [API] tryGetDriverTokenAfterAuthLogin - Token do driver salvo');
+    return true;
+  } catch (e) {
+    debugPrint('🌐 [API] tryGetDriverTokenAfterAuthLogin - Erro: $e');
+    return false;
+  }
+}
+
+/// Reenvia OTP por e-mail no auth (auth.omny.app.br). Retorna 'success' ou mensagem de erro.
+Future<String> sendOtpAuth() async {
+  if (authTempTokenForOtp == null || authTempTokenForOtp!.isEmpty) {
+    return 'Token não disponível';
+  }
+  try {
+    String endpoint = '${authBaseUrl}api/v1/login/send-otp';
+    final body = {'type': 'email'};
+    debugPrint('🌐 [API] sendOtpAuth - URL: $endpoint');
+    debugPrint('🌐 [API] sendOtpAuth - body: $body');
+    var response = await http.post(
+      Uri.parse(endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authTempTokenForOtp',
+      },
+      body: jsonEncode(body),
+    );
+    if (response.statusCode == 200) {
+      var jsonVal = jsonDecode(response.body);
+      if (jsonVal['success'] == true) return 'success';
+      return jsonVal['message']?.toString() ?? 'Erro ao reenviar';
+    }
+    try {
+      var body = jsonDecode(response.body);
+      return body['message']?.toString() ?? response.body;
+    } catch (_) {
+      return response.body;
+    }
+  } catch (e) {
+    if (e is SocketException) internet = false;
+    return e.toString();
+  }
+}
+
+/// Esqueci senha no auth (auth.omny.app.br). Body: email + mobile vazio.
+Future<String> forgotPasswordAuth(String email) async {
+  try {
+    String endpoint = '${authBaseUrl}api/v1/forgot-password';
+    final body = {'email': email.trim(), 'mobile': ''};
+    debugPrint('🌐 [API] forgotPasswordAuth - URL: $endpoint');
+    debugPrint('🌐 [API] forgotPasswordAuth - body: $body');
+    var response = await http.post(
+      Uri.parse(endpoint),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (response.statusCode == 200) {
+      var jsonVal = jsonDecode(response.body);
+      if (jsonVal['success'] == true) return 'success';
+      return jsonVal['message']?.toString() ?? 'Erro na solicitação';
+    }
+    try {
+      var body = jsonDecode(response.body);
+      return body['message']?.toString() ?? response.body;
+    } catch (_) {
+      return response.body;
+    }
+  } catch (e) {
+    if (e is SocketException) internet = false;
+    return e.toString();
+  }
+}
+
 //driver login
 driverLogin() async {
   bearerToken.clear();
@@ -2669,6 +2990,12 @@ dynamic package;
 getUserDetails() async {
   dynamic result;
   try {
+    await ensureBearerTokenFromPref();
+    if (bearerToken.isEmpty) {
+      debugPrint('🌐 [API] getUserDetails - Sem token (Bearer vazio e pref sem token)');
+      return false;
+    }
+    // Perfil sempre na API do driver (driver.omny.app.br). Auth é só para login, OTP, registro e esqueci senha.
     final requestUrl = '${url}api/v1/user';
     final authToken =
         bearerToken.isNotEmpty ? bearerToken[0].token : 'NO_TOKEN';
@@ -2687,6 +3014,16 @@ getUserDetails() async {
         'Authorization': 'Bearer ${bearerToken[0].token}',
       },
     );
+    if (response.statusCode == 401 && await refreshAuthToken() && bearerToken.isNotEmpty) {
+      response = await http.get(
+        Uri.parse(requestUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${bearerToken[0].token}',
+        },
+      );
+      debugPrint('🌐 [API] getUserDetails - Retry após refresh, Status: ${response.statusCode}');
+    }
 
     debugPrint('🌐 [API] getUserDetails - Status Code: ${response.statusCode}');
     debugPrint('🌐 [API] getUserDetails - Response Body: ${response.body}');
@@ -2822,6 +3159,7 @@ getUserDetails() async {
       }
       result = true;
     } else if (response.statusCode == 401) {
+      _logDriver401('GET', 'api/v1/user');
       result = 'logout';
     } else {
       debugPrint(response.body);
@@ -2916,10 +3254,18 @@ ValueNotifyingChat valueNotifierChat = ValueNotifyingChat();
 driverStatus() async {
   dynamic result;
   try {
+    await ensureBearerTokenFromPref();
+    if (bearerToken.isEmpty) return false;
     var response = await http.post(
       Uri.parse('${url}api/v1/driver/online-offline'),
       headers: {'Authorization': 'Bearer ${bearerToken[0].token}'},
     );
+    if (response.statusCode == 401 && await refreshAuthToken() && bearerToken.isNotEmpty) {
+      response = await http.post(
+        Uri.parse('${url}api/v1/driver/online-offline'),
+        headers: {'Authorization': 'Bearer ${bearerToken[0].token}'},
+      );
+    }
     if (response.statusCode == 200) {
       userDetails = jsonDecode(response.body)['data'];
       result = true;
@@ -2945,6 +3291,7 @@ driverStatus() async {
       }
       valueNotifierHome.incrementNotifier();
     } else if (response.statusCode == 401) {
+      _logDriver401('POST', 'api/v1/driver/online-offline');
       result = 'logout';
     } else {
       debugPrint(response.body);
@@ -3248,6 +3595,12 @@ calculateIdleDistance(lat1, lon1, lat2, lon2) {
 
 requestAccept() async {
   dynamic result;
+  if (bearerToken.isEmpty || driverReq.isEmpty || driverReq['id'] == null) {
+    debugPrint('requestAccept: bearerToken ou driverReq inválido');
+    valueNotifierHome.incrementNotifier();
+    return 'failed';
+  }
+  final requestId = driverReq['id'];
   try {
     var response = await http.post(
       Uri.parse('${url}api/v1/request/respond'),
@@ -3255,19 +3608,38 @@ requestAccept() async {
         'Authorization': 'Bearer ${bearerToken[0].token}',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'request_id': driverReq['id'], 'is_accept': 1}),
+      body: jsonEncode({'request_id': requestId, 'is_accept': 1}),
     );
+    if (response.statusCode == 401 && await refreshAuthToken() && bearerToken.isNotEmpty) {
+      response = await http.post(
+        Uri.parse('${url}api/v1/request/respond'),
+        headers: {
+          'Authorization': 'Bearer ${bearerToken[0].token}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'request_id': requestId, 'is_accept': 1}),
+      );
+    }
 
     if (response.statusCode == 200) {
-      FirebaseDatabase.instance.ref('request-meta/${driverReq['id']}').remove();
-      driverReq.clear();
+      Map<String, dynamic>? body;
+      try {
+        body = jsonDecode(response.body) as Map<String, dynamic>?;
+      } catch (_) {
+        debugPrint('requestAccept: resposta não é JSON válido');
+        valueNotifierHome.incrementNotifier();
+        return 'failed';
+      }
+      final isSuccess = body != null && (body['message'] == 'success' || body['success'] == true);
 
-      // AwesomeNotifications().cancel(7425);
+      if (isSuccess) {
+        try {
+          FirebaseDatabase.instance.ref('request-meta/$requestId').remove();
+        } catch (_) {}
+        driverReq.clear();
 
-      if (jsonDecode(response.body)['message'] == 'success') {
         if (audioPlayers.state != PlayerState.stopped) {
           audioPlayers.stop();
-          // audioPlayers.dispose();
         }
         dropDistance = '';
 
@@ -3296,19 +3668,21 @@ requestAccept() async {
         }
         valueNotifierHome.incrementNotifier();
       }
-      result = 'success';
+      result = isSuccess ? 'success' : 'failed';
     } else if (response.statusCode == 401) {
+      _logDriver401('POST', 'api/v1/request/respond (aceitar)');
       result = 'logout';
     } else {
       result = 'failed';
-      debugPrint(response.body);
+      debugPrint('requestAccept: ${response.statusCode} ${response.body}');
     }
     return result;
   } catch (e) {
+    debugPrint('requestAccept error: $e');
     if (e is SocketException) {
       internet = false;
-      valueNotifierHome.incrementNotifier();
     }
+    valueNotifierHome.incrementNotifier();
   }
 }
 
@@ -3328,6 +3702,16 @@ requestReject() async {
       },
       body: jsonEncode({'request_id': driverReq['id'], 'is_accept': 0}),
     );
+    if (response.statusCode == 401 && await refreshAuthToken() && bearerToken.isNotEmpty) {
+      response = await http.post(
+        Uri.parse('${url}api/v1/request/respond'),
+        headers: {
+          'Authorization': 'Bearer ${bearerToken[0].token}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'request_id': driverReq['id'], 'is_accept': 0}),
+      );
+    }
 
     if (response.statusCode == 200) {
       requestStreamEnd?.cancel();
@@ -3349,6 +3733,7 @@ requestReject() async {
       }
       result = 'success';
     } else if (response.statusCode == 401) {
+      _logDriver401('POST', 'api/v1/request/respond (recusar)');
       result = 'logout';
     } else {
       result = 'failed';
@@ -4692,16 +5077,25 @@ getHistory(id) async {
   dynamic result;
 
   try {
+    await ensureBearerTokenFromPref();
+    if (bearerToken.isEmpty) return 'logout';
     var response = await http.get(
       Uri.parse('${url}api/v1/request/history?$id'),
       headers: {'Authorization': 'Bearer ${bearerToken[0].token}'},
     );
+    if (response.statusCode == 401 && await refreshAuthToken() && bearerToken.isNotEmpty) {
+      response = await http.get(
+        Uri.parse('${url}api/v1/request/history?$id'),
+        headers: {'Authorization': 'Bearer ${bearerToken[0].token}'},
+      );
+    }
     if (response.statusCode == 200) {
       myHistory = jsonDecode(response.body)['data'];
       myHistoryPage = jsonDecode(response.body)['meta'];
       result = 'success';
       valueNotifierHome.incrementNotifier();
     } else if (response.statusCode == 401) {
+      _logDriver401('GET', 'api/v1/request/history');
       result = 'logout';
     } else {
       debugPrint(response.body);
@@ -5265,6 +5659,8 @@ Map<String, dynamic> driverReportEarnings = {};
 driverTodayEarning() async {
   dynamic result;
   try {
+    await ensureBearerTokenFromPref();
+    if (bearerToken.isEmpty) return 'logout';
     var response = await http.get(
       Uri.parse('${url}api/v1/driver/today-earnings'),
       headers: {
@@ -5272,10 +5668,20 @@ driverTodayEarning() async {
         'Content-Type': 'application/json',
       },
     );
+    if (response.statusCode == 401 && await refreshAuthToken() && bearerToken.isNotEmpty) {
+      response = await http.get(
+        Uri.parse('${url}api/v1/driver/today-earnings'),
+        headers: {
+          'Authorization': 'Bearer ${bearerToken[0].token}',
+          'Content-Type': 'application/json',
+        },
+      );
+    }
     if (response.statusCode == 200) {
       result = 'success';
       driverTodayEarnings = jsonDecode(response.body)['data'];
     } else if (response.statusCode == 401) {
+      _logDriver401('GET', 'api/v1/driver/today-earnings');
       result = 'logout';
     } else {
       debugPrint(response.body);
@@ -5459,6 +5865,10 @@ getBankInfo() async {
   bankData.clear();
   dynamic result;
   try {
+    await ensureBearerTokenFromPref();
+    if (bearerToken.isEmpty) {
+      return 'logout';
+    }
     var response = await http.get(
       Uri.parse('${url}api/v1/user/get-bank-info'),
       headers: {
@@ -5466,10 +5876,20 @@ getBankInfo() async {
         'Content-Type': 'application/json',
       },
     );
+    if (response.statusCode == 401 && await refreshAuthToken() && bearerToken.isNotEmpty) {
+      response = await http.get(
+        Uri.parse('${url}api/v1/user/get-bank-info'),
+        headers: {
+          'Authorization': 'Bearer ${bearerToken[0].token}',
+          'Content-Type': 'application/json',
+        },
+      );
+    }
     if (response.statusCode == 200) {
       result = 'success';
       bankData = jsonDecode(response.body)['data'];
     } else if (response.statusCode == 401) {
+      _logDriver401('GET', 'api/v1/user/get-bank-info');
       result = 'logout';
     } else {
       debugPrint(response.body);

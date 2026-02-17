@@ -50,9 +50,14 @@ class _RidePageState extends State<RidePage> with WidgetsBindingObserver {
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    if (userDetails['vehicle_types'] != [] && userDetails['role'] != 'owner') {
+    final driverVehicleType = userDetails['driverVehicleType'];
+    if (userDetails['vehicle_types'] != null &&
+        userDetails['vehicle_types'] != [] &&
+        userDetails['role'] != 'owner' &&
+        driverVehicleType != null &&
+        driverVehicleType['data'] != null) {
       setState(() {
-        vechiletypeslist = userDetails['driverVehicleType']['data'];
+        vechiletypeslist = driverVehicleType['data'];
       });
     }
     getadminCurrentMessages();

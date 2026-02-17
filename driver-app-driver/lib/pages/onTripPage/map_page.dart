@@ -2772,8 +2772,9 @@ class _MapsState extends State<Maps>
                                                                         ? (driverReq['accepted_at'] ==
                                                                                 null)
                                                                             ? Column(
+                                                                                mainAxisSize: MainAxisSize.min,
                                                                                 children: [
-                                                                                  (driverReq['is_later'] == 1 && driverReq['is_rental'] != true)
+                                                                                  ((driverReq['is_later'] ?? 0) == 1 && driverReq['is_rental'] != true)
                                                                                       ? Container(
                                                                                           alignment: Alignment.center,
                                                                                           margin: EdgeInsets.only(bottom: media.width * 0.025),
@@ -2781,12 +2782,12 @@ class _MapsState extends State<Maps>
                                                                                           decoration: BoxDecoration(color: buttonColor, borderRadius: BorderRadius.circular(6)),
                                                                                           width: media.width * 1,
                                                                                           child: MyText(
-                                                                                            text: languages[choosenLanguage]['text_rideLaterTime'] + " " + driverReq['cv_trip_start_time'],
+                                                                                            text: languages[choosenLanguage]['text_rideLaterTime'] + " " + (driverReq['cv_trip_start_time']?.toString() ?? ''),
                                                                                             size: media.width * sixteen,
                                                                                             color: topBar,
                                                                                           ),
                                                                                         )
-                                                                                      : (driverReq['is_rental'] == true && driverReq['is_later'] != 1)
+                                                                                      : (driverReq['is_rental'] == true && (driverReq['is_later'] ?? 0) != 1)
                                                                                           ? Container(
                                                                                               alignment: Alignment.center,
                                                                                               margin: EdgeInsets.only(bottom: media.width * 0.025),
@@ -2794,12 +2795,12 @@ class _MapsState extends State<Maps>
                                                                                               decoration: BoxDecoration(color: buttonColor, borderRadius: BorderRadius.circular(6)),
                                                                                               width: media.width * 1,
                                                                                               child: MyText(
-                                                                                                text: languages[choosenLanguage]['text_rental_ride'] + ' - ' + driverReq['rental_package_name'],
+                                                                                                text: languages[choosenLanguage]['text_rental_ride'] + ' - ' + (driverReq['rental_package_name']?.toString() ?? ''),
                                                                                                 size: media.width * sixteen,
                                                                                                 color: Colors.black,
                                                                                               ),
                                                                                             )
-                                                                                          : (driverReq['is_rental'] == true && driverReq['is_later'] == 1)
+                                                                                          : (driverReq['is_rental'] == true && (driverReq['is_later'] ?? 0) == 1)
                                                                                               ? Container(
                                                                                                   alignment: Alignment.center,
                                                                                                   margin: EdgeInsets.only(bottom: media.width * 0.025),
@@ -2809,13 +2810,13 @@ class _MapsState extends State<Maps>
                                                                                                   child: Column(
                                                                                                     children: [
                                                                                                       MyText(
-                                                                                                        text: languages[choosenLanguage]['text_rideLaterTime'] + " " + driverReq['cv_trip_start_time'],
+                                                                                                        text: languages[choosenLanguage]['text_rideLaterTime'] + " " + (driverReq['cv_trip_start_time']?.toString() ?? ''),
                                                                                                         size: media.width * sixteen,
                                                                                                         color: Colors.black,
                                                                                                       ),
                                                                                                       SizedBox(height: media.width * 0.02),
                                                                                                       MyText(
-                                                                                                        text: languages[choosenLanguage]['text_rental_ride'] + ' - ' + driverReq['rental_package_name'],
+                                                                                                        text: languages[choosenLanguage]['text_rental_ride'] + ' - ' + (driverReq['rental_package_name']?.toString() ?? ''),
                                                                                                         size: media.width * sixteen,
                                                                                                         color: Colors.black,
                                                                                                       ),
@@ -2823,7 +2824,9 @@ class _MapsState extends State<Maps>
                                                                                                   ),
                                                                                                 )
                                                                                               : Container(),
-                                                                                  Container(
+                                                                                  Material(
+                                                                                    type: MaterialType.transparency,
+                                                                                    child: Container(
                                                                                       padding: const EdgeInsets.fromLTRB(0, 0, 0,
                                                                                           0),
                                                                                       width: media.width *
@@ -2839,7 +2842,11 @@ class _MapsState extends State<Maps>
                                                                                               ? AnimatedContainer(
                                                                                                   duration: const Duration(milliseconds: 100),
                                                                                                   height: 10,
-                                                                                                  width: (media.width * 0.9 / double.parse(userDetails['trip_accept_reject_duration_for_driver'].toString())) * (double.parse(userDetails['trip_accept_reject_duration_for_driver'].toString()) - duration),
+                                                                                                  width: () {
+                                                                                                    final sec = userDetails['trip_accept_reject_duration_for_driver'];
+                                                                                                    final total = double.tryParse(sec?.toString() ?? '') ?? 30.0;
+                                                                                                    return (media.width * 0.9 / total) * (total - duration);
+                                                                                                  }(),
                                                                                                   decoration: BoxDecoration(
                                                                                                       color: buttonColor,
                                                                                                       borderRadius: (languageDirection == 'ltr')
@@ -2860,13 +2867,13 @@ class _MapsState extends State<Maps>
                                                                                                 Container(
                                                                                                   height: media.width * 0.15,
                                                                                                   width: media.width * 0.15,
-                                                                                                  decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']['data']['profile_picture']), fit: BoxFit.cover)),
+                                                                                                  decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']?['data']?['profile_picture']?.toString() ?? 'https://via.placeholder.com/100'), fit: BoxFit.cover)),
                                                                                                 ),
                                                                                                 SizedBox(
                                                                                                   height: media.width * 0.05,
                                                                                                 ),
                                                                                                 MyText(
-                                                                                                  text: driverReq['userDetail']['data']['name'],
+                                                                                                  text: driverReq['userDetail']?['data']?['name']?.toString() ?? '',
                                                                                                   size: media.width * eighteen,
                                                                                                 ),
                                                                                                 SizedBox(
@@ -3020,10 +3027,15 @@ class _MapsState extends State<Maps>
                                                                                                         setState(() {
                                                                                                           _isLoading = true;
                                                                                                         });
-                                                                                                        await requestAccept();
-                                                                                                        setState(() {
-                                                                                                          _isLoading = false;
-                                                                                                        });
+                                                                                                        try {
+                                                                                                          await requestAccept();
+                                                                                                        } finally {
+                                                                                                          if (mounted) {
+                                                                                                            setState(() {
+                                                                                                              _isLoading = false;
+                                                                                                            });
+                                                                                                          }
+                                                                                                        }
                                                                                                       },
                                                                                                       text: languages[choosenLanguage]['text_accept'],
                                                                                                       width: media.width * 0.38,
@@ -3035,6 +3047,7 @@ class _MapsState extends State<Maps>
                                                                                           )
                                                                                         ],
                                                                                       )),
+                                                                                  ),
                                                                                 ],
                                                                               )
                                                                             : (driverReq['accepted_at'] != null)
@@ -3339,12 +3352,12 @@ class _MapsState extends State<Maps>
                                                                                         Container(
                                                                                           height: media.width * 0.15,
                                                                                           width: media.width * 0.15,
-                                                                                          decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']['data']['profile_picture']), fit: BoxFit.cover)),
+                                                                                          decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']?['data']?['profile_picture']?.toString() ?? 'https://via.placeholder.com/100'), fit: BoxFit.cover)),
                                                                                         ),
                                                                                         SizedBox(width: media.width * 0.03),
                                                                                         Expanded(
                                                                                           child: MyText(
-                                                                                            text: driverReq['userDetail']['data']['name'],
+                                                                                            text: driverReq['userDetail']?['data']?['name']?.toString() ?? '',
                                                                                             size: media.width * eighteen,
                                                                                             color: textColor,
                                                                                             maxLines: 1,
@@ -3358,7 +3371,7 @@ class _MapsState extends State<Maps>
                                                                                       children: [
                                                                                         Builder(
                                                                                           builder: (context) {
-                                                                                            final rating = double.tryParse((driverReq['userDetail']['data']['rating'] ?? 0).toString()) ?? 0.0;
+                                                                                            final rating = double.tryParse((driverReq['userDetail']?['data']?['rating'] ?? 0).toString()) ?? 0.0;
                                                                                             final ratingStr = rating == rating.floor() ? rating.toInt().toString() : rating.toStringAsFixed(1);
                                                                                             return Row(
                                                                                               children: [
@@ -4030,12 +4043,12 @@ class _MapsState extends State<Maps>
                                                                                       Container(
                                                                                         height: media.width * 0.15,
                                                                                         width: media.width * 0.15,
-                                                                                        decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']['data']['profile_picture']), fit: BoxFit.cover)),
+                                                                                        decoration: BoxDecoration(shape: BoxShape.circle, image: DecorationImage(image: NetworkImage(driverReq['userDetail']?['data']?['profile_picture']?.toString() ?? 'https://via.placeholder.com/100'), fit: BoxFit.cover)),
                                                                                       ),
                                                                                       SizedBox(width: media.width * 0.03),
                                                                                       Expanded(
                                                                                         child: MyText(
-                                                                                          text: driverReq['userDetail']['data']['name'],
+                                                                                          text: driverReq['userDetail']?['data']?['name']?.toString() ?? '',
                                                                                           size: media.width * eighteen,
                                                                                           color: textColor,
                                                                                           maxLines: 1,
@@ -4049,7 +4062,7 @@ class _MapsState extends State<Maps>
                                                                                     children: [
                                                                                       Builder(
                                                                                         builder: (context) {
-                                                                                          final rating = double.tryParse((driverReq['userDetail']['data']['rating'] ?? 0).toString()) ?? 0.0;
+                                                                                          final rating = double.tryParse((driverReq['userDetail']?['data']?['rating'] ?? 0).toString()) ?? 0.0;
                                                                                           final ratingStr = rating == rating.floor() ? rating.toInt().toString() : rating.toStringAsFixed(1);
                                                                                           return Row(
                                                                                             children: [

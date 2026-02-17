@@ -51,7 +51,6 @@ class _NamePageState extends State<NamePage> {
   final FocusNode _cityFocusNode = FocusNode();
   final FocusNode _stateFocusNode = FocusNode();
   final FocusNode _genderFocusNode = FocusNode();
-  final FocusNode _passengerPreferenceFocusNode = FocusNode();
   bool _isFirstnameFocused = false;
   bool _isLastnameFocused = false;
   bool _isEmailFocused = false;
@@ -65,7 +64,6 @@ class _NamePageState extends State<NamePage> {
   bool _isCityFocused = false;
   bool _isStateFocused = false;
   bool _isGenderFocused = false;
-  bool _isPassengerPreferenceFocused = false;
   bool _isReferralFocused = false;
   bool _loadingCep = false;
   MaskTextInputFormatter? _phoneMaskFormatter;
@@ -74,11 +72,10 @@ class _NamePageState extends State<NamePage> {
   MaskTextInputFormatter? _birthDateMaskFormatter;
   String _selectedState = '';
   String _selectedGender = '';
-  String _selectedPassengerPreference = 'both';
-
   @override
   void initState() {
     _error = '';
+    userPassengerPreference = 'both';
     _cpfMaskFormatter = MaskTextInputFormatter(
       mask: '###.###.###-##',
       filter: {"#": RegExp(r'[0-9]')},
@@ -104,9 +101,6 @@ class _NamePageState extends State<NamePage> {
     if (userCity.isNotEmpty) cityController.text = userCity;
     if (userState.isNotEmpty) _selectedState = userState;
     if (userGender.isNotEmpty) _selectedGender = userGender;
-    if (userPassengerPreference.isNotEmpty) {
-      _selectedPassengerPreference = userPassengerPreference;
-    }
     if (userCpf.isNotEmpty) cpfController.text = userCpf;
     if (userBirthDate.isNotEmpty && userBirthDate.length >= 10) {
       // userBirthDate vem como yyyy-MM-dd; exibir dd/mm/yyyy
@@ -143,9 +137,6 @@ class _NamePageState extends State<NamePage> {
         () => setState(() => _isStateFocused = _stateFocusNode.hasFocus));
     _genderFocusNode.addListener(
         () => setState(() => _isGenderFocused = _genderFocusNode.hasFocus));
-    _passengerPreferenceFocusNode.addListener(() => setState(() =>
-        _isPassengerPreferenceFocused =
-            _passengerPreferenceFocusNode.hasFocus));
     _referralFocusNode.addListener(
         () => setState(() => _isReferralFocused = _referralFocusNode.hasFocus));
 
@@ -324,7 +315,6 @@ class _NamePageState extends State<NamePage> {
     _cityFocusNode.dispose();
     _stateFocusNode.dispose();
     _genderFocusNode.dispose();
-    _passengerPreferenceFocusNode.dispose();
     cpfController.dispose();
     birthDateController.dispose();
     cepController.dispose();
@@ -362,13 +352,62 @@ class _NamePageState extends State<NamePage> {
         child: Stack(
           children: [
             Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Header com safe area, logo e botão voltar
+                Container(
+                  color: page,
+                  padding: EdgeInsets.only(
+                    top:
+                        MediaQuery.of(context).padding.top + media.width * 0.03,
+                    left: media.width * 0.05,
+                    right: media.width * 0.05,
+                    bottom: media.width * 0.03,
+                  ),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          color: textColor,
+                          size: media.height * 0.024,
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Image.asset(
+                            'assets/images/logo_mini.png',
+                            width: media.width * 0.12,
+                            height: media.width * 0.12,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) =>
+                                const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: media.height * 0.024),
+                    ],
+                  ),
+                ),
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: media.width * 0.05,
+                      right: media.width * 0.05,
+                      bottom: media.height * 0.06,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        MyText(
+                          text: languages[choosenLanguage]['text_sign_up'] ??
+                              'Cadastre-se',
+                          size: media.width * 0.055,
+                          fontweight: FontWeight.bold,
+                        ),
                         SizedBox(height: media.height * 0.02),
                         // Código de indicação (Opcional) - primeira opção no cadastro
                         MyText(
@@ -381,7 +420,7 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(height: media.height * 0.01),
                         Container(
                           height: 48,
-                          width: media.width * 0.9,
+                          width: double.infinity,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
@@ -414,26 +453,25 @@ class _NamePageState extends State<NamePage> {
                           ),
                         ),
                         SizedBox(height: media.height * 0.02),
-                        MyText(
-                          text: languages[choosenLanguage]['text_your_name'],
-                          size: media.width * twenty,
-                          fontweight: FontWeight.bold,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: MyText(
+                                text: languages[choosenLanguage]['text_first_name'] ?? 'Nome',
+                                size: media.width * fourteen,
+                                color: textColor.withOpacity(0.8),
+                              ),
+                            ),
+                            Expanded(
+                              child: MyText(
+                                text: languages[choosenLanguage]['text_last_name'] ?? 'Sobrenome',
+                                size: media.width * fourteen,
+                                color: textColor.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        SizedBox(
-                          width: media.width * 0.9,
-                          child: MyText(
-                            text: languages[choosenLanguage]['text_prob_name'],
-                            size: media.width * twelve,
-                            color: textColor.withOpacity(0.5),
-                            fontweight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
+                        SizedBox(height: media.height * 0.008),
                         Row(
                           children: [
                             Expanded(
@@ -454,7 +492,7 @@ class _NamePageState extends State<NamePage> {
                                       textController: firstname,
                                       focusNode: _firstnameFocusNode,
                                       hinttext: languages[choosenLanguage]
-                                          ['text_first_name'],
+                                          ['text_first_name'] ?? 'Nome',
                                       onTap: (val) {
                                         setState(() {});
                                       })),
@@ -478,7 +516,7 @@ class _NamePageState extends State<NamePage> {
                                       const EdgeInsets.only(left: 5, right: 5),
                                   child: MyTextField(
                                     hinttext: languages[choosenLanguage]
-                                        ['text_last_name'],
+                                        ['text_last_name'] ?? 'Sobrenome',
                                     textController: lastname,
                                     focusNode: _lastnameFocusNode,
                                     onTap: (val) {
@@ -491,6 +529,12 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(
                           height: media.height * 0.02,
                         ),
+                        MyText(
+                          text: languages[choosenLanguage]['text_enter_email'] ?? 'E-mail',
+                          size: media.width * fourteen,
+                          color: textColor.withOpacity(0.8),
+                        ),
+                        SizedBox(height: media.height * 0.008),
                         Container(
                             height: media.width * 0.13,
                             decoration: BoxDecoration(
@@ -514,7 +558,12 @@ class _NamePageState extends State<NamePage> {
                               },
                             )),
                         SizedBox(height: media.width * 0.04),
-                        // CPF
+                        MyText(
+                          text: languages[choosenLanguage]['text_cpf'] ?? 'CPF',
+                          size: media.width * fourteen,
+                          color: textColor.withOpacity(0.8),
+                        ),
+                        SizedBox(height: media.height * 0.008),
                         Container(
                           height: media.width * 0.13,
                           decoration: BoxDecoration(
@@ -559,7 +608,12 @@ class _NamePageState extends State<NamePage> {
                           ),
                         ),
                         SizedBox(height: media.width * 0.03),
-                        // Data de nascimento (máscara dd/mm/aaaa)
+                        MyText(
+                          text: languages[choosenLanguage]['text_birth_date'] ?? 'Data de nascimento',
+                          size: media.width * fourteen,
+                          color: textColor.withOpacity(0.8),
+                        ),
+                        SizedBox(height: media.height * 0.008),
                         Container(
                           height: media.width * 0.13,
                           decoration: BoxDecoration(
@@ -874,76 +928,6 @@ class _NamePageState extends State<NamePage> {
                           ),
                         ),
                         SizedBox(height: media.width * 0.03),
-                        // Preferência de atendimento
-                        MyText(
-                          text: languages[choosenLanguage]
-                                  ['text_preference_service'] ??
-                              'Preferência de atendimento',
-                          size: media.width * twelve,
-                          color: textColor,
-                          fontweight: FontWeight.w600,
-                        ),
-                        SizedBox(height: media.width * 0.015),
-                        Focus(
-                          focusNode: _passengerPreferenceFocusNode,
-                          child: SizedBox(
-                            width: media.width * 0.9,
-                            child: DropdownSearch<String>(
-                              selectedItem: _selectedPassengerPreference.isEmpty
-                                  ? null
-                                  : _selectedPassengerPreference,
-                              items: passengerPreferenceOptions
-                                  .map((p) => p['value']!)
-                                  .toList(),
-                              itemAsString: (String v) =>
-                                  languages[choosenLanguage]
-                                      ['text_passenger_$v'] ??
-                                  passengerPreferenceOptions.firstWhere(
-                                      (e) => e['value'] == v,
-                                      orElse: () => {
-                                            'value': v,
-                                            'label_pt': v
-                                          })['label_pt']!,
-                              onChanged: (v) {
-                                setState(() {
-                                  _selectedPassengerPreference = v ?? 'both';
-                                  userPassengerPreference =
-                                      _selectedPassengerPreference;
-                                });
-                              },
-                              popupProps: PopupProps.menu(
-                                showSearchBox: true,
-                                searchFieldProps: TextFieldProps(
-                                  decoration: InputDecoration(
-                                    hintText: languages[choosenLanguage]
-                                            ['text_search'] ??
-                                        'Buscar',
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                ),
-                              ),
-                              dropdownDecoratorProps: DropDownDecoratorProps(
-                                dropdownSearchDecoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]
-                                          ['text_passenger_preference_hint'] ??
-                                      'Preferência de passageiro',
-                                  hintStyle: GoogleFonts.poppins(
-                                      fontSize: media.width * fourteen,
-                                      color: hintColor),
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: media.width * 0.03),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: media.width * 0.05,
-                        ),
                         (isfromomobile == false)
                             ? Container(
                                 padding:
@@ -1358,8 +1342,6 @@ class _NamePageState extends State<NamePage> {
                                     userCity = cityController.text;
                                     userState = _selectedState;
                                     userGender = _selectedGender;
-                                    userPassengerPreference =
-                                        _selectedPassengerPreference;
                                     var result =
                                         await validateEmail(emailtext.text);
                                     if (result == 'success') {
@@ -1418,8 +1400,6 @@ class _NamePageState extends State<NamePage> {
                               userCity = cityController.text;
                               userState = _selectedState;
                               userGender = _selectedGender;
-                              userPassengerPreference =
-                                  _selectedPassengerPreference;
                               FocusManager.instance.primaryFocus?.unfocus();
                               loginReferralCode =
                                   _referralController.text.trim();

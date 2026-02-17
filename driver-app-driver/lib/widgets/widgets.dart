@@ -39,42 +39,44 @@ class _ButtonState extends State<Button> {
   Widget build(BuildContext context) {
     var media = MediaQuery.of(context).size;
 // F9C27D
-    return InkWell(
-      onTap: widget.onTap,
+    final child = Container(
+      decoration: BoxDecoration(
+          color: widget.color ?? buttonColor,
+          border: Border.all(
+              color: (widget.borcolor != null) ? widget.borcolor : page),
+          borderRadius: BorderRadius.all(Radius.circular(
+              (widget.borderRadius == null) ? 80.0 : widget.borderRadius))),
       child: Container(
-        decoration: BoxDecoration(
-            color: widget.color ?? buttonColor,
-            border: Border.all(
-                color: (widget.borcolor != null) ? widget.borcolor : page),
-            borderRadius: BorderRadius.all(Radius.circular(
-                (widget.borderRadius == null) ? 80.0 : widget.borderRadius))),
-        child: Container(
-          height: widget.height ?? media.width * 0.12,
-          width: (widget.width != null) ? widget.width : null,
-          padding: EdgeInsets.only(
-              left: media.width * twenty, right: media.width * twenty),
-          alignment: Alignment.center,
-          child: FittedBox(
-            fit: BoxFit.contain,
-            child: Text(
-              widget.text,
-              style: choosenLanguage == 'ar'
-                  ? GoogleFonts.cairo(
-                      fontSize: media.width * fourteen,
-                      color:
-                          (widget.textcolor != null) ? widget.textcolor : page,
-                      fontWeight: widget.fontweight ?? FontWeight.bold,
-                      letterSpacing: 1)
-                  : GoogleFonts.poppins(
-                      fontSize: media.width * sixteen,
-                      color:
-                          (widget.textcolor != null) ? widget.textcolor : page,
-                      fontWeight: widget.fontweight ?? FontWeight.bold,
-                      letterSpacing: 1),
-            ),
+        height: widget.height ?? media.width * 0.12,
+        width: (widget.width != null) ? widget.width : null,
+        padding: EdgeInsets.only(
+            left: media.width * twenty, right: media.width * twenty),
+        alignment: Alignment.center,
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: Text(
+            widget.text,
+            style: choosenLanguage == 'ar'
+                ? GoogleFonts.cairo(
+                    fontSize: media.width * fourteen,
+                    color:
+                        (widget.textcolor != null) ? widget.textcolor : page,
+                    fontWeight: widget.fontweight ?? FontWeight.bold,
+                    letterSpacing: 1)
+                : GoogleFonts.poppins(
+                    fontSize: media.width * sixteen,
+                    color:
+                        (widget.textcolor != null) ? widget.textcolor : page,
+                    fontWeight: widget.fontweight ?? FontWeight.bold,
+                    letterSpacing: 1),
           ),
         ),
       ),
+    );
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onTap,
+      child: child,
     );
   }
 }

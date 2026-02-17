@@ -6,6 +6,7 @@ import 'package:flutter_driver/pages/onTripPage/map_page.dart';
 import 'package:flutter_driver/pages/onTripPage/rides.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pinput/pinput.dart';
+import '../../config/api_config.dart';
 import '../../styles/styles.dart';
 import '../../functions/functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,6 +36,7 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
   dynamic aController;
   bool _resend = false;
   String _error = '';
+  String _successMessage = '';
   int _resendDuration = 90; // Primeiro tempo: 90 segundos
   int _resendCountToday = 0;
   static const int _maxResendPerDay = 6;
@@ -88,22 +90,23 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
 //navigate
   navigate(verify) {
     if (verify == true) {
-      if (userDetails['uploaded_document'] == false) {
+      final uploadedDoc = userDetails['uploaded_document'];
+      final approve = userDetails['approve'];
+      if (uploadedDoc == false || uploadedDoc == null) {
         Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
                 builder: (context) => const RequiredInformation()),
             (route) => false);
-      } else if (userDetails['uploaded_document'] == true &&
-          userDetails['approve'] == false) {
+      } else if (uploadedDoc == true && approve == false) {
         Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
               builder: (context) => const RequiredInformation(),
             ),
             (route) => false);
-      } else if (userDetails['uploaded_document'] == true &&
-          userDetails['approve'] == true) {
+      } else {
+        // uploadedDoc == true && (approve == true ou approve null/outro) → tela principal
         if (userDetails['role'] != 'owner') {
           Navigator.pushAndRemoveUntil(
               context,
@@ -134,6 +137,13 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
   }
 
   otpFalse() async {
+    // Quando login é por e-mail/senha (auth), só usamos validateOtpAuth (validate-otp). Nunca verifyUser.
+    if (loginEmailPswd == 1) {
+      return;
+    }
+    if (widget.from == 'email' || authTempTokenForOtp != null) {
+      return;
+    }
     // Não validar automaticamente no fluxo de celular: usuário deve digitar o código SMS
     if (phoneAuthCheck == false && isverifyemail == true) {
       emaillogin();
@@ -202,58 +212,81 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     var media = MediaQuery.of(context).size;
+    final paddingH = media.width * 0.06;
+    final prefix = (languages[choosenLanguage] ?? languages['en'])?['text_enter_otp_at'] ?? 'Digite o código enviado para ';
+    // Fluxo auth (e-mail): priorizar e-mail; senão celular; senão email do cadastro
+    final otpSubtitle = (widget.from == 'email' || authTempTokenForOtp != null) &&
+            authEmailOrMobileForOtp != null &&
+            authEmailOrMobileForOtp!.isNotEmpty
+        ? prefix + authEmailOrMobileForOtp!
+        : isfromomobile == true
+            ? prefix + (countries[phcode]?['dial_code'] ?? '') + phnumber
+            : prefix + email;
+
     return Material(
       color: page,
-      child: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: AnimatedBuilder(
-                    animation: aController,
-                    builder: (context, child) {
-                      if (timerString == "0:00") {
-                        _resend = true;
-                      }
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                (isfromomobile == true)
-                                    ? SizedBox(
-                                        child: MyText(
-                                          // ignore: prefer_interpolation_to_compose_strings
-                                          text: ((languages[choosenLanguage] ??
-                                                          languages['en'])?[
-                                                      'text_enter_otp_at'] ??
-                                                  'Enter the OTP number send to you at ') +
-                                              (countries[phcode]
-                                                      ?['dial_code'] ??
-                                                  '') +
-                                              phnumber,
-                                          size: media.width * twenty,
-                                          fontweight: FontWeight.bold,
-                                        ),
-                                      )
-                                    : SizedBox(
-                                        child: MyText(
-                                          // ignore: prefer_interpolation_to_compose_strings
-                                          text: languages[choosenLanguage]
-                                                  ['text_enter_otp_at'] +
-                                              email,
-                                          size: media.width * twenty,
-                                          fontweight: FontWeight.bold,
-                                        ),
-                                      ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Pinput(
+      child: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header com botão voltar e logo
+                Container(
+                  color: page,
+                  padding: EdgeInsets.only(
+                    top: media.width * 0.03,
+                    left: media.width * 0.05,
+                    right: media.width * 0.05,
+                    bottom: media.width * 0.03,
+                  ),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          color: textColor,
+                          size: media.height * 0.024,
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Image.asset(
+                            'assets/images/logo_mini.png',
+                            width: media.width * 0.12,
+                            height: media.width * 0.12,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) =>
+                                const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: media.height * 0.024),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: AnimatedBuilder(
+                      animation: aController,
+                      builder: (context, child) {
+                        if (timerString == "0:00") {
+                          _resend = true;
+                        }
+                        return SingleChildScrollView(
+                          padding: EdgeInsets.symmetric(horizontal: paddingH, vertical: media.height * 0.02),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              MyText(
+                                text: otpSubtitle,
+                                size: media.width * twenty,
+                                fontweight: FontWeight.bold,
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: media.height * 0.02),
+                              Pinput(
                                   length: 6,
                                   onChanged: (val) {
                                     otpNumber = _pinPutController2.text;
@@ -321,42 +354,80 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                                             loginLoading = true;
                                             valueNotifierLogin
                                                 .incrementNotifier();
-                                            var verify =
-                                                await verifyUser(phnumber);
-                                            if (verify == false) {
-                                              await phoneAuth(countries[phcode]
-                                                      ['dial_code'] +
-                                                  phnumber);
+                                            if (loginEmailPswd == 1 &&
+                                                authTempTokenForOtp != null) {
+                                              var sendResult =
+                                                  await sendOtpAuth();
                                               setState(() {
                                                 _error = '';
                                                 _pinPutController2.text = '';
                                                 _resend = false;
-                                                _resendCountToday++;
+                                              });
+                                              if (sendResult == 'success') {
+                                                setState(() {
+                                                  _successMessage = languages[choosenLanguage]['text_otp_resent'] ?? 'Código reenviado! Verifique seu e-mail.';
+                                                  _error = '';
+                                                });
+                                                Future.delayed(const Duration(seconds: 3), () {
+                                                  if (mounted) setState(() => _successMessage = '');
+                                                });
                                                 _resendDuration =
                                                     _resendDuration * 2;
-                                              });
-                                              await _saveResendCount();
-                                              aController.dispose();
-                                              aController = AnimationController(
-                                                  vsync: this,
-                                                  duration: Duration(
-                                                      seconds:
-                                                          _resendDuration));
-                                              aController.reverse(
-                                                  from: _resendDuration
-                                                      .toDouble());
-                                              if (mounted) setState(() {});
-                                            } else {
-                                              setState(() {
-                                                _pinPutController2.text = '';
-                                                _error = verify is String
-                                                    ? verify
-                                                    : (languages[
-                                                                choosenLanguage]
-                                                            ?[
-                                                            'text_mobile_already_taken'] ??
-                                                        'O número de celular já está em uso.');
-                                              });
+                                                aController.dispose();
+                                                aController =
+                                                    AnimationController(
+                                                        vsync: this,
+                                                        duration: Duration(
+                                                            seconds:
+                                                                _resendDuration));
+                                                aController.reverse(
+                                                    from: _resendDuration
+                                                        .toDouble());
+                                              } else {
+                                                setState(() =>
+                                                    _error = sendResult);
+                                              }
+                                            } else if (loginEmailPswd != 1 &&
+                                                isfromomobile == true) {
+                                              var verify =
+                                                  await verifyUser(phnumber);
+                                              if (verify == false) {
+                                                await phoneAuth(
+                                                    countries[phcode]
+                                                            ['dial_code'] +
+                                                        phnumber);
+                                                setState(() {
+                                                  _error = '';
+                                                  _pinPutController2.text = '';
+                                                  _resend = false;
+                                                  _resendCountToday++;
+                                                  _resendDuration =
+                                                      _resendDuration * 2;
+                                                });
+                                                await _saveResendCount();
+                                                aController.dispose();
+                                                aController =
+                                                    AnimationController(
+                                                        vsync: this,
+                                                        duration: Duration(
+                                                            seconds:
+                                                                _resendDuration));
+                                                aController.reverse(
+                                                    from: _resendDuration
+                                                        .toDouble());
+                                                if (mounted) setState(() {});
+                                              } else {
+                                                setState(() {
+                                                  _pinPutController2.text = '';
+                                                  _error = verify is String
+                                                      ? verify
+                                                      : (languages[
+                                                                  choosenLanguage]
+                                                              ?[
+                                                              'text_mobile_already_taken'] ??
+                                                          'O número de celular já está em uso.');
+                                                });
+                                              }
                                             }
                                             loginLoading = false;
                                             valueNotifierLogin
@@ -416,31 +487,102 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                                 ),
                               ],
                             ),
-                          ),
-                          SizedBox(
-                            height: media.height * 0.05,
-                          ),
-                        ],
-                      );
+                          );
                     }),
               ),
-              if (_error != '')
-                Column(
-                  children: [
-                    SizedBox(
-                        width: media.width * 0.9,
-                        child: MyText(
-                          text: _error,
-                          color: Colors.red,
-                          size: media.width * fourteen,
-                          textAlign: TextAlign.center,
-                        )),
-                    SizedBox(
-                      height: media.width * 0.025,
-                    )
-                  ],
+              if (_successMessage != '')
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: paddingH, vertical: media.width * 0.02),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: media.width * 0.04,
+                      vertical: media.width * 0.035,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.green.shade300,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline_rounded,
+                          color: Colors.green.shade700,
+                          size: media.width * 0.065,
+                        ),
+                        SizedBox(width: media.width * 0.03),
+                        Expanded(
+                          child: MyText(
+                            text: _successMessage,
+                            color: Colors.green.shade800,
+                            size: media.width * fourteen,
+                            textAlign: TextAlign.start,
+                            fontweight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              (isfromomobile == true)
+              if (_error != '')
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: paddingH, vertical: media.width * 0.02),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: media.width * 0.04,
+                      vertical: media.width * 0.035,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.red.shade300,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: Colors.red.shade700,
+                          size: media.width * 0.065,
+                        ),
+                        SizedBox(width: media.width * 0.03),
+                        Expanded(
+                          child: MyText(
+                            text: _error,
+                            color: Colors.red.shade800,
+                            size: media.width * fourteen,
+                            textAlign: TextAlign.start,
+                            fontweight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              (isfromomobile == true && loginEmailPswd != 1)
                   ? Container(
                       alignment: Alignment.center,
                       child: Button(
@@ -513,21 +655,55 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                               loginLoading = true;
 
                               valueNotifierLogin.incrementNotifier();
-                              var result = await emailVerify(email, otpNumber);
-
-                              if (result == 'success') {
-                                isfromomobile = false;
-                                _error = '';
-                                var verify = await verifyUser(email);
-                                value = 1;
-                                navigate(verify);
+                              if (authTempTokenForOtp != null ||
+                                  loginEmailPswd == 1) {
+                                if (authTempTokenForOtp == null ||
+                                    authEmailOrMobileForOtp == null ||
+                                    authEmailOrMobileForOtp!.isEmpty) {
+                                  setState(() {
+                                    _error = languages[choosenLanguage]
+                                            ['text_otp_error'] ??
+                                        'Sessão expirada. Faça login novamente.';
+                                  });
+                                  loginLoading = false;
+                                  valueNotifierLogin.incrementNotifier();
+                                  return;
+                                }
+                                var ok = await validateOtpAuth(otpNumber);
+                                if (ok) {
+                                  isfromomobile = false;
+                                  _error = '';
+                                  var u = await getUserDetails();
+                                  if (u == 'logout') return;
+                                  value = 1;
+                                  navigate(true);
+                                } else {
+                                  setState(() {
+                                    _pinPutController2.clear();
+                                    otpNumber = '';
+                                    _error = languages[choosenLanguage]
+                                            ['text_otp_error'] ??
+                                        'Código inválido';
+                                  });
+                                }
                               } else {
-                                setState(() {
-                                  _pinPutController2.clear();
-                                  otpNumber = '';
-                                  _error = languages[choosenLanguage]
-                                      ['text_otp_error'];
-                                });
+                                var result =
+                                    await emailVerify(email, otpNumber);
+
+                                if (result == 'success') {
+                                  isfromomobile = false;
+                                  _error = '';
+                                  var verify = await verifyUser(email);
+                                  value = 1;
+                                  navigate(verify);
+                                } else {
+                                  setState(() {
+                                    _pinPutController2.clear();
+                                    otpNumber = '';
+                                    _error = languages[choosenLanguage]
+                                        ['text_otp_error'];
+                                  });
+                                }
                               }
                             }
                             loginLoading = false;
@@ -582,6 +758,7 @@ class _OtpState extends State<Otp> with TickerProviderStateMixin {
                   ))
               : Container()
         ],
+      ),
       ),
     );
   }
