@@ -40,17 +40,57 @@ class _AggreementPageState extends State<AggreementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-                child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
+            // Header: safe area, voltar e logo
+            Container(
+              color: page,
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + media.width * 0.03,
+                left: media.width * 0.05,
+                right: media.width * 0.05,
+                bottom: media.width * 0.03,
+              ),
+              child: Row(
                 children: [
-                  SizedBox(
-                    height: media.height * 0.01,
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(
+                      Icons.arrow_back_ios,
+                      color: textColor,
+                      size: media.height * 0.024,
+                    ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.only(top: 15, bottom: 15),
-                    child: MyText(
+                  Expanded(
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        'assets/images/logo_mini.png',
+                        width: media.width * 0.12,
+                        height: media.width * 0.12,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) =>
+                            const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: media.height * 0.024),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: media.width * 0.06,
+                  right: media.width * 0.06,
+                  bottom: media.height * 0.06,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: media.height * 0.02),
+                    Container(
+                      padding: const EdgeInsets.only(top: 15, bottom: 15),
+                      child: MyText(
                       text: languages[choosenLanguage]['text_accept_head'],
                       size: media.width * twenty,
                       fontweight: FontWeight.bold,
@@ -189,12 +229,18 @@ class _AggreementPageState extends State<AggreementPage> {
                         ],
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
-            )),
+            ),
             ischeck == true
                 ? Padding(
-                    padding: const EdgeInsets.only(top: 15, bottom: 15),
+                    padding: EdgeInsets.only(
+                      top: 15,
+                      bottom: MediaQuery.of(context).padding.bottom + 15,
+                      left: media.width * 0.06,
+                      right: media.width * 0.06,
+                    ),
                     child: Button(
                         onTap: () async {
                           // Validar campos antes de registrar
@@ -258,7 +304,12 @@ class _AggreementPageState extends State<AggreementPage> {
                         text: languages[choosenLanguage]['text_next']),
                   )
                 : Padding(
-                    padding: const EdgeInsets.only(top: 15, bottom: 15),
+                    padding: EdgeInsets.only(
+                      top: 15,
+                      bottom: MediaQuery.of(context).padding.bottom + 15,
+                      left: media.width * 0.06,
+                      right: media.width * 0.06,
+                    ),
                     child: Button(
                         onTap: () async {},
                         text: languages[choosenLanguage]['text_next'],

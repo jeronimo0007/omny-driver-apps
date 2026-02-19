@@ -5,6 +5,7 @@ import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translations/translation.dart';
 import '../../widgets/widgets.dart';
+import 'agreement.dart';
 import 'login.dart';
 
 String name = ''; //name of user
@@ -41,9 +42,7 @@ class _NamePageState extends State<NamePage> {
   FocusNode cpfFocus = FocusNode();
   FocusNode birthDateFocus = FocusNode();
   FocusNode genderFocus = FocusNode();
-  FocusNode passengerPreferenceFocus = FocusNode();
   String? selectedGender;
-  String? selectedPassengerPreference;
 
   // Estados de validação
   bool firstnameError = false;
@@ -52,19 +51,16 @@ class _NamePageState extends State<NamePage> {
   bool genderError = false;
   bool cpfError = false;
   bool birthDateError = false;
-  bool passengerPreferenceError = false;
-
+  bool referralError = false; // No user o código de indicação é obrigatório
+  bool phoneError = false; // Celular obrigatório para concluir cadastro
   @override
   void initState() {
     _error = '';
+    passengerPreference = 'nao_tenho_preferencia';
 
     if (isLoginemail == true) {
       emailtext.text = email;
     }
-
-    // Definir preferência de motorista padrão
-    selectedPassengerPreference = 'nao_tenho_preferencia';
-    passengerPreference = 'nao_tenho_preferencia';
 
     firstnameFocus.addListener(() {
       setState(() {});
@@ -87,9 +83,6 @@ class _NamePageState extends State<NamePage> {
     genderFocus.addListener(() {
       setState(() {});
     });
-    passengerPreferenceFocus.addListener(() {
-      setState(() {});
-    });
     referralFocus.addListener(() => setState(() {}));
 
     super.initState();
@@ -106,7 +99,6 @@ class _NamePageState extends State<NamePage> {
     cpfFocus.dispose();
     birthDateFocus.dispose();
     genderFocus.dispose();
-    passengerPreferenceFocus.dispose();
     cpfController.dispose();
     birthDateController.dispose();
     super.dispose();
@@ -125,8 +117,12 @@ class _NamePageState extends State<NamePage> {
 
   bool showtoast = false;
 
-  // Função de validação
+  // Função de validação (no user código de indicação e celular são obrigatórios)
   bool validateFields() {
+    final phoneDigits = controller.text.replaceAll(RegExp(r'[^\d]'), '');
+    final minLen = (phcode != null && countries[phcode] != null && countries[phcode]['dial_min_length'] != null)
+        ? countries[phcode]['dial_min_length'] as int
+        : 10;
     setState(() {
       firstnameError = firstname.text.trim().isEmpty;
       lastnameError = lastname.text.trim().isEmpty;
@@ -134,8 +130,8 @@ class _NamePageState extends State<NamePage> {
       genderError = selectedGender == null || selectedGender!.isEmpty;
       cpfError = cpfController.text.replaceAll(RegExp(r'[^\d]'), '').isEmpty;
       birthDateError = birthDateController.text.trim().isEmpty;
-      passengerPreferenceError = selectedPassengerPreference == null ||
-          selectedPassengerPreference!.isEmpty;
+      referralError = _referralController.text.trim().isEmpty;
+      phoneError = phoneDigits.length < minLen;
     });
 
     return !firstnameError &&
@@ -144,7 +140,8 @@ class _NamePageState extends State<NamePage> {
         !genderError &&
         !cpfError &&
         !birthDateError &&
-        !passengerPreferenceError;
+        !referralError &&
+        !phoneError;
   }
 
   @override
@@ -160,33 +157,86 @@ class _NamePageState extends State<NamePage> {
         child: Stack(
           children: [
             Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Header com safe area, logo e botão voltar
+                Container(
+                  color: page,
+                  padding: EdgeInsets.only(
+                    top:
+                        MediaQuery.of(context).padding.top + media.width * 0.03,
+                    left: media.width * 0.05,
+                    right: media.width * 0.05,
+                    bottom: media.width * 0.03,
+                  ),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          color: textColor,
+                          size: media.height * 0.024,
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Image.asset(
+                            'assets/images/logo_mini.png',
+                            width: media.width * 0.12,
+                            height: media.width * 0.12,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) =>
+                                const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: media.height * 0.024),
+                    ],
+                  ),
+                ),
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: media.width * 0.05,
+                      right: media.width * 0.05,
+                      bottom: media.height * 0.06,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        MyText(
+                          text: languages[choosenLanguage]['text_sign_up'] ??
+                              'Cadastre-se',
+                          size: media.width * 0.055,
+                          fontweight: FontWeight.bold,
+                        ),
                         SizedBox(height: media.height * 0.02),
-                        // Código de indicação (Opcional) - primeira opção no cadastro
+                        // Código de indicação (obrigatório no user)
                         MyText(
                           text: languages[choosenLanguage]
-                                  ['text_referral_optional'] ??
-                              'Código de indicação (Opcional)',
+                                  ['text_referral_required'] ??
+                              languages[choosenLanguage]
+                                  ['text_label_referral'] ??
+                              'Código de indicação',
                           size: media.width * fourteen,
-                          color: hintColor,
+                          color: referralError ? Colors.red : hintColor,
                         ),
                         SizedBox(height: media.height * 0.01),
                         Container(
                           height: 48,
-                          width: media.width * 0.9,
+                          width: double.infinity,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: referralFocus.hasFocus
-                                  ? buttonColor
-                                  : textColor.withOpacity(0.5),
-                              width: referralFocus.hasFocus ? 2.0 : 1.0,
+                              color: referralError
+                                  ? Colors.red
+                                  : (referralFocus.hasFocus
+                                      ? buttonColor
+                                      : textColor.withOpacity(0.5)),
+                              width: referralError || referralFocus.hasFocus ? 2.0 : 1.0,
                             ),
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -208,37 +258,41 @@ class _NamePageState extends State<NamePage> {
                               fontSize: media.width * fourteen,
                               color: textColor,
                             ),
-                            onChanged: (_) => setState(() {}),
+                            onChanged: (_) {
+                              setState(() {
+                                if (referralError &&
+                                    _referralController.text.trim().isNotEmpty) {
+                                  referralError = false;
+                                }
+                              });
+                            },
                           ),
                         ),
                         SizedBox(height: media.height * 0.02),
-                        MyText(
-                          text: languages[choosenLanguage]['text_your_name'],
-                          size: media.width * twenty,
-                          fontweight: FontWeight.bold,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: MyText(
+                                text: languages[choosenLanguage]['text_first_name'] ?? 'Nome',
+                                size: media.width * fourteen,
+                                color: textColor.withOpacity(0.8),
+                              ),
+                            ),
+                            Expanded(
+                              child: MyText(
+                                text: languages[choosenLanguage]['text_last_name'] ?? 'Sobrenome',
+                                size: media.width * fourteen,
+                                color: textColor.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        SizedBox(
-                          width: media.width * 0.9,
-                          child: MyText(
-                            text: languages[choosenLanguage]['text_prob_name'],
-                            size: media.width * twelve,
-                            color: textColor.withOpacity(0.5),
-                            fontweight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
+                        SizedBox(height: media.height * 0.008),
                         Row(
                           children: [
                             Expanded(
                               child: Container(
-                                  constraints: BoxConstraints(
-                                    minHeight: media.width * 0.13,
-                                  ),
+                                  height: media.width * 0.13,
                                   decoration: BoxDecoration(
                                     color: page,
                                     borderRadius: BorderRadius.circular(10),
@@ -274,7 +328,7 @@ class _NamePageState extends State<NamePage> {
                                   child: MyTextField(
                                       textController: firstname,
                                       hinttext: languages[choosenLanguage]
-                                          ['text_first_name'],
+                                          ['text_first_name'] ?? 'Nome',
                                       maxline: null,
                                       focusNode: firstnameFocus,
                                       onTap: (val) {
@@ -293,9 +347,7 @@ class _NamePageState extends State<NamePage> {
                             ),
                             Expanded(
                               child: Container(
-                                  constraints: BoxConstraints(
-                                    minHeight: media.width * 0.13,
-                                  ),
+                                  height: media.width * 0.13,
                                   decoration: BoxDecoration(
                                     color: page,
                                     borderRadius: BorderRadius.circular(10),
@@ -330,7 +382,7 @@ class _NamePageState extends State<NamePage> {
                                   alignment: Alignment.centerLeft,
                                   child: MyTextField(
                                     hinttext: languages[choosenLanguage]
-                                        ['text_last_name'],
+                                        ['text_last_name'] ?? 'Sobrenome',
                                     textController: lastname,
                                     maxline: null,
                                     focusNode: lastnameFocus,
@@ -349,53 +401,12 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(
                           height: media.height * 0.02,
                         ),
-                        Container(
-                            height: media.width * 0.13,
-                            decoration: BoxDecoration(
-                              color: page,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: emailError
-                                    ? Colors.red
-                                    : (emailFocus.hasFocus
-                                        ? buttonColor
-                                        : textColor),
-                                width:
-                                    (emailError || emailFocus.hasFocus) ? 2 : 1,
-                              ),
-                              boxShadow: (emailError || emailFocus.hasFocus)
-                                  ? [
-                                      BoxShadow(
-                                        color: emailError
-                                            ? Colors.red.withOpacity(0.3)
-                                            : buttonColor.withOpacity(0.3),
-                                        spreadRadius: 2,
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            padding: const EdgeInsets.only(left: 5, right: 5),
-                            child: MyTextField(
-                              textController: emailtext,
-                              readonly: (isfromomobile == false) ? true : false,
-                              hinttext: languages[choosenLanguage]
-                                  ['text_enter_email'],
-                              focusNode: emailFocus,
-                              onTap: (val) {
-                                setState(() {
-                                  if (emailError &&
-                                      emailtext.text.trim().isNotEmpty) {
-                                    emailError = false;
-                                  }
-                                });
-                              },
-                            )),
-                        SizedBox(
-                          height: media.height * 0.02,
+                        MyText(
+                          text: languages[choosenLanguage]['text_select_gender'] ?? 'Gênero',
+                          size: media.width * fourteen,
+                          color: textColor.withOpacity(0.8),
                         ),
-                        // Campo de Gênero (Dropdown com busca)
+                        SizedBox(height: media.height * 0.008),
                         Container(
                           decoration: BoxDecoration(
                             color: page,
@@ -480,7 +491,64 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(
                           height: media.height * 0.02,
                         ),
-                        // Campo de CPF
+                        MyText(
+                          text: languages[choosenLanguage]['text_enter_email'] ?? 'E-mail',
+                          size: media.width * fourteen,
+                          color: textColor.withOpacity(0.8),
+                        ),
+                        SizedBox(height: media.height * 0.008),
+                        Container(
+                            height: media.width * 0.13,
+                            decoration: BoxDecoration(
+                              color: page,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: emailError
+                                    ? Colors.red
+                                    : (emailFocus.hasFocus
+                                        ? buttonColor
+                                        : textColor),
+                                width:
+                                    (emailError || emailFocus.hasFocus) ? 2 : 1,
+                              ),
+                              boxShadow: (emailError || emailFocus.hasFocus)
+                                  ? [
+                                      BoxShadow(
+                                        color: emailError
+                                            ? Colors.red.withOpacity(0.3)
+                                            : buttonColor.withOpacity(0.3),
+                                        spreadRadius: 2,
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            padding: const EdgeInsets.only(left: 5, right: 5),
+                            child: MyTextField(
+                              textController: emailtext,
+                              readonly: (isfromomobile == false) ? true : false,
+                              hinttext: languages[choosenLanguage]
+                                  ['text_enter_email'],
+                              focusNode: emailFocus,
+                              onTap: (val) {
+                                setState(() {
+                                  if (emailError &&
+                                      emailtext.text.trim().isNotEmpty) {
+                                    emailError = false;
+                                  }
+                                });
+                              },
+                            )),
+                        SizedBox(
+                          height: media.height * 0.02,
+                        ),
+                        MyText(
+                          text: languages[choosenLanguage]['text_enter_cpf'] ?? 'CPF',
+                          size: media.width * fourteen,
+                          color: textColor.withOpacity(0.8),
+                        ),
+                        SizedBox(height: media.height * 0.008),
                         Container(
                           height: media.width * 0.13,
                           decoration: BoxDecoration(
@@ -541,7 +609,12 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(
                           height: media.height * 0.02,
                         ),
-                        // Campo de Data de Nascimento
+                        MyText(
+                          text: languages[choosenLanguage]['text_enter_birth_date'] ?? 'Data de nascimento',
+                          size: media.width * fourteen,
+                          color: textColor.withOpacity(0.8),
+                        ),
+                        SizedBox(height: media.height * 0.008),
                         Container(
                           height: media.width * 0.13,
                           decoration: BoxDecoration(
@@ -604,113 +677,37 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(
                           height: media.height * 0.02,
                         ),
-                        // Campo de Preferência de Motorista (Dropdown com busca)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: page,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: passengerPreferenceError
-                                  ? Colors.red
-                                  : (passengerPreferenceFocus.hasFocus
-                                      ? buttonColor
-                                      : textColor),
-                              width: (passengerPreferenceError ||
-                                      passengerPreferenceFocus.hasFocus)
-                                  ? 2
-                                  : 1,
-                            ),
-                            boxShadow: (passengerPreferenceError ||
-                                    passengerPreferenceFocus.hasFocus)
-                                ? [
-                                    BoxShadow(
-                                      color: passengerPreferenceError
-                                          ? Colors.red.withOpacity(0.3)
-                                          : buttonColor.withOpacity(0.3),
-                                      spreadRadius: 2,
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          padding: const EdgeInsets.only(left: 5, right: 5),
-                          child: DropdownSearch<String>(
-                            selectedItem: selectedPassengerPreference,
-                            items: const [
-                              'masculino',
-                              'feminino',
-                              'nao_tenho_preferencia'
-                            ],
-                            itemAsString: (String v) {
-                              if (v == 'masculino')
-                                return languages[choosenLanguage]
-                                        ['text_masculine'] ??
-                                    'Masculino';
-                              if (v == 'feminino')
-                                return languages[choosenLanguage]
-                                        ['text_feminine'] ??
-                                    'Feminino';
-                              return languages[choosenLanguage]
-                                      ['text_no_preference'] ??
-                                  'Não tenho preferência';
-                            },
-                            onChanged: (String? value) {
-                              setState(() {
-                                selectedPassengerPreference = value;
-                                passengerPreference = value ?? '';
-                                if (passengerPreferenceError &&
-                                    value != null &&
-                                    value.isNotEmpty)
-                                  passengerPreferenceError = false;
-                              });
-                            },
-                            popupProps: PopupProps.menu(
-                              showSearchBox: true,
-                              searchFieldProps: TextFieldProps(
-                                decoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]
-                                          ['text_search'] ??
-                                      'Buscar',
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8)),
-                                ),
-                              ),
-                            ),
-                            dropdownDecoratorProps: DropDownDecoratorProps(
-                              dropdownSearchDecoration: InputDecoration(
-                                hintText: languages[choosenLanguage]
-                                        ['text_passenger_preference'] ??
-                                    'Preferência de Motorista',
-                                hintStyle: getGoogleFontStyle(
-                                    fontSize: media.width * fourteen,
-                                    color: hintColor),
-                                border: InputBorder.none,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: media.width * 0.05,
-                        ),
-                        (isfromomobile == false)
-                            ? Container(
+                        // Celular sempre visível no cadastro (obrigatório)
+                        Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  MyText(
+                                    text: languages[choosenLanguage]['text_phone_number'] ?? 'Celular',
+                                    size: media.width * fourteen,
+                                    color: textColor.withOpacity(0.8),
+                                  ),
+                                  SizedBox(height: media.height * 0.008),
+                                  Container(
                                 padding:
                                     const EdgeInsets.fromLTRB(10, 0, 10, 0),
                                 height: 55,
-                                width: media.width * 0.9,
+                                width: double.infinity,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: phoneFocus.hasFocus
-                                        ? buttonColor
-                                        : textColor,
-                                    width: phoneFocus.hasFocus ? 2 : 1,
+                                    color: phoneError
+                                        ? Colors.red
+                                        : (phoneFocus.hasFocus
+                                            ? buttonColor
+                                            : textColor),
+                                    width: (phoneError || phoneFocus.hasFocus) ? 2 : 1,
                                   ),
-                                  boxShadow: phoneFocus.hasFocus
+                                  boxShadow: (phoneError || phoneFocus.hasFocus)
                                       ? [
                                           BoxShadow(
-                                            color: buttonColor.withOpacity(0.3),
+                                            color: phoneError
+                                                ? Colors.red.withOpacity(0.3)
+                                                : buttonColor.withOpacity(0.3),
                                             spreadRadius: 2,
                                             blurRadius: 8,
                                             offset: const Offset(0, 2),
@@ -943,17 +940,18 @@ class _NamePageState extends State<NamePage> {
                                           focusNode: phoneFocus,
                                           onChanged: (val) {
                                             setState(() {
-                                              phnumber = controller.text;
+                                              phnumber = controller.text.replaceAll(RegExp(r'[^\d]'), '');
+                                              if (phoneError && phnumber.length >= (countries[phcode]?['dial_min_length'] ?? 10)) {
+                                                phoneError = false;
+                                              }
                                             });
-                                            if (controller.text.length ==
-                                                countries[phcode]
-                                                    ['dial_max_length']) {
+                                            if (controller.text.replaceAll(RegExp(r'[^\d]'), '').length >=
+                                                (countries[phcode]?['dial_max_length'] ?? 11)) {
                                               FocusManager.instance.primaryFocus
                                                   ?.unfocus();
                                             }
                                           },
-                                          maxLength: countries[phcode]
-                                              ['dial_max_length'],
+                                          maxLength: countries[phcode]?['dial_max_length'] ?? 11,
                                           style: getGoogleFontStyle(
                                                   color: textColor,
                                                   fontSize:
@@ -963,15 +961,6 @@ class _NamePageState extends State<NamePage> {
                                           keyboardType: TextInputType.number,
                                           decoration: InputDecoration(
                                             counterText: '',
-                                            prefixText:
-                                                '${countries[phcode]['dial_code']} ',
-                                            prefixStyle: getGoogleFontStyle(
-                                                    color: textColor,
-                                                    fontSize:
-                                                        media.width * sixteen,
-                                                    fontWeight:
-                                                        FontWeight.normal)
-                                                .copyWith(letterSpacing: 1),
                                             hintStyle: getGoogleFontStyle(
                                               color: textColor.withOpacity(0.7),
                                               fontSize: media.width * sixteen,
@@ -984,8 +973,9 @@ class _NamePageState extends State<NamePage> {
                                     )
                                   ],
                                 ),
-                              )
-                            : Container(),
+                              ),
+                                ],
+                              ),
                         const SizedBox(
                           height: 20,
                         ),
@@ -1066,30 +1056,40 @@ class _NamePageState extends State<NamePage> {
                                               name = firstname.text;
                                             }
                                             email = emailtext.text;
-                                            var result = await validateEmail(
-                                                emailtext.text);
+                                            phnumber = controller.text.replaceAll(RegExp(r'[^\d]'), '');
+                                            final countryCode = countries[phcode]?['dial_code']?.toString() ?? '';
+                                            final mobileDigits = controller.text.replaceAll(RegExp(r'[^\d]'), '');
+                                            final docDigits = cpfController.text.replaceAll(RegExp(r'[^\d]'), '');
+                                            var result = await validateEmailMobileDocument(
+                                                emailtext.text.trim(),
+                                                mobileDigits,
+                                                countryCode,
+                                                docDigits);
                                             if (result == 'success') {
                                               isfromomobile = true;
                                               isverifyemail = true;
-
                                               currentPage = 3;
+                                              loginLoading = false;
+                                              valueNotifierLogin.incrementNotifier();
+                                              if (mounted) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => const AggreementPage(),
+                                                  ),
+                                                );
+                                              }
                                             } else {
                                               setState(() {
-                                                _error = serverErrorMessage
-                                                        .isNotEmpty
-                                                    ? serverErrorMessage
-                                                    : result.toString();
+                                                _error = result.toString();
                                               });
-                                              // showToast();
                                             }
                                           } else {
-                                            // showToast();
                                             setState(() {
                                               _error =
                                                   languages[choosenLanguage]
                                                       ['text_email_validation'];
                                             });
-                                            // showToast();
                                           }
                                           loginLoading = false;
                                           valueNotifierLogin
@@ -1106,8 +1106,13 @@ class _NamePageState extends State<NamePage> {
                                                   .isNotEmpty &&
                                               birthDateController
                                                   .text.isNotEmpty &&
-                                              selectedPassengerPreference !=
-                                                  null)
+                                              _referralController.text
+                                                  .trim()
+                                                  .isNotEmpty &&
+                                              controller.text.replaceAll(RegExp(r'[^\d]'), '').length >=
+                                                  (countries[phcode] != null && countries[phcode]['dial_min_length'] != null
+                                                      ? countries[phcode]['dial_min_length'] as int
+                                                      : 10))
                                           ? buttonColor
                                           : Colors.grey,
                                       text: languages[choosenLanguage]
@@ -1139,12 +1144,26 @@ class _NamePageState extends State<NamePage> {
                                       } else {
                                         name = firstname.text;
                                       }
+                                      phnumber = controller.text.replaceAll(RegExp(r'[^\d]'), '');
                                       FocusManager.instance.primaryFocus
                                           ?.unfocus();
                                       loginReferralCode =
                                           _referralController.text.trim();
                                       loginLoading = true;
                                       valueNotifierLogin.incrementNotifier();
+                                      final countryCode = countries[phcode]?['dial_code']?.toString() ?? '';
+                                      final docDigits = cpfController.text.replaceAll(RegExp(r'[^\d]'), '');
+                                      var validateResult = await validateEmailMobileDocument(
+                                          emailtext.text.trim(),
+                                          phnumber,
+                                          countryCode,
+                                          docDigits);
+                                      if (validateResult != 'success') {
+                                        setState(() => _error = validateResult.toString());
+                                        loginLoading = false;
+                                        valueNotifierLogin.incrementNotifier();
+                                        return;
+                                      }
                                       var val = await otpCall();
                                       // Tratar quando otpCall retorna null (nó não existe) - usar OTP próprio (false)
                                       if (val != null && val.value == true) {
@@ -1177,7 +1196,9 @@ class _NamePageState extends State<NamePage> {
                                               .replaceAll(RegExp(r'[^\d]'), '')
                                               .isNotEmpty &&
                                           birthDateController.text.isNotEmpty &&
-                                          selectedPassengerPreference != null)
+                                          _referralController.text
+                                              .trim()
+                                              .isNotEmpty)
                                       ? buttonColor
                                       : Colors.grey,
                                   text: languages[choosenLanguage]['text_next'],

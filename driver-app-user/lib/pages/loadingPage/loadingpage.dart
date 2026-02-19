@@ -117,9 +117,15 @@ class _LoadingPageState extends State<LoadingPage> {
 
   @override
   void initState() {
-    getLanguageDone();
-
     super.initState();
+    // Carregar módulos da API primeiro (enable_loginEmailPswd), depois idioma e navegação
+    getOwnermodule().then((_) {
+      debugPrint('🌐 [LOADING] getOwnermodule concluído, iniciando getLanguageDone');
+      getLanguageDone();
+    }).catchError((e) {
+      debugPrint('🌐 [LOADING] ERRO em getOwnermodule: $e');
+      getLanguageDone();
+    });
   }
 
   //navigate

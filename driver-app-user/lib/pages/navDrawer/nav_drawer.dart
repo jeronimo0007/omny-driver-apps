@@ -273,28 +273,30 @@ class _NavDrawerState extends State<NavDrawer> {
                             ),
                             child: Column(
                               children: [
-                                // 1 - Carteira e Saldo
-                                NavMenu(
-                                  onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => const WalletPage()));
-                                  },
-                                  text: languages[choosenLanguage]['text_enable_wallet'],
-                                  image: 'assets/images/walletIcon.png',
-                                ),
-                                // 2 - Dados bancários
-                                NavMenu(
-                                  onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => const BankDetails()));
-                                  },
-                                  text: languages[choosenLanguage]['text_bankDetails'],
-                                  icon: Icons.account_balance_outlined,
-                                ),
+                                // 1 - Carteira e Saldo (oculto se enable_menus == 1)
+                                if (enableMenus != '1')
+                                  NavMenu(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => const WalletPage()));
+                                    },
+                                    text: languages[choosenLanguage]['text_enable_wallet'],
+                                    image: 'assets/images/walletIcon.png',
+                                  ),
+                                // 2 - Dados bancários (oculto se enable_menus == 1)
+                                if (enableMenus != '1')
+                                  NavMenu(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => const BankDetails()));
+                                    },
+                                    text: languages[choosenLanguage]['text_bankDetails'],
+                                    icon: Icons.account_balance_outlined,
+                                  ),
                                 // 3 - Favoritos
                                 NavMenu(
                                   onTap: () {
@@ -317,17 +319,18 @@ class _NavDrawerState extends State<NavDrawer> {
                                   text: languages[choosenLanguage]['text_my_orders'],
                                   image: 'assets/images/history.png',
                                 ),
-                                // 5 - Indicações
-                                NavMenu(
-                                  onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => const ReferralPage()));
-                                  },
-                                  text: languages[choosenLanguage]['text_enable_referal'],
-                                  image: 'assets/images/referral.png',
-                                ),
+                                // 5 - Indicações (oculto se enable_menus == 1)
+                                if (enableMenus != '1')
+                                  NavMenu(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => const ReferralPage()));
+                                    },
+                                    text: languages[choosenLanguage]['text_enable_referal'],
+                                    image: 'assets/images/referral.png',
+                                  ),
                                 // 6 - SOS
                                 NavMenu(
                                   onTap: () async {

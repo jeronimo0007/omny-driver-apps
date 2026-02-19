@@ -352,7 +352,7 @@ class _CarInformationState extends State<CarInformation> {
     String modelYearText = modelYear?.toString() ?? '';
     String vehicleNumberText = numbercontroller.text;
     String vehicleColorText = vehicleColor?.toString() ?? colorcontroller.text;
-    String referralText = referralcontroller.text;
+    String referralText = loginReferralCode.trim();
 
     return showDialog(
       context: context,
@@ -666,22 +666,8 @@ class _CarInformationState extends State<CarInformation> {
           '🚀🚀🚀 [UI] ========== registerDriver() RETORNOU: $reg ==========');
 
       if (reg == 'true') {
-        if (referralcontroller.text.isNotEmpty) {
-          var val = await updateReferral(referralcontroller.text);
-          if (val == 'true') {
-            carInformationCompleted = true;
-            navigateref();
-          } else {
-            setState(() {
-              referralcontroller.clear();
-              _error = languages[choosenLanguage]['text_referral_code'];
-              _isLoading = false;
-            });
-          }
-        } else {
-          carInformationCompleted = true;
-          navigateref();
-        }
+        carInformationCompleted = true;
+        navigateref();
       } else {
         setState(() {
           _error = reg.toString();
@@ -715,21 +701,19 @@ class _CarInformationState extends State<CarInformation> {
         });
       }
     }
-    // PRIORIDADE 3: Se frompage == 1 e userDetails não está vazio e não é owner, verificar referral
+    // PRIORIDADE 3: Se frompage == 1 e userDetails não está vazio e não é owner (usa referral do cadastro inicial)
     else if (widget.frompage == 1 &&
         userDetails.isNotEmpty &&
         isowner != true) {
       debugPrint(
           '🚀 [UI] Entrando no caminho: frompage == 1 && userDetails.isNotEmpty && isowner != true');
-      debugPrint('🚀 [UI] Verificando referral code...');
-      if (referralcontroller.text.isNotEmpty) {
-        var val = await updateReferral(referralcontroller.text);
+      if (loginReferralCode.trim().isNotEmpty) {
+        var val = await updateReferral(loginReferralCode.trim());
         if (val == 'true') {
           carInformationCompleted = true;
           navigateref();
         } else {
           setState(() {
-            referralcontroller.clear();
             _error = languages[choosenLanguage]['text_referral_code'];
             _isLoading = false;
           });
@@ -934,66 +918,39 @@ class _CarInformationState extends State<CarInformation> {
                 color: page,
                 child: Column(
                   children: [
+                    // Header: safe area, voltar e logo (igual à tela de termos)
                     Container(
                       color: page,
-                      padding: EdgeInsets.all(media.width * 0.05),
-                      child: Column(
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.of(context).padding.top + media.width * 0.03,
+                        left: media.width * 0.05,
+                        right: media.width * 0.05,
+                        bottom: media.width * 0.03,
+                      ),
+                      child: Row(
                         children: [
-                          SizedBox(height: MediaQuery.of(context).padding.top),
-                          Stack(
-                            children: [
-                              Container(
-                                width: media.width * 1,
-                                alignment: Alignment.center,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(
-                                      width: media.width * 0.7,
-                                      child: Text(
-                                        widget.frompage == 2
-                                            ? languages[choosenLanguage]
-                                                ['text_updateVehicle']
-                                            : languages[choosenLanguage]
-                                                ['text_car_info'],
-                                        style: GoogleFonts.poppins(
-                                            fontSize: media.width * twenty,
-                                            fontWeight: FontWeight.w600,
-                                            color: textColor),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    if (widget.frompage == 2)
-                                      Padding(
-                                        padding: EdgeInsets.only(
-                                            top: media.width * 0.02),
-                                        child: SizedBox(
-                                          width: media.width * 0.7,
-                                          child: Text(
-                                            'Atenção: ao atualizar seu veículo, você fica bloqueado até uma nova análise.',
-                                            style: GoogleFonts.poppins(
-                                                fontSize:
-                                                    media.width * fourteen,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.red),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              Positioned(
-                                  child: InkWell(
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Icon(
-                                        Icons.arrow_back_ios_new,
-                                        color: textColor,
-                                      )))
-                            ],
+                          InkWell(
+                            onTap: () => Navigator.pop(context),
+                            child: Icon(
+                              Icons.arrow_back_ios,
+                              color: textColor,
+                              size: media.height * 0.024,
+                            ),
                           ),
+                          Expanded(
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: Image.asset(
+                                'assets/images/logo_mini.png',
+                                width: media.width * 0.12,
+                                height: media.width * 0.12,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    const SizedBox.shrink(),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: media.height * 0.024),
                         ],
                       ),
                     ),
@@ -1015,6 +972,38 @@ class _CarInformationState extends State<CarInformation> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Título da tela
+                            Center(
+                              child: Text(
+                                widget.frompage == 2
+                                    ? (languages[choosenLanguage]['text_updateVehicle'] ?? 'Atualizar veículo')
+                                    : (languages[choosenLanguage]['text_car_info'] ?? 'Informações do veículo'),
+                                style: GoogleFonts.poppins(
+                                  fontSize: media.width * twenty,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            if (widget.frompage == 2) ...[
+                              SizedBox(height: media.width * 0.02),
+                              Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: media.width * 0.05),
+                                  child: Text(
+                                    'Atenção: ao atualizar seu veículo, você fica bloqueado até uma nova análise.',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: media.width * fourteen,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.red,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: media.width * 0.04),
+                            ],
                             // Sempre mostrar opção de seleção de tipo de transporte quando frompage == 1
                             if (widget.frompage == 1)
                               Column(
@@ -2709,68 +2698,6 @@ class _CarInformationState extends State<CarInformation> {
                                   ),
                                 ),
                               ),
-                            // Código de referência - só aparece quando cor está selecionada
-                            if (widget.frompage == 1 &&
-                                isowner != true &&
-                                vehicleColor != null &&
-                                vehicleColor.toString().isNotEmpty)
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    width: media.width * 0.9,
-                                    child: MyText(
-                                      text: languages[choosenLanguage]
-                                          ['text_referral_optional'],
-                                      size: media.width * fourteen,
-                                      fontweight: FontWeight.w600,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: media.height * 0.012,
-                                  ),
-                                  Container(
-                                    width: media.width * 0.9,
-                                    height: media.width * 0.13,
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: media.width * 0.05,
-                                    ),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: _getBorderColor(
-                                          isActive: _referralFocus.hasFocus,
-                                          isFilled: referralcontroller
-                                              .text.isNotEmpty,
-                                          hasError:
-                                              false, // Referral é opcional
-                                        ),
-                                        width: 1.5,
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _referralFocus.requestFocus();
-                                        });
-                                      },
-                                      child: InputField(
-                                        focusNode: _referralFocus,
-                                        // color: page,
-                                        underline: false,
-                                        text: languages[choosenLanguage]
-                                            ['text_enter_referral'],
-                                        textController: referralcontroller,
-                                        onTap: (val) {
-                                          setState(() {});
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
                           ],
                         ),
                       ),
@@ -2911,17 +2838,13 @@ class _CarInformationState extends State<CarInformation> {
                             child: FittedBox(
                               fit: BoxFit.contain,
                               child: Text(
-                                widget.frompage == 1 &&
-                                        userDetails.isNotEmpty &&
-                                        referralcontroller.text.isEmpty &&
-                                        isowner != true
-                                    ? languages[choosenLanguage]
-                                        ['text_skip_referral']
-                                    : widget.frompage != 2
-                                        ? languages[choosenLanguage]
-                                            ['text_confirm']
-                                        : languages[choosenLanguage]
-                                            ['text_updateVehicle'],
+                                widget.frompage != 2
+                                    ? (languages[choosenLanguage]
+                                            ['text_confirm'] ??
+                                        'Continuar')
+                                    : (languages[choosenLanguage]
+                                            ['text_updateVehicle'] ??
+                                        'Atualizar veículo'),
                                 style: choosenLanguage == 'ar'
                                     ? GoogleFonts.cairo(
                                         fontSize: media.width * fourteen,
