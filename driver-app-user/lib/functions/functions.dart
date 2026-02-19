@@ -269,7 +269,7 @@ positionStreamData() {
   });
 }
 
-//validate email already exist
+//validate email already exist (mantido para compatibilidade; preferir validateEmailMobileDocument no cadastro)
 
 validateEmail(email) async {
   dynamic result;
@@ -317,6 +317,73 @@ validateEmail(email) async {
       internet = false;
     }
   }
+}
+
+/// Valida no cadastro os 3 campos: email, mobile e document (CPF).
+/// Chama api/v1/user/validate-email-mobile-document (igual ao driver).
+/// [mobile] número só dígitos (sem máscara); [countryCode] ex: +55 ou 55.
+validateEmailMobileDocument(
+    String email, String mobile, String countryCode, String document) async {
+  dynamic result;
+  try {
+    final fullMobile = countryCode.replaceAll(RegExp(r'[^\d]'), '') +
+        mobile.replaceAll(RegExp(r'[^\d]'), '');
+    final docDigits = document.replaceAll(RegExp(r'[^\d]'), '');
+    final body = {
+      'email': email.trim(),
+      'mobile': fullMobile,
+      'document': docDigits,
+    };
+    String endpoint = '${url}api/v1/user/validate-email-mobile-document';
+    debugPrint(
+        '🌐 [API] validateEmailMobileDocument (user) - endpoint: $endpoint | body: $body');
+    var response = await http.post(Uri.parse(endpoint), body: body);
+    debugPrint(
+        '🌐 [API] validateEmailMobileDocument (user) - status: ${response.statusCode} | body: ${response.body}');
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['success'] == true && json['data'] != null) {
+        final data = json['data'] as Map<String, dynamic>;
+        final emailTaken = data['email_taken'] == true;
+        final mobileTaken = data['mobile_taken'] == true;
+        final documentTaken = data['document_taken'] == true;
+        if (emailTaken) {
+          result = 'E-mail já cadastrado.';
+        } else if (mobileTaken) {
+          result = 'Celular já cadastrado.';
+        } else if (documentTaken) {
+          result = 'CPF já cadastrado.';
+        } else {
+          result = 'success';
+        }
+      } else if (json['success'] == true) {
+        result = 'success';
+      } else {
+        result = json['message']?.toString() ?? 'failed';
+      }
+    } else if (response.statusCode == 422) {
+      try {
+        final resBody = jsonDecode(response.body);
+        result = resBody['message']?.toString() ?? 'Os dados enviados são inválidos.';
+      } catch (_) {
+        result = 'Os dados enviados são inválidos.';
+      }
+    } else {
+      try {
+        result = jsonDecode(response.body)['message'] ?? 'Erro na validação.';
+      } catch (_) {
+        result = 'Erro na validação.';
+      }
+    }
+  } catch (e) {
+    if (e is SocketException) {
+      internet = false;
+      result = 'no internet';
+    } else {
+      result = 'Erro na validação.';
+    }
+  }
+  return result;
 }
 
 //language code
@@ -688,13 +755,20 @@ registerUser() async {
       fcm = 'fallback_token_${DateTime.now().millisecondsSinceEpoch}';
     }
 
-    String endpoint = '${url}api/v1/user/register';
+    final base = loginEmailPswd == 1 ? authBaseUrl : url;
+    String endpoint = '${base}api/v1/user/register';
+
+    debugPrint('📝 [REGISTER] ========== REQUEST (user) ==========');
+    debugPrint('📝 [REGISTER] Método: POST');
+    debugPrint('📝 [REGISTER] URL: $endpoint');
+    debugPrint('📝 [REGISTER] Base (auth vs driver): ${loginEmailPswd == 1 ? "authBaseUrl" : "url"}');
 
     final response = http.MultipartRequest(
       'POST',
       Uri.parse(endpoint),
     );
     response.headers.addAll({'Content-Type': 'application/json'});
+    debugPrint('📝 [REGISTER] Headers: ${response.headers}');
 
     // Tratar upload de imagem (não funciona no web)
     if (proImageFile != null && !kIsWeb) {
@@ -779,6 +853,7 @@ registerUser() async {
     }
 
     Map<String, String> fields = {
+      'type': 'user',
       "name": nameValue,
       "mobile": mobileValue,
       "email": emailValue,
@@ -808,10 +883,19 @@ registerUser() async {
 
     response.fields.addAll(fields);
 
+    debugPrint('📝 [REGISTER] Body/Params: $fields');
+    debugPrint('📝 [REGISTER] ================================');
+
     logApiCall('POST', endpoint, headers: response.headers, body: fields);
 
     var request = await response.send();
     var respon = await http.Response.fromStream(request);
+
+    debugPrint('📝 [REGISTER] ========== RESPONSE ==========');
+    debugPrint('📝 [REGISTER] Status: ${respon.statusCode}');
+    debugPrint('📝 [REGISTER] Response Headers: ${respon.headers}');
+    debugPrint('📝 [REGISTER] Body: ${respon.body}');
+    debugPrint('📝 [REGISTER] ================================');
 
     logApiCall('POST', endpoint,
         headers: response.headers,
@@ -866,8 +950,9 @@ registerUser() async {
       result = serverErrorMessage;
     }
     return result;
-  } catch (e) {
-    debugPrint('❌ registerUser: Erro na execução: $e');
+  } catch (e, stack) {
+    debugPrint('❌ [REGISTER] registerUser - Exceção: $e');
+    debugPrint('❌ [REGISTER] registerUser - Stack: $stack');
     if (e is SocketException) {
       internet = false;
       result = 'Sem conexão com a internet';
@@ -1050,7 +1135,182 @@ acceptRequest(body) async {
   }
 }
 
-//user login
+/// Token temporário quando o login auth retorna que precisa OTP (validate-otp usa este Bearer)
+String? authTempTokenForOtp;
+/// E-mail ou celular usado no login, quando vai para tela OTP (validate-otp envia em email_or_mobile)
+String? authEmailOrMobileForOtp;
+
+/// Login pelo novo endpoint (auth.omny.app.br) com e-mail/senha. Só usado quando loginEmailPswd == 1.
+/// Retorna: 'token' = sucesso com tokens; 'otp_required' = ir para tela OTP (authTempTokenForOtp preenchido); ou string de erro.
+Future<dynamic> userLoginEmailPassword(String emailOrMobile, String password) async {
+  bearerToken.clear();
+  authTempTokenForOtp = null;
+  authEmailOrMobileForOtp = null;
+  try {
+    // device_token: na web FCM não está disponível (fica vazio ou placeholder);
+    // no celular (Android/iOS) getToken() devolve o token FCM real para push.
+    String? fcm;
+    try {
+      if (kIsWeb) {
+        fcm = 'web_${DateTime.now().millisecondsSinceEpoch}';
+        debugPrint('🌐 Web: device_token não disponível (FCM), enviando identificador web');
+      } else {
+        var token = await FirebaseMessaging.instance.getToken();
+        fcm = token ?? '';
+        if (fcm.isEmpty) {
+          fcm = 'mobile_${DateTime.now().millisecondsSinceEpoch}';
+        }
+      }
+    } catch (_) {
+      fcm = '';
+    }
+    String endpoint = '${authBaseUrl}api/v1/login';
+    Map<String, String> headers = {'Content-Type': 'application/json'};
+    Map<String, dynamic> bodyData = {
+      'emailOrMobile': emailOrMobile.trim(),
+      'password': password,
+      'type': 'user',
+      'fcm_token': fcm,
+    };
+    debugPrint('🌐 [API] userLoginEmailPassword - URL: $endpoint');
+    debugPrint('🌐 [API] userLoginEmailPassword - body: $bodyData');
+    logApiCall('POST', endpoint, headers: headers, body: bodyData);
+    var response = await http.post(
+      Uri.parse(endpoint),
+      headers: headers,
+      body: jsonEncode(bodyData),
+    );
+    logApiCall('POST', endpoint, headers: headers, body: bodyData, statusCode: response.statusCode, responseBody: response.body);
+    if (response.statusCode != 200) {
+      serverErrorMessage = extractErrorMessage(response);
+      return serverErrorMessage.isNotEmpty ? serverErrorMessage : 'Erro no login';
+    }
+    var jsonVal = jsonDecode(response.body);
+    bool success = jsonVal['success'] == true;
+    if (!success) return jsonVal['message']?.toString() ?? 'Erro no login';
+    var data = jsonVal['data'];
+    if (data == null) return 'Resposta inválida';
+    // Caso 1: já logou antes, tokens direto (não precisa OTP)
+    if (data['access_token'] != null && data['user'] == null) {
+      bearerToken.add(BearerClass(type: data['token_type']?.toString() ?? 'Bearer', token: data['access_token'].toString()));
+      if (bearerToken.isNotEmpty) {
+        await pref.setString('Bearer', bearerToken[0].token);
+      }
+      return 'token';
+    }
+    // Caso 2: trocou de celular, precisa validar OTP (data.user + fcm_token)
+    if (data['user'] != null && (data['fcm_token'] == true || data['device_token'] == true)) {
+      var user = data['user'];
+      if (user['access_token'] != null) {
+        authTempTokenForOtp = user['access_token'].toString();
+      }
+      authEmailOrMobileForOtp = emailOrMobile.trim();
+      return 'otp_required';
+    }
+    return 'Resposta inválida';
+  } catch (e) {
+    if (e is SocketException) internet = false;
+    return e.toString();
+  }
+}
+
+/// Valida OTP no auth. Body: otp, email_or_mobile, fcm_token. Retorna true se sucesso e tokens salvos.
+Future<bool> validateOtpAuth(String otp) async {
+  final emailOrMobile = authEmailOrMobileForOtp?.trim() ?? '';
+  if (emailOrMobile.isEmpty) return false;
+  try {
+    String? fcm;
+    try {
+      if (kIsWeb) {
+        fcm = 'web_${DateTime.now().millisecondsSinceEpoch}';
+      } else {
+        var token = await FirebaseMessaging.instance.getToken();
+        fcm = token ?? '';
+        if (fcm.isEmpty) fcm = 'mobile_${DateTime.now().millisecondsSinceEpoch}';
+      }
+    } catch (_) {
+      fcm = '';
+    }
+    String endpoint = '${authBaseUrl}api/v1/validate-otp';
+    final body = {'otp': otp, 'email_or_mobile': emailOrMobile, 'fcm_token': fcm};
+    debugPrint('🌐 [API] validateOtpAuth - URL: $endpoint');
+    debugPrint('🌐 [API] validateOtpAuth - body: $body');
+    var response = await http.post(
+      Uri.parse(endpoint),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (response.statusCode != 200) return false;
+    var jsonVal = jsonDecode(response.body);
+    if (jsonVal['success'] != true) return false;
+    var data = jsonVal['data'];
+    if (data == null || data['access_token'] == null) return false;
+    bearerToken.clear();
+    bearerToken.add(BearerClass(type: data['token_type']?.toString() ?? 'Bearer', token: data['access_token'].toString()));
+    await pref.setString('Bearer', bearerToken[0].token);
+    authTempTokenForOtp = null;
+    authEmailOrMobileForOtp = null;
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Reenvia OTP por e-mail no auth (auth.omny.app.br). Usa authTempTokenForOtp. Retorna 'success' ou mensagem de erro.
+Future<String> sendOtpAuth() async {
+  if (authTempTokenForOtp == null || authTempTokenForOtp!.isEmpty) return 'Token não disponível';
+  try {
+    String endpoint = '${authBaseUrl}api/v1/login/send-otp';
+    final body = {'type': 'email'};
+    debugPrint('🌐 [API] sendOtpAuth - URL: $endpoint');
+    debugPrint('🌐 [API] sendOtpAuth - body: $body');
+    var response = await http.post(
+      Uri.parse(endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authTempTokenForOtp',
+      },
+      body: jsonEncode(body),
+    );
+    if (response.statusCode == 200) {
+      var jsonVal = jsonDecode(response.body);
+      if (jsonVal['success'] == true) return 'success';
+      return jsonVal['message']?.toString() ?? 'Erro ao reenviar';
+    }
+    serverErrorMessage = extractErrorMessage(response);
+    return serverErrorMessage.isNotEmpty ? serverErrorMessage : 'Erro ao reenviar OTP';
+  } catch (e) {
+    if (e is SocketException) internet = false;
+    return e.toString();
+  }
+}
+
+/// Esqueci senha no auth (auth.omny.app.br). Body: email + mobile vazio. Retorna 'success' ou mensagem de erro.
+Future<String> forgotPasswordAuth(String email) async {
+  try {
+    String endpoint = '${authBaseUrl}api/v1/forgot-password';
+    final body = {'email': email.trim(), 'mobile': ''};
+    debugPrint('🌐 [API] forgotPasswordAuth - URL: $endpoint');
+    debugPrint('🌐 [API] forgotPasswordAuth - body: $body');
+    var response = await http.post(
+      Uri.parse(endpoint),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (response.statusCode == 200) {
+      var jsonVal = jsonDecode(response.body);
+      if (jsonVal['success'] == true) return 'success';
+      return jsonVal['message']?.toString() ?? 'Erro na solicitação';
+    }
+    serverErrorMessage = extractErrorMessage(response);
+    return serverErrorMessage.isNotEmpty ? serverErrorMessage : 'Erro ao solicitar redefinição';
+  } catch (e) {
+    if (e is SocketException) internet = false;
+    return e.toString();
+  }
+}
+
+//user login (fluxo antigo: telefone/OTP)
 userLogin() async {
   bearerToken.clear();
   dynamic result;
@@ -3943,30 +4203,58 @@ getReferral() async {
 
 userLogout() async {
   dynamic result;
+  final logoutUrl = '${url}api/v1/logout';
+  debugPrint('🚪 [LOGOUT] ========== REQUEST (user) ==========');
+  debugPrint('🚪 [LOGOUT] Método: POST');
+  debugPrint('🚪 [LOGOUT] URL: $logoutUrl');
   try {
+    if (bearerToken.isEmpty) {
+      debugPrint('🚪 [LOGOUT] ERRO: bearerToken vazio, não é possível chamar API');
+      result = 'success';
+      pref.remove('Bearer');
+      return result;
+    }
+    final token = bearerToken[0].token;
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+    debugPrint('🚪 [LOGOUT] Headers:');
+    debugPrint('🚪 [LOGOUT]   Content-Type: ${headers['Content-Type']}');
+    debugPrint('🚪 [LOGOUT]   Authorization: Bearer ${token.length} chars (início: ${token.length > 20 ? token.substring(0, 20) + "..." : token})');
+    debugPrint('🚪 [LOGOUT]   [VERBOSE] Authorization completo: Bearer $token');
+    debugPrint('🚪 [LOGOUT] Body: (nenhum)');
+    debugPrint('🚪 [LOGOUT] ================================');
     var response = await http.post(
-      Uri.parse('${url}api/v1/logout'),
-      headers: {
-        'Authorization': 'Bearer ${bearerToken[0].token}',
-        'Content-Type': 'application/json',
-      },
+      Uri.parse(logoutUrl),
+      headers: headers,
     );
+    debugPrint('🚪 [LOGOUT] ========== RESPONSE ==========');
+    debugPrint('🚪 [LOGOUT] Status: ${response.statusCode}');
+    debugPrint('🚪 [LOGOUT] Body: ${response.body}');
+    debugPrint('🚪 [LOGOUT] Headers response: ${response.headers}');
     if (response.statusCode == 200) {
       pref.remove('Bearer');
-
       result = 'success';
+      debugPrint('🚪 [LOGOUT] Sucesso: token removido');
     } else if (response.statusCode == 401) {
       result = 'logout';
+      debugPrint('🚪 [LOGOUT] 401: token inválido/expirado, retornando logout');
     } else {
-      debugPrint(response.body);
+      debugPrint('🚪 [LOGOUT] Falha HTTP: ${response.statusCode} - ${response.body}');
       result = 'failure';
     }
-  } catch (e) {
+  } catch (e, stack) {
+    debugPrint('🚪 [LOGOUT] Exceção: $e');
+    debugPrint('🚪 [LOGOUT] Stack: $stack');
     if (e is SocketException) {
       result = 'no internet';
       internet = false;
+    } else {
+      result = 'failure';
     }
   }
+  debugPrint('🚪 [LOGOUT] Resultado final: $result');
   return result;
 }
 
@@ -4990,19 +5278,29 @@ paymentMethod(payment) async {
 }
 
 String isemailmodule = '1';
+/// enable_menus da API: 1 = ocultar Carteira, Dados bancários e Indicações; 0 = mostrar.
+String enableMenus = '0';
 getOwnermodule() async {
   dynamic res;
   try {
+    debugPrint('🌐 [API] getOwnermodule (user) - URL: ${url}api/v1/common/modules');
     final response = await http.get(Uri.parse('${url}api/v1/common/modules'));
 
+    debugPrint('🌐 [API] getOwnermodule (user) - Status: ${response.statusCode}');
     if (response.statusCode == 200) {
-      isemailmodule = jsonDecode(response.body)['enable_email_otp'];
-
+      final jsonResponse = jsonDecode(response.body);
+      isemailmodule = jsonResponse['enable_email_otp']?.toString() ?? isemailmodule;
+      enableMenus = jsonResponse['enable_menus']?.toString() ?? '0';
+      if (jsonResponse['enable_loginEmailPswd'] != null) {
+        loginEmailPswd = jsonResponse['enable_loginEmailPswd'] == 1 ? 1 : 0;
+        debugPrint('🌐 [API] getOwnermodule (user) - loginEmailPswd: $loginEmailPswd (enable_loginEmailPswd da API)');
+      }
       res = 'success';
     } else {
-      debugPrint(response.body);
+      debugPrint('🌐 [API] getOwnermodule (user) - Response: ${response.body}');
     }
   } catch (e) {
+    debugPrint('🌐 [API] getOwnermodule (user) - Exceção: $e');
     if (e is SocketException) {
       internet = false;
       res = 'no internet';

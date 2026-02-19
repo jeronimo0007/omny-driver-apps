@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import '../../config/api_config.dart';
 import '../../functions/functions.dart';
 import '../../styles/styles.dart';
 import '../../translation/translation.dart';
 import '../../widgets/widgets.dart';
+import 'agreement.dart';
 import 'login.dart';
 
 String name = ''; //name of user
@@ -176,56 +178,47 @@ class _NamePageState extends State<NamePage> {
     );
   }
 
-  // Função para obter a máscara de telefone baseada no país
+  // Função para obter a máscara de telefone baseada no país (celular Brasil: (11) 91234-5678)
   String _getPhoneMask() {
     if (countries.isNotEmpty && phcode != null && countries[phcode] != null) {
-      int maxLength = countries[phcode]['dial_max_length'] ?? 10;
+      int maxLength = countries[phcode]['dial_max_length'] ?? 11;
 
-      // Máscaras comuns por tamanho
       if (maxLength <= 8) {
         return '####-####';
       } else if (maxLength == 9) {
         return '#####-####';
       } else if (maxLength == 10) {
-        return '(##)#####-####'; // Formato brasileiro
+        return '(##) ####-####'; // DDD + 8 dígitos
       } else if (maxLength == 11) {
-        return '(##)#####-####';
+        return '(##) #####-####'; // (99) 99999-9999 - celular Brasil
       } else {
-        // Máscara genérica: grupos de 4 dígitos separados por espaço
-        String mask = '';
-        for (int i = 0; i < maxLength; i++) {
-          if (i > 0 && i % 4 == 0) {
-            mask += ' ';
-          }
-          mask += '#';
-        }
-        return mask;
+        return '(##) #####-####';
       }
     }
-    // Padrão brasileiro
-    return '(##)#####-####';
+    return '(##) #####-####';
   }
 
   // Função para obter o hint do telefone
   String _getPhoneHint() {
     if (countries.isNotEmpty && phcode != null && countries[phcode] != null) {
-      int maxLength = countries[phcode]['dial_max_length'] ?? 10;
+      int maxLength = countries[phcode]['dial_max_length'] ?? 11;
 
       if (maxLength <= 8) {
         return '1234-5678';
       } else if (maxLength == 9) {
         return '12345-6789';
       } else if (maxLength == 10) {
-        return '(11)91234-5678';
+        return '(11) 9123-4567';
       } else if (maxLength == 11) {
-        return '(11)91234-5678';
+        return '(11) 91234-5678';
       } else {
-        return '';
+        return '(11) 91234-5678';
       }
     }
-    return '(11)91234-5678';
+    return '(11) 91234-5678';
   }
 
+  /// Campo com label em cima do input (padrão do cadastro).
   Widget _buildLabeledField(
     TextEditingController ctrl,
     String label,
@@ -236,35 +229,43 @@ class _NamePageState extends State<NamePage> {
   }) {
     var media = MediaQuery.of(context).size;
     final usePurpleBorder = focusNode != null && isFocused;
-    return Container(
-      height: media.width * 0.13,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: usePurpleBorder ? const Color(0xFF9A03E9) : textColor,
-          width: usePurpleBorder ? 2.0 : 1.0,
-        ),
-      ),
-      padding: const EdgeInsets.only(left: 12, right: 12),
-      child: TextFormField(
-        controller: ctrl,
-        focusNode: focusNode,
-        onChanged: (v) {
-          onSave(v);
-          setState(() {});
-        },
-        style: GoogleFonts.poppins(
-            fontSize: media.width * sixteen, color: textColor),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.poppins(
-              fontSize: media.width * sixteen, color: hintColor),
-          border: InputBorder.none,
-          labelText: label,
-          labelStyle: GoogleFonts.poppins(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
               fontSize: media.width * twelve, color: hintColor),
         ),
-      ),
+        SizedBox(height: media.height * 0.008),
+        Container(
+          height: media.width * 0.13,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: usePurpleBorder ? const Color(0xFF9A03E9) : textColor,
+              width: usePurpleBorder ? 2.0 : 1.0,
+            ),
+          ),
+          padding: const EdgeInsets.only(left: 12, right: 12),
+          child: TextFormField(
+            controller: ctrl,
+            focusNode: focusNode,
+            onChanged: (v) {
+              onSave(v);
+              setState(() {});
+            },
+            style: GoogleFonts.poppins(
+                fontSize: media.width * sixteen, color: textColor),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.poppins(
+                  fontSize: media.width * sixteen, color: hintColor),
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -456,17 +457,19 @@ class _NamePageState extends State<NamePage> {
                         Row(
                           children: [
                             Expanded(
-                              child: MyText(
-                                text: languages[choosenLanguage]['text_first_name'] ?? 'Nome',
-                                size: media.width * fourteen,
-                                color: textColor.withOpacity(0.8),
+                              child: Text(
+                                languages[choosenLanguage]['text_first_name'] ?? 'Nome',
+                                style: GoogleFonts.poppins(
+                                    fontSize: media.width * twelve,
+                                    color: hintColor),
                               ),
                             ),
                             Expanded(
-                              child: MyText(
-                                text: languages[choosenLanguage]['text_last_name'] ?? 'Sobrenome',
-                                size: media.width * fourteen,
-                                color: textColor.withOpacity(0.8),
+                              child: Text(
+                                languages[choosenLanguage]['text_last_name'] ?? 'Sobrenome',
+                                style: GoogleFonts.poppins(
+                                    fontSize: media.width * twelve,
+                                    color: hintColor),
                               ),
                             ),
                           ],
@@ -529,10 +532,84 @@ class _NamePageState extends State<NamePage> {
                         SizedBox(
                           height: media.height * 0.02,
                         ),
-                        MyText(
-                          text: languages[choosenLanguage]['text_enter_email'] ?? 'E-mail',
-                          size: media.width * fourteen,
-                          color: textColor.withOpacity(0.8),
+                        Text(
+                          languages[choosenLanguage]['text_sexo'] ?? 'Sexo',
+                          style: GoogleFonts.poppins(
+                              fontSize: media.width * twelve,
+                              color: hintColor),
+                        ),
+                        SizedBox(height: media.height * 0.008),
+                        Focus(
+                              focusNode: _genderFocusNode,
+                              child: Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: _isGenderFocused
+                                        ? const Color(0xFF9A03E9)
+                                        : textColor,
+                                    width: _isGenderFocused ? 2.0 : 1.0,
+                                  ),
+                                ),
+                                child: DropdownSearch<String>(
+                                  selectedItem: _selectedGender.isEmpty
+                                      ? null
+                                      : _selectedGender,
+                                  items: genderOptions
+                                      .map((g) => g['value']!)
+                                      .toList(),
+                                  itemAsString: (String v) =>
+                                      languages[choosenLanguage]
+                                          ['text_gender_$v'] ??
+                                      genderOptions.firstWhere(
+                                          (e) => e['value'] == v,
+                                          orElse: () => {
+                                                'value': v,
+                                                'label_pt': v
+                                              })['label_pt']!,
+                                  onChanged: (v) {
+                                    setState(() {
+                                      _selectedGender = v ?? '';
+                                      userGender = _selectedGender;
+                                    });
+                                  },
+                                  popupProps: PopupProps.menu(
+                                    showSearchBox: true,
+                                    searchFieldProps: TextFieldProps(
+                                      decoration: InputDecoration(
+                                        hintText: languages[choosenLanguage]
+                                                ['text_search'] ??
+                                            'Buscar',
+                                        border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                    ),
+                                  ),
+                                  dropdownDecoratorProps: DropDownDecoratorProps(
+                                    dropdownSearchDecoration: InputDecoration(
+                                      hintText: languages[choosenLanguage]
+                                              ['text_gender_hint'] ??
+                                          'Selecione o gênero',
+                                      hintStyle: GoogleFonts.poppins(
+                                          fontSize: media.width * fourteen,
+                                          color: hintColor),
+                                      border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(10)),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: media.width * 0.03),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        SizedBox(height: media.width * 0.03),
+                        Text(
+                          languages[choosenLanguage]['text_enter_email'] ?? 'E-mail',
+                          style: GoogleFonts.poppins(
+                              fontSize: media.width * twelve,
+                              color: hintColor),
                         ),
                         SizedBox(height: media.height * 0.008),
                         Container(
@@ -558,10 +635,11 @@ class _NamePageState extends State<NamePage> {
                               },
                             )),
                         SizedBox(height: media.width * 0.04),
-                        MyText(
-                          text: languages[choosenLanguage]['text_cpf'] ?? 'CPF',
-                          size: media.width * fourteen,
-                          color: textColor.withOpacity(0.8),
+                        Text(
+                          languages[choosenLanguage]['text_cpf'] ?? 'CPF',
+                          style: GoogleFonts.poppins(
+                              fontSize: media.width * twelve,
+                              color: hintColor),
                         ),
                         SizedBox(height: media.height * 0.008),
                         Container(
@@ -598,20 +676,16 @@ class _NamePageState extends State<NamePage> {
                                   fontSize: media.width * sixteen,
                                   color: hintColor),
                               border: InputBorder.none,
-                              labelText: languages[choosenLanguage]
-                                      ['text_cpf'] ??
-                                  'CPF',
-                              labelStyle: GoogleFonts.poppins(
-                                  fontSize: media.width * twelve,
-                                  color: hintColor),
                             ),
                           ),
                         ),
                         SizedBox(height: media.width * 0.03),
-                        MyText(
-                          text: languages[choosenLanguage]['text_birth_date'] ?? 'Data de nascimento',
-                          size: media.width * fourteen,
-                          color: textColor.withOpacity(0.8),
+                        Text(
+                          languages[choosenLanguage]['text_birth_date'] ??
+                              'Data de nascimento',
+                          style: GoogleFonts.poppins(
+                              fontSize: media.width * twelve,
+                              color: hintColor),
                         ),
                         SizedBox(height: media.height * 0.008),
                         Container(
@@ -648,76 +722,70 @@ class _NamePageState extends State<NamePage> {
                                   fontSize: media.width * sixteen,
                                   color: hintColor),
                               border: InputBorder.none,
-                              labelText: languages[choosenLanguage]
-                                      ['text_birth_date'] ??
-                                  'Data de nascimento',
-                              labelStyle: GoogleFonts.poppins(
-                                  fontSize: media.width * twelve,
-                                  color: hintColor),
                             ),
                           ),
                         ),
                         SizedBox(height: media.width * 0.03),
-                        // CEP
+                        Text(
+                          languages[choosenLanguage]['text_cep'] ?? 'CEP',
+                          style: GoogleFonts.poppins(
+                              fontSize: media.width * twelve,
+                              color: hintColor),
+                        ),
+                        SizedBox(height: media.height * 0.008),
                         Container(
-                          height: media.width * 0.13,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: _isCepFocused
-                                  ? const Color(0xFF9A03E9)
-                                  : textColor,
-                              width: _isCepFocused ? 2.0 : 1.0,
-                            ),
-                          ),
-                          padding: const EdgeInsets.only(left: 12, right: 12),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: cepController,
-                                  focusNode: _cepFocusNode,
-                                  inputFormatters: _cepMaskFormatter != null
-                                      ? [_cepMaskFormatter!]
-                                      : [],
-                                  onChanged: (val) {
-                                    userCep =
-                                        val.replaceAll(RegExp(r'[^\d]'), '');
-                                    if (userCep.length == 8) _onCepBlur();
-                                    setState(() {});
-                                  },
-                                  keyboardType: TextInputType.number,
-                                  style: GoogleFonts.poppins(
-                                      fontSize: media.width * sixteen,
-                                      color: textColor),
-                                  decoration: InputDecoration(
-                                    hintText: languages[choosenLanguage]
-                                            ['text_cep_hint'] ??
-                                        '00000-000',
-                                    hintStyle: GoogleFonts.poppins(
-                                        fontSize: media.width * sixteen,
-                                        color: hintColor),
-                                    border: InputBorder.none,
-                                    labelText: languages[choosenLanguage]
-                                            ['text_cep'] ??
-                                        'CEP',
-                                    labelStyle: GoogleFonts.poppins(
-                                        fontSize: media.width * twelve,
-                                        color: hintColor),
-                                  ),
+                              height: media.width * 0.13,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: _isCepFocused
+                                      ? const Color(0xFF9A03E9)
+                                      : textColor,
+                                  width: _isCepFocused ? 2.0 : 1.0,
                                 ),
                               ),
-                              if (_loadingCep)
-                                Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2, color: theme))),
-                            ],
-                          ),
-                        ),
+                              padding: const EdgeInsets.only(left: 12, right: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: cepController,
+                                      focusNode: _cepFocusNode,
+                                      inputFormatters: _cepMaskFormatter != null
+                                          ? [_cepMaskFormatter!]
+                                          : [],
+                                      onChanged: (val) {
+                                        userCep =
+                                            val.replaceAll(RegExp(r'[^\d]'), '');
+                                        if (userCep.length == 8) _onCepBlur();
+                                        setState(() {});
+                                      },
+                                      keyboardType: TextInputType.number,
+                                      style: GoogleFonts.poppins(
+                                          fontSize: media.width * sixteen,
+                                          color: textColor),
+                                      decoration: InputDecoration(
+                                        hintText: languages[choosenLanguage]
+                                                ['text_cep_hint'] ??
+                                            '00000-000',
+                                        hintStyle: GoogleFonts.poppins(
+                                            fontSize: media.width * sixteen,
+                                            color: hintColor),
+                                        border: InputBorder.none,
+                                      ),
+                                    ),
+                                  ),
+                                  if (_loadingCep)
+                                    Padding(
+                                        padding: const EdgeInsets.only(left: 8),
+                                        child: SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2, color: theme))),
+                                ],
+                              ),
+                            ),
                         SizedBox(height: media.width * 0.03),
                         // Endereço (obrigatório – borda roxa no foco)
                         _buildLabeledField(
@@ -772,407 +840,131 @@ class _NamePageState extends State<NamePage> {
                             focusNode: _neighborhoodFocusNode,
                             isFocused: _isNeighborhoodFocused),
                         SizedBox(height: media.width * 0.03),
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: _buildLabeledField(
-                                  cityController,
-                                  languages[choosenLanguage]['text_city'] ??
-                                      'Cidade',
-                                  languages[choosenLanguage]
-                                          ['text_city_hint'] ??
-                                      'Cidade',
-                                  (v) => userCity = v,
-                                  focusNode: _cityFocusNode,
-                                  isFocused: _isCityFocused),
+                        // Cidade (full width, label em cima)
+                        _buildLabeledField(
+                            cityController,
+                            languages[choosenLanguage]['text_city'] ??
+                                'Cidade',
+                            languages[choosenLanguage]
+                                    ['text_city_hint'] ??
+                                'Cidade',
+                            (v) => userCity = v,
+                            focusNode: _cityFocusNode,
+                            isFocused: _isCityFocused),
+                        SizedBox(height: media.width * 0.03),
+                        Text(
+                          languages[choosenLanguage]['text_state'] ?? 'Estado',
+                          style: GoogleFonts.poppins(
+                              fontSize: media.width * twelve,
+                              color: hintColor),
+                        ),
+                        SizedBox(height: media.height * 0.008),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: _isStateFocused
+                                  ? const Color(0xFF9A03E9)
+                                  : textColor,
+                              width: _isStateFocused ? 2.0 : 1.0,
                             ),
-                            SizedBox(width: media.width * 0.03),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  MyText(
-                                    text: languages[choosenLanguage]
-                                            ['text_state'] ??
-                                        'Estado',
-                                    size: media.width * twelve,
-                                    color: textColor,
-                                    fontweight: FontWeight.w600,
-                                  ),
-                                  SizedBox(height: media.width * 0.015),
-                                  Focus(
-                                    focusNode: _stateFocusNode,
-                                    child: DropdownSearch<String>(
-                                      selectedItem: _selectedState.isEmpty
-                                          ? null
-                                          : _selectedState,
-                                      items: brazilianStates
-                                          .map((s) => s['uf']!)
-                                          .toList(),
-                                      itemAsString: (String s) {
-                                        final e = brazilianStates.firstWhere(
-                                          (e) => e['uf'] == s,
-                                          orElse: () => {'uf': s, 'name': s},
-                                        );
-                                        return '${e['uf']} - ${e['name']}';
-                                      },
-                                      onChanged: (v) {
-                                        setState(() {
-                                          _selectedState = v ?? '';
-                                          userState = _selectedState;
-                                        });
-                                      },
-                                      popupProps: PopupProps.menu(
-                                        showSearchBox: true,
-                                        searchFieldProps: TextFieldProps(
-                                          decoration: InputDecoration(
-                                            hintText: languages[choosenLanguage]
-                                                    ['text_search'] ??
-                                                'Buscar',
-                                            border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8)),
-                                          ),
-                                        ),
-                                      ),
-                                      dropdownDecoratorProps:
-                                          DropDownDecoratorProps(
-                                        dropdownSearchDecoration:
-                                            InputDecoration(
-                                          hintText: languages[choosenLanguage]
-                                                  ['text_state_hint'] ??
-                                              'UF',
-                                          hintStyle: GoogleFonts.poppins(
-                                              fontSize: media.width * fourteen,
-                                              color: hintColor),
-                                          border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                          contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: media.width * 0.03),
-                                        ),
+                          ),
+                          child: Focus(
+                            focusNode: _stateFocusNode,
+                            child: DropdownSearch<String>(
+                                  selectedItem: _selectedState.isEmpty
+                                      ? null
+                                      : _selectedState,
+                                  items: brazilianStates
+                                      .map((s) => s['uf']!)
+                                      .toList(),
+                                  itemAsString: (String s) {
+                                    final e = brazilianStates.firstWhere(
+                                      (e) => e['uf'] == s,
+                                      orElse: () => {'uf': s, 'name': s},
+                                    );
+                                    return '${e['uf']} - ${e['name']}';
+                                  },
+                                  onChanged: (v) {
+                                    setState(() {
+                                      _selectedState = v ?? '';
+                                      userState = _selectedState;
+                                    });
+                                  },
+                                  popupProps: PopupProps.menu(
+                                    showSearchBox: true,
+                                    searchFieldProps: TextFieldProps(
+                                      decoration: InputDecoration(
+                                        hintText: languages[choosenLanguage]
+                                                ['text_search'] ??
+                                            'Buscar',
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: media.width * 0.03),
-                        // Sexo
-                        MyText(
-                          text:
-                              languages[choosenLanguage]['text_sexo'] ?? 'Sexo',
-                          size: media.width * twelve,
-                          color: textColor,
-                          fontweight: FontWeight.w600,
-                        ),
-                        SizedBox(height: media.width * 0.015),
-                        Focus(
-                          focusNode: _genderFocusNode,
-                          child: SizedBox(
-                            width: media.width * 0.9,
-                            child: DropdownSearch<String>(
-                              selectedItem: _selectedGender.isEmpty
-                                  ? null
-                                  : _selectedGender,
-                              items: genderOptions
-                                  .map((g) => g['value']!)
-                                  .toList(),
-                              itemAsString: (String v) =>
-                                  languages[choosenLanguage]
-                                      ['text_gender_$v'] ??
-                                  genderOptions.firstWhere(
-                                      (e) => e['value'] == v,
-                                      orElse: () => {
-                                            'value': v,
-                                            'label_pt': v
-                                          })['label_pt']!,
-                              onChanged: (v) {
-                                setState(() {
-                                  _selectedGender = v ?? '';
-                                  userGender = _selectedGender;
-                                });
-                              },
-                              popupProps: PopupProps.menu(
-                                showSearchBox: true,
-                                searchFieldProps: TextFieldProps(
-                                  decoration: InputDecoration(
-                                    hintText: languages[choosenLanguage]
-                                            ['text_search'] ??
-                                        'Buscar',
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8)),
+                                  dropdownDecoratorProps:
+                                      DropDownDecoratorProps(
+                                    dropdownSearchDecoration:
+                                        InputDecoration(
+                                      hintText: languages[choosenLanguage]
+                                              ['text_state_hint'] ??
+                                          'UF',
+                                      hintStyle: GoogleFonts.poppins(
+                                          fontSize: media.width * fourteen,
+                                          color: hintColor),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: media.width * 0.03),
+                                    ),
                                   ),
                                 ),
                               ),
-                              dropdownDecoratorProps: DropDownDecoratorProps(
-                                dropdownSearchDecoration: InputDecoration(
-                                  hintText: languages[choosenLanguage]
-                                          ['text_gender_hint'] ??
-                                      'Selecione o gênero',
-                                  hintStyle: GoogleFonts.poppins(
-                                      fontSize: media.width * fourteen,
-                                      color: hintColor),
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: media.width * 0.03),
-                                ),
-                              ),
                             ),
-                          ),
-                        ),
                         SizedBox(height: media.width * 0.03),
-                        (isfromomobile == false)
-                            ? Container(
-                                padding:
-                                    const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                                height: 55,
-                                width: media.width * 0.9,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: _isPhoneFocused
-                                        ? const Color(0xFF9A03E9) // Roxo
-                                        : textColor,
-                                    width: _isPhoneFocused ? 2.0 : 1.0,
+                        // Celular é obrigatório no cadastro (sempre visível)
+                        Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    languages[choosenLanguage]['text_phone'] ?? 'Telefone',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: media.width * twelve,
+                                        color: hintColor),
                                   ),
-                                ),
-                                child: Row(
+                                  SizedBox(height: media.height * 0.008),
+                                  Container(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                                    height: 55,
+                                    width: media.width * 0.9,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: _isPhoneFocused
+                                            ? const Color(0xFF9A03E9)
+                                            : textColor,
+                                        width: _isPhoneFocused ? 2.0 : 1.0,
+                                      ),
+                                    ),
+                                    child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    // Botão de seleção de país
-                                    InkWell(
-                                      onTap: () async {
-                                        if (countries.isNotEmpty) {
-                                          //dialod box for select country for dial code
-                                          await showDialog(
-                                              context: context,
-                                              builder: (context) {
-                                                var searchVal = '';
-                                                return AlertDialog(
-                                                  backgroundColor: page,
-                                                  insetPadding:
-                                                      const EdgeInsets.all(10),
-                                                  content: StatefulBuilder(
-                                                      builder:
-                                                          (context, setState) {
-                                                    return Container(
-                                                      width: media.width * 0.9,
-                                                      color: page,
-                                                      child: Directionality(
-                                                        textDirection:
-                                                            (languageDirection ==
-                                                                    'rtl')
-                                                                ? TextDirection
-                                                                    .rtl
-                                                                : TextDirection
-                                                                    .ltr,
-                                                        child: Column(
-                                                          children: [
-                                                            Container(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 20,
-                                                                      right:
-                                                                          20),
-                                                              height: 40,
-                                                              width:
-                                                                  media.width *
-                                                                      0.9,
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              20),
-                                                                  border: Border.all(
-                                                                      color: Colors
-                                                                          .grey,
-                                                                      width:
-                                                                          1.5)),
-                                                              child: TextField(
-                                                                decoration: InputDecoration(
-                                                                    contentPadding: (languageDirection ==
-                                                                            'rtl')
-                                                                        ? EdgeInsets.only(
-                                                                            bottom: media.width *
-                                                                                0.035)
-                                                                        : EdgeInsets.only(
-                                                                            bottom: media.width *
-                                                                                0.04),
-                                                                    border:
-                                                                        InputBorder
-                                                                            .none,
-                                                                    hintText:
-                                                                        (languages[choosenLanguage] ?? languages['en'])?['text_search'] ??
-                                                                            'Search',
-                                                                    hintStyle: GoogleFonts.poppins(
-                                                                        fontSize:
-                                                                            media.width *
-                                                                                sixteen,
-                                                                        color:
-                                                                            hintColor)),
-                                                                style: GoogleFonts.poppins(
-                                                                    fontSize: media
-                                                                            .width *
-                                                                        sixteen,
-                                                                    color:
-                                                                        textColor),
-                                                                onChanged:
-                                                                    (val) {
-                                                                  setState(() {
-                                                                    searchVal =
-                                                                        val;
-                                                                  });
-                                                                },
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                                height: 20),
-                                                            Expanded(
-                                                              child:
-                                                                  SingleChildScrollView(
-                                                                child: Column(
-                                                                  children: countries
-                                                                      .asMap()
-                                                                      .map((i, value) {
-                                                                        return MapEntry(
-                                                                            i,
-                                                                            SizedBox(
-                                                                              width: media.width * 0.9,
-                                                                              child: (searchVal == '' && countries[i]['flag'] != null)
-                                                                                  ? InkWell(
-                                                                                      onTap: () {
-                                                                                        phcode = i;
-                                                                                        Navigator.pop(context);
-                                                                                        // Atualizar estado principal e limpar campo
-                                                                                        controller.clear();
-                                                                                        phnumber = '';
-                                                                                        _updatePhoneMaskFormatter();
-                                                                                        setState(() {});
-                                                                                      },
-                                                                                      child: Container(
-                                                                                        padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                                                        color: page,
-                                                                                        child: Row(
-                                                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                          children: [
-                                                                                            Row(
-                                                                                              children: [
-                                                                                                Image.network(countries[i]['flag']),
-                                                                                                SizedBox(
-                                                                                                  width: media.width * 0.02,
-                                                                                                ),
-                                                                                                SizedBox(
-                                                                                                  width: media.width * 0.4,
-                                                                                                  child: MyText(
-                                                                                                    text: countries[i]['name'],
-                                                                                                    size: media.width * sixteen,
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                            MyText(text: countries[i]['dial_code'], size: media.width * sixteen)
-                                                                                          ],
-                                                                                        ),
-                                                                                      ))
-                                                                                  : (countries[i]['flag'] != null && countries[i]['name'].toLowerCase().contains(searchVal.toLowerCase()))
-                                                                                      ? InkWell(
-                                                                                          onTap: () {
-                                                                                            phcode = i;
-                                                                                            Navigator.pop(context);
-                                                                                            // Atualizar estado principal e limpar campo
-                                                                                            controller.clear();
-                                                                                            phnumber = '';
-                                                                                            _updatePhoneMaskFormatter();
-                                                                                            setState(() {});
-                                                                                          },
-                                                                                          child: Container(
-                                                                                            padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                                                            color: page,
-                                                                                            child: Row(
-                                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                              children: [
-                                                                                                Row(
-                                                                                                  children: [
-                                                                                                    Image.network(countries[i]['flag']),
-                                                                                                    SizedBox(
-                                                                                                      width: media.width * 0.02,
-                                                                                                    ),
-                                                                                                    SizedBox(
-                                                                                                      width: media.width * 0.4,
-                                                                                                      child: MyText(text: countries[i]['name'], size: media.width * sixteen),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                ),
-                                                                                                MyText(text: countries[i]['dial_code'], size: media.width * sixteen)
-                                                                                              ],
-                                                                                            ),
-                                                                                          ))
-                                                                                      : Container(),
-                                                                            ));
-                                                                      })
-                                                                      .values
-                                                                      .toList(),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }),
-                                                );
-                                              });
-                                        } else {
-                                          getCountryCode();
-                                        }
-                                        // Limpar o campo quando o país mudar para aplicar nova máscara
-                                        controller.clear();
-                                        phnumber = '';
-                                        _updatePhoneMaskFormatter();
-                                        setState(() {});
-                                      },
-                                      //input field
-                                      child: Container(
-                                        height: 50,
-                                        alignment: Alignment.center,
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Image.network(
-                                              (countries.isNotEmpty &&
-                                                      phcode != null &&
-                                                      countries[phcode] !=
-                                                          null &&
-                                                      countries[phcode]
-                                                              ['flag'] !=
-                                                          null
-                                                  ? countries[phcode]['flag']
-                                                  : 'https://flagcdn.com/w40/br.png'),
-                                              width: 24,
-                                              height: 24,
-                                              fit: BoxFit.contain,
-                                            ),
-                                            SizedBox(
-                                              width: media.width * 0.02,
-                                            ),
-                                            Icon(
-                                              Icons.arrow_drop_down,
-                                              size: 28,
-                                              color: textColor,
-                                            )
-                                          ],
-                                        ),
+                                    // País fixo: só bandeira; +55 enviado em hidden (dial_code na API)
+                                    Container(
+                                      height: 50,
+                                      alignment: Alignment.center,
+                                      padding: EdgeInsets.symmetric(horizontal: media.width * 0.02),
+                                      child: Image.network(
+                                        'https://flagcdn.com/w40/br.png',
+                                        width: 24,
+                                        height: 24,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (_, __, ___) => const SizedBox(width: 24, height: 24),
                                       ),
                                     ),
                                     const SizedBox(width: 4),
@@ -1182,24 +974,6 @@ class _NamePageState extends State<NamePage> {
                                       color: underline,
                                     ),
                                     const SizedBox(width: 10),
-                                    // Código do país - centralizado verticalmente
-                                    Container(
-                                      height: 50,
-                                      alignment: Alignment.center,
-                                      child: MyText(
-                                        text: (countries.isNotEmpty &&
-                                                phcode != null &&
-                                                countries[phcode] != null &&
-                                                countries[phcode]
-                                                        ['dial_code'] !=
-                                                    null)
-                                            ? countries[phcode]['dial_code']
-                                                .toString()
-                                            : '+55',
-                                        size: media.width * sixteen,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
                                     // Campo de texto com máscara - centralizado verticalmente
                                     Expanded(
                                       child: Container(
@@ -1274,8 +1048,9 @@ class _NamePageState extends State<NamePage> {
                                     )
                                   ],
                                 ),
-                              )
-                            : Container(),
+                                  ),
+                                ],
+                              ),
                       ],
                     ),
                   ),
@@ -1299,16 +1074,20 @@ class _NamePageState extends State<NamePage> {
                       )
                     ],
                   ),
-                (isfromomobile == true)
+                (isfromomobile == true && loginEmailPswd == 1)
                     ? Column(
                         children: [
                           Button(
                               onTap: () async {
+                                final phoneOk = controller.text.length >=
+                                    (countries[phcode]?['dial_min_length'] ?? 10);
                                 if (firstname.text.isNotEmpty &&
-                                    emailtext.text.isNotEmpty) {
+                                    emailtext.text.isNotEmpty &&
+                                    phoneOk) {
                                   setState(() {
                                     _error = '';
                                   });
+                                  phnumber = controller.text.replaceAll(RegExp(r'[^\d]'), '');
                                   loginReferralCode =
                                       _referralController.text.trim();
                                   loginLoading = true;
@@ -1342,13 +1121,26 @@ class _NamePageState extends State<NamePage> {
                                     userCity = cityController.text;
                                     userState = _selectedState;
                                     userGender = _selectedGender;
-                                    var result =
-                                        await validateEmail(emailtext.text);
+                                    final countryCode = countries[phcode]?['dial_code']?.toString() ?? '';
+                                    var result = await validateEmailMobileDocument(
+                                        emailtext.text,
+                                        phnumber,
+                                        countryCode,
+                                        userCpf);
                                     if (result == 'success') {
                                       isfromomobile = true;
                                       isverifyemail = true;
-
                                       currentPage = 3;
+                                      loginLoading = false;
+                                      valueNotifierLogin.incrementNotifier();
+                                      if (mounted) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const AggreementPage(),
+                                          ),
+                                        );
+                                      }
                                     } else {
                                       setState(() {
                                         _error = result.toString();
@@ -1368,7 +1160,9 @@ class _NamePageState extends State<NamePage> {
                                 }
                               },
                               color: (firstname.text.isNotEmpty &&
-                                      emailtext.text.isNotEmpty)
+                                      emailtext.text.isNotEmpty &&
+                                      controller.text.length >=
+                                          (countries[phcode]?['dial_min_length'] ?? 10))
                                   ? buttonColor
                                   : Colors.grey,
                               text: languages[choosenLanguage]['text_next'])
@@ -1382,6 +1176,7 @@ class _NamePageState extends State<NamePage> {
                             if (firstname.text.isNotEmpty &&
                                 controller.text.length >=
                                     countries[phcode]['dial_min_length']) {
+                              phnumber = controller.text.replaceAll(RegExp(r'[^\d]'), '');
                               if (lastname.text != '') {
                                 name = '${firstname.text} ${lastname.text}';
                               } else {
@@ -1405,23 +1200,32 @@ class _NamePageState extends State<NamePage> {
                                   _referralController.text.trim();
                               loginLoading = true;
                               valueNotifierLogin.incrementNotifier();
-                              var val = await otpCall();
-                              if (val.value == true) {
-                                phoneAuthCheck = true;
-                                await phoneAuth(
-                                    (countries[phcode]?['dial_code'] ?? '') +
-                                        phnumber);
-                                value = 0;
-                                currentPage = 3;
-                              } else {
-                                value = 0;
-                                isverifyemail = true;
-                                phoneAuthCheck = false;
-                                isfromomobile = true;
-                                currentPage = 1;
+                              final countryCode = countries[phcode]?['dial_code']?.toString() ?? '';
+                              final doc = cpfController.text.replaceAll(RegExp(r'[^\d]'), '');
+                              var validateResult = await validateEmailMobileDocument(
+                                  emailtext.text.trim(),
+                                  phnumber,
+                                  countryCode,
+                                  doc);
+                              if (validateResult != 'success') {
+                                setState(() => _error = validateResult.toString());
+                                loginLoading = false;
+                                valueNotifierLogin.incrementNotifier();
+                                return;
                               }
+                              isfromomobile = true;
+                              isverifyemail = true;
+                              currentPage = 3;
                               loginLoading = false;
                               valueNotifierLogin.incrementNotifier();
+                              if (mounted) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AggreementPage(),
+                                  ),
+                                );
+                              }
                             }
                           },
                           color: (firstname.text.isNotEmpty &&

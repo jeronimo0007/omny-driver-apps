@@ -288,8 +288,9 @@ SizedBox(
                                               _isAccountExpanded ? 0.3 : 1.0,
                                           child: Column(
                                             children: [
-                                              // 1 - Carteira e Saldo
-                                              userDetails['owner_id'] == null &&
+                                              // 1 - Carteira e Saldo (oculto se enable_menus == 1)
+                                              enableMenus != '1' &&
+                                                      userDetails['owner_id'] == null &&
                                                       userDetails['show_wallet_feature_on_mobile_app'] == '1'
                                                   ? NavMenu(
                                                       onTap: () {
@@ -327,8 +328,9 @@ SizedBox(
                                                 image: 'assets/images/earing.png',
                                               ),
 
-                                              // 4 - Indicações
-                                              userDetails['owner_id'] == null && userDetails['role'] == 'driver'
+                                              // 4 - Indicações (oculto se enable_menus == 1)
+                                              enableMenus != '1' &&
+                                                      userDetails['owner_id'] == null && userDetails['role'] == 'driver'
                                                   ? NavMenu(
                                                       onTap: () {
                                                         Navigator.push(
@@ -341,17 +343,19 @@ SizedBox(
                                                     )
                                                   : Container(),
 
-                                              // 5 - Dados bancários
-                                              NavMenu(
-                                                onTap: () {
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) => const BankDetails()));
-                                                },
-                                                text: languages[choosenLanguage]['text_updateBank'],
-                                                icon: Icons.account_balance_outlined,
-                                              ),
+                                              // 5 - Dados bancários (oculto se enable_menus == 1)
+                                              enableMenus != '1'
+                                                  ? NavMenu(
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder: (context) => const BankDetails()));
+                                                      },
+                                                      text: languages[choosenLanguage]['text_updateBank'],
+                                                      icon: Icons.account_balance_outlined,
+                                                    )
+                                                  : Container(),
 
                                               // 6 - SOS
                                               userDetails['role'] != 'owner'

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../config/api_config.dart';
 import '../../styles/styles.dart';
 import '../../functions/functions.dart';
 import '../../translations/translation.dart';
@@ -9,7 +10,9 @@ import 'dart:math' as math;
 import '../loadingPage/loading.dart';
 import '../noInternet/nointernet.dart';
 import '../language/languages.dart';
+import '../onTripPage/map_page.dart';
 import 'agreement.dart';
+import 'forgot_password.dart';
 import 'namepage.dart';
 import 'otp_page.dart';
 
@@ -38,6 +41,11 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
   // bool _resend = false;
   FocusNode phoneFocus = FocusNode();
   FocusNode emailFocus = FocusNode();
+  // Novo fluxo login e-mail/senha (loginEmailPswd == 1)
+  final TextEditingController _emailAuthController = TextEditingController();
+  final TextEditingController _passwordAuthController = TextEditingController();
+  String _errorAuth = '';
+  bool _loadingAuth = false;
 
   String get timerString {
     Duration duration = aController.duration * aController.value;
@@ -66,9 +74,173 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _emailAuthController.dispose();
+    _passwordAuthController.dispose();
     phoneFocus.dispose();
     emailFocus.dispose();
     super.dispose();
+  }
+
+  /// Tela de login e-mail/senha (quando loginEmailPswd == 1)
+  Widget _buildEmailPasswordLogin(Size media) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: media.height * 0.02),
+          InkWell(
+            onTap: () => Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => const Languages())),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: media.width * 0.02),
+              child: Row(
+                children: [
+                  Icon(Icons.arrow_back_ios, color: buttonColor, size: media.height * 0.024),
+                  SizedBox(width: media.width * 0.02),
+                  Text(
+                    languages[choosenLanguage]['text_choose_language'] ?? 'Idioma',
+                    style: GoogleFonts.poppins(color: buttonColor, fontSize: media.width * 0.04),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: media.height * 0.03),
+          MyText(
+            text: languages[choosenLanguage]['text_login'] ?? 'Entrar',
+            size: media.width * 0.06,
+            fontweight: FontWeight.bold,
+          ),
+          SizedBox(height: media.height * 0.02),
+          MyText(
+            text: languages[choosenLanguage]['text_enter_email'] ?? 'E-mail',
+            size: media.width * 0.035,
+            color: textColor.withOpacity(0.8),
+          ),
+          SizedBox(height: media.height * 0.01),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: textColor.withOpacity(0.3)),
+            ),
+            child: TextField(
+              controller: _emailAuthController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: languages[choosenLanguage]['text_enter_email'] ?? 'Digite seu e-mail',
+                hintStyle: GoogleFonts.poppins(color: hintColor, fontSize: media.width * 0.035),
+                contentPadding: EdgeInsets.symmetric(horizontal: media.width * 0.04, vertical: media.height * 0.02),
+                border: InputBorder.none,
+              ),
+              style: GoogleFonts.poppins(color: textColor, fontSize: media.width * 0.04),
+            ),
+          ),
+          SizedBox(height: media.height * 0.02),
+          MyText(
+            text: languages[choosenLanguage]['text_password'] ?? 'Senha',
+            size: media.width * 0.035,
+            color: textColor.withOpacity(0.8),
+          ),
+          SizedBox(height: media.height * 0.01),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: textColor.withOpacity(0.3)),
+            ),
+            child: TextField(
+              controller: _passwordAuthController,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: languages[choosenLanguage]['text_password'] ?? 'Digite sua senha',
+                hintStyle: GoogleFonts.poppins(color: hintColor, fontSize: media.width * 0.035),
+                contentPadding: EdgeInsets.symmetric(horizontal: media.width * 0.04, vertical: media.height * 0.02),
+                border: InputBorder.none,
+              ),
+              style: GoogleFonts.poppins(color: textColor, fontSize: media.width * 0.04),
+            ),
+          ),
+          if (_errorAuth.isNotEmpty) ...[
+            SizedBox(height: media.height * 0.015),
+            Text(_errorAuth, style: GoogleFonts.poppins(color: Colors.red, fontSize: media.width * 0.032)),
+          ],
+          SizedBox(height: media.height * 0.03),
+          Button(
+            onTap: _loadingAuth
+                ? null
+                : () async {
+                    final email = _emailAuthController.text.trim();
+                    final password = _passwordAuthController.text;
+                    if (email.isEmpty || password.isEmpty) {
+                      setState(() => _errorAuth = languages[choosenLanguage]['text_fill_form'] ?? 'Preencha e-mail e senha');
+                      return;
+                    }
+                    setState(() {
+                      _errorAuth = '';
+                      _loadingAuth = true;
+                      loginLoading = true;
+                    });
+                    valueNotifierLogin.incrementNotifier();
+                    final result = await userLoginEmailPassword(email, password);
+                    if (!mounted) return;
+                    setState(() {
+                      _loadingAuth = false;
+                      loginLoading = false;
+                    });
+                    valueNotifierLogin.incrementNotifier();
+                    if (result == 'token') {
+                      var val = await getUserDetails();
+                      if (val == 'logout') return;
+                      if (!mounted) return;
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Maps()),
+                          (route) => false);
+                    } else if (result == 'otp_required') {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const Otp(from: 'email')));
+                    } else {
+                      setState(() => _errorAuth = result?.toString() ?? 'Erro no login');
+                    }
+                  },
+            text: languages[choosenLanguage]['text_login'] ?? 'Entrar',
+          ),
+          SizedBox(height: media.height * 0.02),
+          InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ForgotPassword()),
+            ),
+            child: Center(
+              child: Text(
+                languages[choosenLanguage]['text_forgot_password'] ?? 'Esqueci minha senha',
+                style: GoogleFonts.poppins(
+                  color: buttonColor,
+                  fontSize: media.width * 0.035,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: media.height * 0.015),
+          InkWell(
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (context) => const NamePage())),
+            child: Center(
+              child: Text(
+                languages[choosenLanguage]['text_sign_up'] ?? 'Cadastrar',
+                style: GoogleFonts.poppins(
+                  color: buttonColor,
+                  fontSize: media.width * 0.035,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   countryCode() async {
@@ -138,6 +310,9 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SizedBox(height: media.height * 0.02),
+                                if (loginEmailPswd == 1)
+                                  Expanded(child: _buildEmailPasswordLogin(media))
+                                else ...[
                                 InkWell(
                                     onTap: () {
                                       if (currentPage == 0) {
@@ -833,26 +1008,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                           decoration:
                                                               InputDecoration(
                                                             counterText: '',
-                                                            prefixText:
-                                                                '${countries[phcode]['dial_code']} ',
-                                                            prefixStyle: choosenLanguage ==
-                                                                    'ar'
-                                                                ? GoogleFonts.cairo(
-                                                                    color:
-                                                                        textColor,
-                                                                    fontSize: media
-                                                                            .width *
-                                                                        sixteen,
-                                                                    letterSpacing:
-                                                                        1)
-                                                                : GoogleFonts.poppins(
-                                                                    color:
-                                                                        textColor,
-                                                                    fontSize: media
-                                                                            .width *
-                                                                        sixteen,
-                                                                    letterSpacing:
-                                                                        1),
                                                             hintStyle:
                                                                 choosenLanguage ==
                                                                         'ar'
@@ -1413,6 +1568,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                 ? const Expanded(
                                                     child: AggreementPage())
                                                 : Container(),
+                                ],
                               ],
                             ),
                           ),

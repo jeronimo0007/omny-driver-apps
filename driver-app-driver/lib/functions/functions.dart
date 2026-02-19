@@ -261,13 +261,12 @@ getDetailsOfDevice() async {
   }
 }
 
-//validate email already exist
-
+//validate email already exist (cadastro: mantido para adddriver; preferir validateEmailMobileDocument no cadastro)
 validateEmail(email) async {
   dynamic result;
   try {
     var response = await http.post(
-      Uri.parse('${url}api/v1/driver/validate-mobile'),
+      Uri.parse('${url}api/v1/driver/validate-email'),
       body: {
         'email': email,
         "role": userDetails.isNotEmpty
@@ -281,6 +280,137 @@ validateEmail(email) async {
       } else {
         debugPrint(response.body);
         result = 'failed';
+      }
+    } else if (response.statusCode == 422) {
+      debugPrint(response.body);
+      try {
+        final body = jsonDecode(response.body);
+        result = formatValidationErrors(
+          body['errors'],
+          fallbackMessage:
+              body['message']?.toString() ?? 'Os dados enviados são inválidos.',
+        );
+      } catch (_) {
+        result = 'Os dados enviados são inválidos.';
+      }
+    } else {
+      debugPrint(response.body);
+      try {
+        result = jsonDecode(response.body)['message'] ?? 'Erro na validação.';
+      } catch (_) {
+        result = 'Erro na validação.';
+      }
+    }
+  } catch (e) {
+    if (e is SocketException) {
+      internet = false;
+      result = 'no internet';
+    }
+  }
+  return result;
+}
+
+/// Valida no cadastro os 3 campos: email, mobile e document (CPF).
+/// Chama api/v1/driver/validate-email-mobile-document.
+/// [mobile] número só dígitos (sem máscara); [countryCode] ex: +55 ou 55.
+validateEmailMobileDocument(
+    String email, String mobile, String countryCode, String document) async {
+  dynamic result;
+  try {
+    final fullMobile =
+        countryCode.replaceAll(RegExp(r'[^\d]'), '') +
+        mobile.replaceAll(RegExp(r'[^\d]'), '');
+    final docDigits = document.replaceAll(RegExp(r'[^\d]'), '');
+    final body = {
+      'email': email.trim(),
+      'mobile': fullMobile,
+      'document': docDigits,
+      'role': userDetails.isNotEmpty
+          ? userDetails['role'].toString()
+          : ischeckownerordriver,
+    };
+    var response = await http.post(
+      Uri.parse('${url}api/v1/driver/validate-email-mobile-document'),
+      body: body,
+    );
+    debugPrint(
+        '🌐 [API] validateEmailMobileDocument - status: ${response.statusCode} | body: ${response.body}');
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['success'] == true && json['data'] != null) {
+        final data = json['data'] as Map<String, dynamic>;
+        final emailTaken = data['email_taken'] == true;
+        final mobileTaken = data['mobile_taken'] == true;
+        final documentTaken = data['document_taken'] == true;
+        if (emailTaken) {
+          result = 'E-mail já cadastrado.';
+        } else if (mobileTaken) {
+          result = 'Celular já cadastrado.';
+        } else if (documentTaken) {
+          result = 'CPF já cadastrado.';
+        } else {
+          result = 'success';
+        }
+      } else if (json['success'] == true) {
+        result = 'success';
+      } else {
+        debugPrint(response.body);
+        result = json['message']?.toString() ?? 'failed';
+      }
+    } else if (response.statusCode == 422) {
+      debugPrint(response.body);
+      try {
+        final resBody = jsonDecode(response.body);
+        result = formatValidationErrors(
+          resBody['errors'],
+          fallbackMessage:
+              resBody['message']?.toString() ?? 'Os dados enviados são inválidos.',
+        );
+      } catch (_) {
+        result = 'Os dados enviados são inválidos.';
+      }
+    } else {
+      debugPrint(response.body);
+      try {
+        result =
+            jsonDecode(response.body)['message'] ?? 'Erro na validação.';
+      } catch (_) {
+        result = 'Erro na validação.';
+      }
+    }
+  } catch (e) {
+    if (e is SocketException) {
+      internet = false;
+      result = 'no internet';
+    }
+  }
+  return result;
+}
+
+/// Valida só celular (validate-mobile). Preferir validateEmailMobileDocument no cadastro.
+validateMobile(String mobile, String countryCode) async {
+  dynamic result;
+  try {
+    final fullMobile = countryCode.replaceAll(RegExp(r'[^\d]'), '') +
+        mobile.replaceAll(RegExp(r'[^\d]'), '');
+    var response = await http.post(
+      Uri.parse('${url}api/v1/driver/validate-mobile'),
+      body: {
+        'mobile': fullMobile,
+        'country_code': countryCode.trim(),
+        "role": userDetails.isNotEmpty
+            ? userDetails['role'].toString()
+            : ischeckownerordriver,
+      },
+    );
+    debugPrint(
+        '🌐 [API] validateMobile - mobile: $fullMobile | status: ${response.statusCode} | body: ${response.body}');
+    if (response.statusCode == 200) {
+      if (jsonDecode(response.body)['success'] == true) {
+        result = 'success';
+      } else {
+        debugPrint(response.body);
+        result = jsonDecode(response.body)['message']?.toString() ?? 'failed';
       }
     } else if (response.statusCode == 422) {
       debugPrint(response.body);
@@ -613,64 +743,20 @@ uploadFleetDocs(fleetid) async {
   return result;
 }
 
-//getting country code
-
-List countries = [];
+//getting country code — Brasil como único padrão, sem opção de mudança
+List countries = [
+  {
+    'name': 'Brasil',
+    'dial_code': '+55',
+    'dial_min_length': 11,
+    'dial_max_length': 11,
+    'iso2': 'BR',
+    'flag': 'https://flagcdn.com/w40/br.png',
+  },
+];
 getCountryCode() async {
-  dynamic result;
-  try {
-    debugPrint('🌐 [API] getCountryCode - Buscando códigos de país');
-    final response = await http.get(Uri.parse('${url}api/v1/countries'));
-
-    debugPrint('🌐 [API] getCountryCode - Status Code: ${response.statusCode}');
-    if (response.statusCode == 200) {
-      countries = jsonDecode(response.body)['data'] ?? [];
-      debugPrint(
-          '🌐 [API] getCountryCode - Países recebidos: ${countries.length}');
-
-      if (countries.isNotEmpty) {
-        // Forçar Brasil como padrão (DDI +55)
-        final brazilIndex = countries.indexWhere((c) {
-          final code = c['dial_code']?.toString().replaceAll(' ', '') ?? '';
-          final iso = c['iso2']?.toString().toUpperCase() ?? '';
-          return code == '+55' || iso == 'BR';
-        });
-        phcode = (brazilIndex >= 0) ? brazilIndex : 0;
-        debugPrint(
-            '🌐 [API] getCountryCode - Brasil forçado como padrão, phcode: $phcode');
-      } else {
-        phcode = 0;
-        debugPrint('🌐 [API] getCountryCode - Lista vazia, phcode = 0');
-      }
-
-      // Garantir que phcode não seja null
-      if (phcode == null || phcode < 0 || phcode >= countries.length) {
-        phcode = 0;
-        debugPrint('🌐 [API] getCountryCode - phcode ajustado para 0');
-      }
-
-      result = 'success';
-    } else {
-      debugPrint('🌐 [API] getCountryCode - ERRO ${response.statusCode}');
-      debugPrint('🌐 [API] getCountryCode - Response: ${response.body}');
-      // Inicializar com valores padrão em caso de erro
-      phcode = 0;
-      result = 'error';
-    }
-  } catch (e) {
-    debugPrint('🌐 [API] getCountryCode - EXCEÇÃO: $e');
-    debugPrint('🌐 [API] getCountryCode - Tipo: ${e.runtimeType}');
-    if (e is SocketException) {
-      internet = false;
-      result = 'no internet';
-      debugPrint('🌐 [API] getCountryCode - SocketException: Sem internet');
-    }
-    // Inicializar com valores padrão em caso de exceção
-    phcode = 0;
-  }
-  debugPrint(
-      '🌐 [API] getCountryCode - Resultado final: $result, phcode: $phcode');
-  return result;
+  phcode = 0;
+  return 'success';
 }
 
 //login firebase
@@ -1653,9 +1739,10 @@ registerDriver() async {
     final base = loginEmailPswd == 1 ? authBaseUrl : url;
     final apiUrl = '${base}api/v1/driver/register';
     debugPrint(
-        '🌐🌐🌐 [API] registerDriver - ========== INÍCIO DA CHAMADA ==========');
-    debugPrint('🌐 [API] registerDriver - URL: $apiUrl');
-    debugPrint('🌐 [API] registerDriver - Método: POST');
+        '📝 [REGISTER] ========== REQUEST (driver) ==========');
+    debugPrint('📝 [REGISTER] Método: POST');
+    debugPrint('📝 [REGISTER] URL: $apiUrl');
+    debugPrint('📝 [REGISTER] Base (auth vs driver): ${loginEmailPswd == 1 ? "authBaseUrl" : "url"}');
 
     final response = http.MultipartRequest(
       'POST',
@@ -1663,7 +1750,7 @@ registerDriver() async {
     );
 
     response.headers.addAll({'Content-Type': 'application/json'});
-    debugPrint('🌐 [API] registerDriver - Headers: ${response.headers}');
+    debugPrint('📝 [REGISTER] Headers: ${response.headers}');
 
     if (proImageFile1 != null) {
       response.files.add(
@@ -1676,6 +1763,7 @@ registerDriver() async {
     }
 
     final fields = <String, String>{
+      'type': 'driver',
       "name": name.toString(),
       "mobile": phnumber.toString(),
       "email": email.toString(),
@@ -1711,38 +1799,13 @@ registerDriver() async {
       'city': userCity.toString(),
       'state': userState.toString(),
     };
+    if (loginReferralCode.trim().isNotEmpty) {
+      fields['referral_code'] = loginReferralCode.trim();
+    }
 
-    debugPrint(
-        '🌐🌐🌐 [API] registerDriver - ========== BODY DA REQUISIÇÃO ==========');
-    debugPrint('🌐 [API] registerDriver - name: ${fields["name"]}');
-    debugPrint('🌐 [API] registerDriver - mobile: ${fields["mobile"]}');
-    debugPrint('🌐 [API] registerDriver - email: ${fields["email"]}');
-    debugPrint(
-        '🌐 [API] registerDriver - device_token: ${fields["device_token"]}');
-    debugPrint('🌐 [API] registerDriver - country: ${fields["country"]}');
-    debugPrint(
-        '🌐 [API] registerDriver - service_location_id: ${fields["service_location_id"]}');
-    debugPrint('🌐 [API] registerDriver - login_by: ${fields["login_by"]}');
-    debugPrint(
-        '🌐 [API] registerDriver - vehicle_types: ${fields["vehicle_types"]}');
-    debugPrint('🌐 [API] registerDriver - car_make: ${fields["car_make"]}');
-    debugPrint('🌐 [API] registerDriver - car_model: ${fields["car_model"]}');
-    debugPrint('🌐 [API] registerDriver - car_color: ${fields["car_color"]}');
-    debugPrint('🌐 [API] registerDriver - car_number: ${fields["car_number"]}');
-    debugPrint(
-        '🌐 [API] registerDriver - vehicle_year: ${fields["vehicle_year"]}');
-    debugPrint('🌐 [API] registerDriver - lang: ${fields["lang"]}');
-    debugPrint(
-        '🌐 [API] registerDriver - transport_type: ${fields["transport_type"]}');
-    debugPrint(
-        '🌐 [API] registerDriver - custom_make: ${fields["custom_make"]}');
-    debugPrint(
-        '🌐 [API] registerDriver - custom_model: ${fields["custom_model"]}');
-    debugPrint('🌐 [API] registerDriver - gender: ${fields["gender"]}');
-    debugPrint(
-        '🌐 [API] registerDriver - passenger_preference: ${fields["passenger_preference"]}');
-    debugPrint(
-        '🌐🌐🌐 [API] registerDriver - ========== FIM DO BODY ==========');
+    debugPrint('📝 [REGISTER] Body/Params: $fields');
+    debugPrint('📝 [REGISTER] Payload (JSON): ${jsonEncode(fields)}');
+    debugPrint('📝 [REGISTER] ================================');
 
     response.fields.addAll(fields);
     // Garantir que gender e passenger_preference sejam sempre enviados
@@ -1750,21 +1813,14 @@ registerDriver() async {
     response.fields['passenger_preference'] =
         userPassengerPreference.toString();
 
-    debugPrint(
-        '🌐🌐🌐 [API] registerDriver - ========== ENVIANDO REQUISIÇÃO ==========');
     var request = await response.send();
     var respon = await http.Response.fromStream(request);
 
-    debugPrint(
-        '🌐🌐🌐 [API] registerDriver - ========== RESPOSTA RECEBIDA ==========');
-    debugPrint('🌐 [API] registerDriver - Status Code: ${request.statusCode}');
-    debugPrint('🌐 [API] registerDriver - Response Headers: ${respon.headers}');
-    debugPrint(
-        '🌐 [API] registerDriver - Response Body (primeiros 500 chars): ${respon.body.length > 500 ? '${respon.body.substring(0, 500)}...' : respon.body}');
-    if (respon.body.length > 500) {
-      debugPrint(
-          '🌐 [API] registerDriver - Response Body completo (${respon.body.length} chars)');
-    }
+    debugPrint('📝 [REGISTER] ========== RESPONSE ==========');
+    debugPrint('📝 [REGISTER] Status: ${request.statusCode}');
+    debugPrint('📝 [REGISTER] Response Headers: ${respon.headers}');
+    debugPrint('📝 [REGISTER] Body: ${respon.body}');
+    debugPrint('📝 [REGISTER] ================================');
 
     if (request.statusCode == 200) {
       var jsonVal = jsonDecode(respon.body);
@@ -1847,9 +1903,10 @@ registerDriver() async {
         result = 'Erro ao realizar cadastro.';
       }
     }
-  } catch (e) {
-    debugPrint('🌐 [API] registerDriver - EXCEÇÃO: $e');
-    debugPrint('🌐 [API] registerDriver - Tipo: ${e.runtimeType}');
+  } catch (e, stack) {
+    debugPrint('❌ [REGISTER] registerDriver - Exceção: $e');
+    debugPrint('❌ [REGISTER] registerDriver - Tipo: ${e.runtimeType}');
+    debugPrint('❌ [REGISTER] registerDriver - Stack: $stack');
     if (e is SocketException) {
       internet = false;
       result = 'no internet';
@@ -1867,7 +1924,7 @@ registerDriver() async {
       }
     }
   }
-  debugPrint('🌐 [API] registerDriver - Resultado final: $result');
+  debugPrint('📝 [REGISTER] registerDriver - Resultado final: $result');
   return result;
 }
 
@@ -1925,38 +1982,59 @@ registerOwner() async {
     var token = await FirebaseMessaging.instance.getToken();
     var fcm = token.toString();
     final base = loginEmailPswd == 1 ? authBaseUrl : url;
+    final endpoint = '${base}api/v1/owner/register';
+
+    debugPrint('📝 [REGISTER] ========== REQUEST (owner) ==========');
+    debugPrint('📝 [REGISTER] Método: POST');
+    debugPrint('📝 [REGISTER] URL: $endpoint');
+    debugPrint('📝 [REGISTER] Base: ${loginEmailPswd == 1 ? "authBaseUrl" : "url"}');
+
     final response = http.MultipartRequest(
       'POST',
-      Uri.parse('${base}api/v1/owner/register'),
+      Uri.parse(endpoint),
     );
     response.headers.addAll({'Content-Type': 'application/json'});
+    debugPrint('📝 [REGISTER] Headers: ${response.headers}');
     if (proImageFile1 != null) {
       response.files.add(
         await http.MultipartFile.fromPath('profile_picture', proImageFile1),
       );
+      debugPrint('📝 [REGISTER] profile_picture anexado: $proImageFile1');
     }
-    response.fields.addAll({
-      "name": name,
-      "mobile": phnumber,
-      "email": email,
-      "address": companyAddress,
-      "postal_code": postalCode,
-      "city": city,
-      "tax_number": taxNumber,
-      "company_name": companyName,
+    final fields = <String, String>{
+      'type': 'owner',
+      "name": name.toString(),
+      "mobile": phnumber.toString(),
+      "email": email.toString(),
+      "address": companyAddress.toString(),
+      "postal_code": postalCode.toString(),
+      "city": city.toString(),
+      "tax_number": taxNumber.toString(),
+      "company_name": companyName.toString(),
       "device_token": fcm,
-      "country": countries[phcode]['dial_code'],
+      "country": countries[phcode]['dial_code'].toString(),
       "service_location_id": myServiceId.toString(),
       "login_by": kIsWeb
-          ? 'android' // Backend não aceita 'web', usar 'android' como fallback
+          ? 'android'
           : (platform == TargetPlatform.android)
               ? 'android'
               : 'ios',
-      'lang': choosenLanguage,
-      'transport_type': transportType,
-    });
+      'lang': choosenLanguage.toString(),
+      'transport_type': transportType.toString(),
+    };
+    response.fields.addAll(Map<String, String>.from(fields));
+    debugPrint('📝 [REGISTER] Body/Params: $fields');
+    debugPrint('📝 [REGISTER] Payload (JSON): ${jsonEncode(fields)}');
+    debugPrint('📝 [REGISTER] ================================');
+
     var request = await response.send();
     var respon = await http.Response.fromStream(request);
+
+    debugPrint('📝 [REGISTER] ========== RESPONSE (owner) ==========');
+    debugPrint('📝 [REGISTER] Status: ${respon.statusCode}');
+    debugPrint('📝 [REGISTER] Response Headers: ${respon.headers}');
+    debugPrint('📝 [REGISTER] Body: ${respon.body}');
+    debugPrint('📝 [REGISTER] ================================');
 
     if (respon.statusCode == 200) {
       var jsonVal = jsonDecode(respon.body);
@@ -1979,8 +2057,9 @@ registerOwner() async {
         });
       }
       result = 'true';
+      debugPrint('📝 [REGISTER] registerOwner - Sucesso');
     } else if (respon.statusCode == 422) {
-      debugPrint(respon.body);
+      debugPrint('❌ [REGISTER] registerOwner - 422: ${respon.body}');
       var error = jsonDecode(respon.body)['errors'];
       result = error[error.keys.toList()[0]]
           .toString()
@@ -1988,15 +2067,20 @@ registerOwner() async {
           .replaceAll(']', '')
           .toString();
     } else {
-      debugPrint(respon.body);
+      debugPrint('❌ [REGISTER] registerOwner - Erro ${respon.statusCode}: ${respon.body}');
       result = jsonDecode(respon.body)['message'];
     }
-  } catch (e) {
+  } catch (e, stack) {
+    debugPrint('❌ [REGISTER] registerOwner - Exceção: $e');
+    debugPrint('❌ [REGISTER] registerOwner - Stack: $stack');
     if (e is SocketException) {
       internet = false;
       result = 'no internet';
+    } else {
+      result = 'Erro ao registrar: $e';
     }
   }
+  debugPrint('📝 [REGISTER] registerOwner - Resultado final: $result');
   return result;
 }
 
@@ -2816,16 +2900,24 @@ Future<bool> tryGetDriverTokenAfterAuthLogin() async {
   }
 }
 
-/// Reenvia OTP por e-mail no auth (auth.omny.app.br). Retorna 'success' ou mensagem de erro.
+/// Reenvia OTP no auth (auth.omny.app.br). type: 'email' envia por e-mail, type: 'mobile' por celular.
+/// Usa authEmailOrMobileForOtp para saber o destino (contém @ = email, senão = celular).
 Future<String> sendOtpAuth() async {
   if (authTempTokenForOtp == null || authTempTokenForOtp!.isEmpty) {
     return 'Token não disponível';
   }
+  final emailOrMobile = authEmailOrMobileForOtp?.trim() ?? '';
+  if (emailOrMobile.isEmpty) return 'E-mail ou celular não informado';
+  final bool isEmail = emailOrMobile.contains('@');
+  final String type = isEmail ? 'email' : 'mobile';
   try {
     String endpoint = '${authBaseUrl}api/v1/login/send-otp';
-    final body = {'type': 'email'};
+    final body = {
+      'type': type,
+      'email_or_mobile': emailOrMobile,
+    };
     debugPrint('🌐 [API] sendOtpAuth - URL: $endpoint');
-    debugPrint('🌐 [API] sendOtpAuth - body: $body');
+    debugPrint('🌐 [API] sendOtpAuth - body: $body (type: $type)');
     var response = await http.post(
       Uri.parse(endpoint),
       headers: {
@@ -5585,19 +5677,41 @@ userLogout() async {
   dynamic result;
   var id = userDetails['id'];
   var role = userDetails['role'];
+  final logoutUrl = '${url}api/v1/logout';
+  debugPrint('🚪 [LOGOUT] ========== REQUEST ==========');
+  debugPrint('🚪 [LOGOUT] Método: POST');
+  debugPrint('🚪 [LOGOUT] URL: $logoutUrl');
+  debugPrint('🚪 [LOGOUT] id: $id | role: $role');
   try {
+    if (bearerToken.isEmpty) {
+      debugPrint('🚪 [LOGOUT] ERRO: bearerToken vazio, não é possível chamar API');
+      result = 'success'; // segue fluxo local para limpar e redirecionar
+      pref.remove('Bearer');
+      return result;
+    }
+    final token = bearerToken[0].token;
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+    debugPrint('🚪 [LOGOUT] Headers:');
+    debugPrint('🚪 [LOGOUT]   Content-Type: ${headers['Content-Type']}');
+    debugPrint('🚪 [LOGOUT]   Authorization: Bearer ${token.length} chars (início: ${token.length > 20 ? token.substring(0, 20) + "..." : token})');
+    debugPrint('🚪 [LOGOUT]   [VERBOSE] Authorization completo: Bearer $token');
+    debugPrint('🚪 [LOGOUT] Body: (nenhum)');
+    debugPrint('🚪 [LOGOUT] ================================');
     var response = await http.post(
-      Uri.parse('${url}api/v1/logout'),
-      headers: {
-        'Authorization': 'Bearer ${bearerToken[0].token}',
-        'Content-Type': 'application/json',
-      },
+      Uri.parse(logoutUrl),
+      headers: headers,
     );
+    debugPrint('🚪 [LOGOUT] ========== RESPONSE ==========');
+    debugPrint('🚪 [LOGOUT] Status: ${response.statusCode}');
+    debugPrint('🚪 [LOGOUT] Body: ${response.body}');
+    debugPrint('🚪 [LOGOUT] Headers response: ${response.headers}');
     if (response.statusCode == 200) {
       if (!kIsWeb) {
         platforms.invokeMethod('logout');
       }
-      // print(id);
       if (role != 'owner') {
         final position = FirebaseDatabase.instance.ref();
         position.child('drivers/driver_$id').update({'is_active': 0});
@@ -5611,18 +5725,25 @@ userLogout() async {
       requestStreamEnd = null;
       pref.remove('Bearer');
       result = 'success';
+      debugPrint('🚪 [LOGOUT] Sucesso: token removido e streams cancelados');
     } else if (response.statusCode == 401) {
       result = 'logout';
+      debugPrint('🚪 [LOGOUT] 401: token inválido/expirado, retornando logout');
     } else {
-      debugPrint(response.body);
+      debugPrint('🚪 [LOGOUT] Falha HTTP: ${response.statusCode} - ${response.body}');
       result = 'failure';
     }
-  } catch (e) {
+  } catch (e, stack) {
+    debugPrint('🚪 [LOGOUT] Exceção: $e');
+    debugPrint('🚪 [LOGOUT] Stack: $stack');
     if (e is SocketException) {
       result = 'no internet';
       internet = false;
+    } else {
+      result = 'failure';
     }
   }
+  debugPrint('🚪 [LOGOUT] Resultado final: $result');
   return result;
 }
 
@@ -6864,6 +6985,8 @@ paymentReceived() async {
 
 String ownermodule = '1';
 String isemailmodule = '1';
+/// enable_menus da API: 1 = ocultar Carteira, Dados bancários e Indicações; 0 = mostrar.
+String enableMenus = '0';
 getOwnermodule() async {
   dynamic res;
 
@@ -6879,10 +7002,16 @@ getOwnermodule() async {
     if (response.statusCode == 200) {
       try {
         final jsonResponse = jsonDecode(response.body);
-        ownermodule = jsonResponse['enable_owner_login'];
-        isemailmodule = jsonResponse['enable_email_otp'];
+        ownermodule = jsonResponse['enable_owner_login']?.toString() ?? ownermodule;
+        isemailmodule = jsonResponse['enable_email_otp']?.toString() ?? isemailmodule;
+        enableMenus = jsonResponse['enable_menus']?.toString() ?? '0';
+        if (jsonResponse['enable_loginEmailPswd'] != null) {
+          loginEmailPswd = jsonResponse['enable_loginEmailPswd'] == 1 ? 1 : 0;
+          debugPrint('🌐 [API] getOwnermodule - loginEmailPswd: $loginEmailPswd (enable_loginEmailPswd da API)');
+        }
         debugPrint('🌐 [API] getOwnermodule - ownermodule: $ownermodule');
         debugPrint('🌐 [API] getOwnermodule - isemailmodule: $isemailmodule');
+        debugPrint('🌐 [API] getOwnermodule - enableMenus: $enableMenus (1=ocultar carteira/bank/referral)');
         res = 'success';
       } catch (e) {
         debugPrint('🌐 [API] getOwnermodule - ERRO ao decodificar JSON: $e');

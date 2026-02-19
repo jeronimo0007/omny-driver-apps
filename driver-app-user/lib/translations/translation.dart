@@ -2516,7 +2516,7 @@ Map<String, dynamic> languages = {
     "text_account_declined": "Sua Conta Foi Recusada",
     "text_declined_reason": "Motivo da Recusa",
     "text_skip_referral": "Pular Indicação",
-    "text_referral_optional": "Codigo de Indicação (obrigatório)",
+    "text_referral_optional": "Cádigo de Indicação (obrigatório)",
     "text_wallet_balance_low":
         "O saldo da sua carteira está baixo, tente outro método de pagamento",
     "text_mobile_already_taken": "Número de celular fornecido já utilizado",

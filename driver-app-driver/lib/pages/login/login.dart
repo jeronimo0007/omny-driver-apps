@@ -831,27 +831,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                                                 color: underline,
                                               ),
                                               const SizedBox(width: 10),
-                                              // Código do país - centralizado verticalmente
-                                              Container(
-                                                height: 50,
-                                                alignment: Alignment.center,
-                                                child: MyText(
-                                                  text: (countries.isNotEmpty &&
-                                                          phcode != null &&
-                                                          countries[phcode] !=
-                                                              null &&
-                                                          countries[phcode][
-                                                                  'dial_code'] !=
-                                                              null)
-                                                      ? countries[phcode]
-                                                              ['dial_code']
-                                                          .toString()
-                                                      : '+55',
-                                                  size: media.width * sixteen,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              // Campo de texto com máscara - centralizado verticalmente
                                               Expanded(
                                                 child: Container(
                                                   height: 50,
